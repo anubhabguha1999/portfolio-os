@@ -1,0 +1,255 @@
+import type { ColorPalette, EffectsConfig, LayoutConfig, MotionConfig, ThemeConfig, TypographyConfig } from '@/types/portfolio';
+
+const typography = (t: Partial<TypographyConfig>): TypographyConfig => ({
+  headingFont: 'inter',
+  bodyFont: 'inter',
+  monoFont: 'jetbrains',
+  baseSize: 17,
+  scale: 1.25,
+  headingWeight: 700,
+  bodyWeight: 400,
+  lineHeight: 1.65,
+  headingLineHeight: 1.1,
+  letterSpacing: 0,
+  headingLetterSpacing: -0.02,
+  headingTransform: 'none',
+  ...t,
+});
+
+const layout = (l: Partial<LayoutConfig>): LayoutConfig => ({
+  maxWidth: 1120,
+  sectionSpacing: 112,
+  cardRadius: 16,
+  buttonRadius: 10,
+  containerPadding: 24,
+  gridGap: 24,
+  ...l,
+});
+
+const effects = (e: Partial<EffectsConfig>): EffectsConfig => ({
+  shadow: 'soft',
+  blur: 0,
+  glass: false,
+  gradient: false,
+  gradientAngle: 135,
+  borderWidth: 1,
+  grain: false,
+  ...e,
+});
+
+const motion = (m: Partial<MotionConfig>): MotionConfig => ({
+  enabled: true,
+  duration: 700,
+  easing: 'ease-out',
+  defaultAnimation: 'fade',
+  ...m,
+});
+
+const palette = (p: Omit<ColorPalette, 'success' | 'warning' | 'error'> & Partial<ColorPalette>): ColorPalette => ({
+  success: '#16a34a',
+  warning: '#d97706',
+  error: '#dc2626',
+  ...p,
+});
+
+export const THEMES: ThemeConfig[] = [
+  {
+    id: 'minimal-developer',
+    name: 'Minimal Developer',
+    description: 'Quiet, precise, content-first. Neutral greys with a single confident accent.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#2563eb', primaryContrast: '#ffffff', secondary: '#0f172a', accent: '#7c3aed', background: '#ffffff', surface: '#f6f7f9', text: '#0f172a', muted: '#526077', border: '#e3e7ee' }),
+      dark: palette({ primary: '#60a5fa', primaryContrast: '#06101f', secondary: '#e2e8f0', accent: '#a78bfa', background: '#0b0d12', surface: '#13161d', text: '#e6e9ef', muted: '#94a0b4', border: '#232835' }),
+    },
+    typography: typography({ headingFont: 'inter', bodyFont: 'inter' }),
+    layout: layout({}),
+    effects: effects({}),
+    motion: motion({}),
+    cardStyle: 'outlined',
+    buttonStyle: 'solid',
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk',
+    description: 'Neon magenta and cyan on deep violet-black. Loud, glowing, nocturnal.',
+    defaultScheme: 'dark',
+    palettes: {
+      dark: palette({ primary: '#ff2e97', primaryContrast: '#0a0014', secondary: '#00f0ff', accent: '#f9f002', background: '#0a0014', surface: '#140926', text: '#f3e9ff', muted: '#b39ddb', border: '#3b1d5e', success: '#39ff14', warning: '#f9f002', error: '#ff3864' }),
+      light: palette({ primary: '#d6006f', primaryContrast: '#ffffff', secondary: '#007c85', accent: '#6d28d9', background: '#fbf7ff', surface: '#f1e8ff', text: '#1a0833', muted: '#5b4a78', border: '#e0cffa' }),
+    },
+    typography: typography({ headingFont: 'unbounded', bodyFont: 'grotesk', monoFont: 'jetbrains', headingWeight: 800, headingTransform: 'uppercase', headingLetterSpacing: 0.02, headingLineHeight: 1.05 }),
+    layout: layout({ cardRadius: 4, buttonRadius: 2 }),
+    effects: effects({ shadow: 'glow', gradient: true, gradientAngle: 120, grain: true }),
+    motion: motion({ defaultAnimation: 'blur', duration: 600 }),
+    cardStyle: 'outlined',
+    buttonStyle: 'solid',
+  },
+  {
+    id: 'editorial',
+    name: 'Editorial',
+    description: 'Magazine typography — high-contrast serif headlines, generous measure, ink on paper.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#b42318', primaryContrast: '#ffffff', secondary: '#1c1917', accent: '#a16207', background: '#faf8f3', surface: '#f2eee4', text: '#1c1917', muted: '#57534e', border: '#ded7c7' }),
+      dark: palette({ primary: '#f97066', primaryContrast: '#1c0b09', secondary: '#f5f5f4', accent: '#facc15', background: '#151311', surface: '#1f1c19', text: '#f2efe9', muted: '#a8a29e', border: '#35302b' }),
+    },
+    typography: typography({ headingFont: 'playfair', bodyFont: 'transitional', baseSize: 18, scale: 1.333, headingWeight: 600, lineHeight: 1.7, headingLineHeight: 1.08, headingLetterSpacing: -0.015 }),
+    layout: layout({ maxWidth: 1040, cardRadius: 0, buttonRadius: 0, sectionSpacing: 128 }),
+    effects: effects({ shadow: 'none' }),
+    motion: motion({ defaultAnimation: 'reveal', duration: 900 }),
+    cardStyle: 'flat',
+    buttonStyle: 'underline',
+  },
+  {
+    id: 'glass',
+    name: 'Glass',
+    description: 'Frosted translucent panels floating over soft colour fields.',
+    defaultScheme: 'dark',
+    palettes: {
+      dark: palette({ primary: '#8b5cf6', primaryContrast: '#ffffff', secondary: '#22d3ee', accent: '#f472b6', background: '#0c0a1d', surface: '#1a1733', text: '#f4f3ff', muted: '#b4b0d6', border: '#2f2a55' }),
+      light: palette({ primary: '#7c3aed', primaryContrast: '#ffffff', secondary: '#0891b2', accent: '#db2777', background: '#f3f1ff', surface: '#ffffff', text: '#1e1b3a', muted: '#5d5985', border: '#dcd7ff' }),
+    },
+    typography: typography({ headingFont: 'manrope', bodyFont: 'manrope', headingWeight: 800 }),
+    layout: layout({ cardRadius: 24, buttonRadius: 999 }),
+    effects: effects({ glass: true, blur: 18, gradient: true, shadow: 'medium' }),
+    motion: motion({ defaultAnimation: 'scale' }),
+    cardStyle: 'glass',
+    buttonStyle: 'pill',
+  },
+  {
+    id: 'brutalist',
+    name: 'Brutalist',
+    description: 'Raw grids, heavy borders, hard shadows and unapologetic type.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#ffde03', primaryContrast: '#000000', secondary: '#000000', accent: '#ff4f00', background: '#f4f1ea', surface: '#ffffff', text: '#000000', muted: '#333333', border: '#000000' }),
+      dark: palette({ primary: '#ffde03', primaryContrast: '#000000', secondary: '#ffffff', accent: '#ff4f00', background: '#0d0d0d', surface: '#1a1a1a', text: '#ffffff', muted: '#cfcfcf', border: '#ffffff' }),
+    },
+    typography: typography({ headingFont: 'grotesk', bodyFont: 'grotesk', monoFont: 'ibm-plex-mono', headingWeight: 700, headingTransform: 'uppercase', headingLetterSpacing: -0.01, headingLineHeight: 0.98, scale: 1.414 }),
+    layout: layout({ cardRadius: 0, buttonRadius: 0, gridGap: 20 }),
+    effects: effects({ shadow: 'hard', borderWidth: 3 }),
+    motion: motion({ defaultAnimation: 'slide', duration: 450, easing: 'linear' }),
+    cardStyle: 'brutal',
+    buttonStyle: 'brutal',
+  },
+  {
+    id: 'apple',
+    name: 'Cupertino',
+    description: 'Crisp product-page clarity — big type, airy spacing, restrained colour.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#0071e3', primaryContrast: '#ffffff', secondary: '#1d1d1f', accent: '#bf4800', background: '#ffffff', surface: '#f5f5f7', text: '#1d1d1f', muted: '#6e6e73', border: '#d2d2d7' }),
+      dark: palette({ primary: '#2997ff', primaryContrast: '#000000', secondary: '#f5f5f7', accent: '#ff9f0a', background: '#000000', surface: '#161617', text: '#f5f5f7', muted: '#a1a1a6', border: '#2d2d30' }),
+    },
+    typography: typography({ headingFont: 'system', bodyFont: 'system', baseSize: 17, scale: 1.3, headingWeight: 700, headingLetterSpacing: -0.03, headingLineHeight: 1.05 }),
+    layout: layout({ maxWidth: 1080, cardRadius: 22, buttonRadius: 999, sectionSpacing: 128 }),
+    effects: effects({ shadow: 'soft', borderWidth: 0 }),
+    motion: motion({ defaultAnimation: 'slide', duration: 800, easing: 'spring' }),
+    cardStyle: 'elevated',
+    buttonStyle: 'pill',
+  },
+  {
+    id: 'terminal',
+    name: 'Dark Terminal',
+    description: 'Phosphor green monospace on black. For people who live in the shell.',
+    defaultScheme: 'dark',
+    palettes: {
+      dark: palette({ primary: '#3ddc84', primaryContrast: '#031a0c', secondary: '#7ee7ff', accent: '#ffcc66', background: '#07090a', surface: '#0e1214', text: '#d7f5e3', muted: '#86a896', border: '#1f2a26', success: '#3ddc84' }),
+      light: palette({ primary: '#0f7a3f', primaryContrast: '#ffffff', secondary: '#0e6a80', accent: '#9a6700', background: '#f6faf7', surface: '#ebf3ee', text: '#0c1f14', muted: '#46604f', border: '#cfe0d5' }),
+    },
+    typography: typography({ headingFont: 'jetbrains', bodyFont: 'jetbrains', monoFont: 'jetbrains', baseSize: 15, scale: 1.2, headingWeight: 700, lineHeight: 1.7, headingLetterSpacing: 0, headingLineHeight: 1.2 }),
+    layout: layout({ maxWidth: 980, cardRadius: 6, buttonRadius: 4, sectionSpacing: 96 }),
+    effects: effects({ shadow: 'none' }),
+    motion: motion({ defaultAnimation: 'fade', duration: 400, easing: 'linear' }),
+    cardStyle: 'outlined',
+    buttonStyle: 'outline',
+  },
+  {
+    id: 'luxury',
+    name: 'Luxury',
+    description: 'Champagne gold on obsidian, refined serifs, slow elegant motion.',
+    defaultScheme: 'dark',
+    palettes: {
+      dark: palette({ primary: '#d4b373', primaryContrast: '#14110b', secondary: '#efe6d2', accent: '#a37e4a', background: '#0e0d0b', surface: '#181612', text: '#f2ebdd', muted: '#b3a78f', border: '#2e2a22' }),
+      light: palette({ primary: '#8a6a2f', primaryContrast: '#ffffff', secondary: '#1e1a13', accent: '#b08d57', background: '#fbf8f2', surface: '#f3ede1', text: '#1e1a13', muted: '#6b604e', border: '#e3d9c5' }),
+    },
+    typography: typography({ headingFont: 'cormorant', bodyFont: 'manrope', baseSize: 17, scale: 1.4, headingWeight: 500, headingLetterSpacing: 0, headingLineHeight: 1.05, letterSpacing: 0.005 }),
+    layout: layout({ maxWidth: 1080, cardRadius: 2, buttonRadius: 0, sectionSpacing: 136 }),
+    effects: effects({ shadow: 'none', borderWidth: 1 }),
+    motion: motion({ defaultAnimation: 'reveal', duration: 1100, easing: 'ease-in-out' }),
+    cardStyle: 'outlined',
+    buttonStyle: 'outline',
+  },
+  {
+    id: 'creative-studio',
+    name: 'Creative Studio',
+    description: 'Bold colour blocking, playful display type, confident personality.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#ff5a36', primaryContrast: '#ffffff', secondary: '#2a2cfa', accent: '#00b37e', background: '#fffaf5', surface: '#fff0e5', text: '#1b1523', muted: '#5f566b', border: '#f1dccd' }),
+      dark: palette({ primary: '#ff7a5c', primaryContrast: '#1b0e0a', secondary: '#8b8dff', accent: '#2ee6a8', background: '#15111a', surface: '#1f1925', text: '#fff3ec', muted: '#b9aec4', border: '#352c3d' }),
+    },
+    typography: typography({ headingFont: 'syne', bodyFont: 'manrope', headingWeight: 800, scale: 1.414, headingLetterSpacing: -0.03, headingLineHeight: 1 }),
+    layout: layout({ cardRadius: 28, buttonRadius: 999, gridGap: 28 }),
+    effects: effects({ shadow: 'medium', gradient: true, gradientAngle: 160 }),
+    motion: motion({ defaultAnimation: 'stagger', duration: 650, easing: 'spring' }),
+    cardStyle: 'elevated',
+    buttonStyle: 'pill',
+  },
+  {
+    id: 'experimental',
+    name: 'Experimental',
+    description: 'Acid lime, oversized type and a grid you can feel. For the unconventional.',
+    defaultScheme: 'dark',
+    palettes: {
+      dark: palette({ primary: '#c6ff00', primaryContrast: '#0b0b0b', secondary: '#ff4dd8', accent: '#3d5afe', background: '#0b0b0b', surface: '#151515', text: '#f1f1f1', muted: '#a3a3a3', border: '#2b2b2b' }),
+      light: palette({ primary: '#5b7a00', primaryContrast: '#ffffff', secondary: '#b3009b', accent: '#2742f5', background: '#f7f7f2', surface: '#ececE4', text: '#0b0b0b', muted: '#4b4b4b', border: '#d4d4c8' }),
+    },
+    typography: typography({ headingFont: 'unbounded', bodyFont: 'grotesk', monoFont: 'ibm-plex-mono', headingWeight: 600, scale: 1.5, headingLetterSpacing: -0.04, headingLineHeight: 0.95 }),
+    layout: layout({ maxWidth: 1240, cardRadius: 0, buttonRadius: 0, gridGap: 16 }),
+    effects: effects({ shadow: 'none', grain: true, borderWidth: 1 }),
+    motion: motion({ defaultAnimation: 'blur', duration: 800 }),
+    cardStyle: 'outlined',
+    buttonStyle: 'solid',
+  },
+  {
+    id: 'executive',
+    name: 'Executive',
+    description: 'Boardroom-ready navy and slate. Trustworthy, structured, calm.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#1e3a8a', primaryContrast: '#ffffff', secondary: '#0f172a', accent: '#b45309', background: '#fbfbfd', surface: '#f1f4f9', text: '#101828', muted: '#475467', border: '#dde3ec' }),
+      dark: palette({ primary: '#93b4ff', primaryContrast: '#0a1330', secondary: '#e2e8f0', accent: '#fbbf24', background: '#0b1120', surface: '#111a2e', text: '#e7ecf5', muted: '#98a6bf', border: '#22304d' }),
+    },
+    typography: typography({ headingFont: 'fraunces', bodyFont: 'inter', headingWeight: 600, scale: 1.3, headingLetterSpacing: -0.01 }),
+    layout: layout({ maxWidth: 1100, cardRadius: 10, buttonRadius: 8 }),
+    effects: effects({ shadow: 'soft' }),
+    motion: motion({ defaultAnimation: 'fade', duration: 600 }),
+    cardStyle: 'elevated',
+    buttonStyle: 'solid',
+  },
+  {
+    id: 'nordic',
+    name: 'Nordic',
+    description: 'Muted sage and sand, soft corners, Scandinavian calm.',
+    defaultScheme: 'light',
+    palettes: {
+      light: palette({ primary: '#3f6b5a', primaryContrast: '#ffffff', secondary: '#27302c', accent: '#c07a4c', background: '#f7f5f0', surface: '#eeebe3', text: '#1f2522', muted: '#5b645f', border: '#dcd8cc' }),
+      dark: palette({ primary: '#8fc1ab', primaryContrast: '#0e1a15', secondary: '#e8e4da', accent: '#e0a57c', background: '#141816', surface: '#1c211e', text: '#ebe8e1', muted: '#a3aba6', border: '#2c332f' }),
+    },
+    typography: typography({ headingFont: 'humanist', bodyFont: 'humanist', headingWeight: 600, scale: 1.25 }),
+    layout: layout({ cardRadius: 14, buttonRadius: 12 }),
+    effects: effects({ shadow: 'soft' }),
+    motion: motion({ defaultAnimation: 'slide', duration: 700 }),
+    cardStyle: 'flat',
+    buttonStyle: 'solid',
+  },
+];
+
+export const DEFAULT_THEME_ID = 'minimal-developer';
+
+export function getTheme(id: string): ThemeConfig {
+  const found = THEMES.find((t) => t.id === id) ?? THEMES[0]!;
+  return structuredClone(found);
+}
