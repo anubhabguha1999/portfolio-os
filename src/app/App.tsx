@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/Toaster';
 import { Spinner } from '@/components/ui/Button';
 import { PwaPrompt } from '@/features/settings/PwaPrompt';
 import { ScrollToTop } from './ScrollToTop';
+import { VercelAnalytics } from './VercelAnalytics';
 
 const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const ProjectsPage = lazy(() => import('@/features/projects/ProjectsPage'));
@@ -33,6 +34,7 @@ export function App() {
   return (
     <HashRouter>
       <ScrollToTop />
+      <VercelAnalytics />
       <ErrorBoundary area="Application">
         <Suspense fallback={<PageFallback />}>
           <Routes>

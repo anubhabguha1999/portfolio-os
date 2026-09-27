@@ -229,6 +229,132 @@ dialog.app-dialog[open] > .app-dialog-panel {
     transform: translateY(100%);
   }
 }
+/* Landing page motion. Entrance is a one-shot keyframe; everything scroll-linked uses
+   CSS scroll-driven animations, which run off the main thread (no JS per frame).
+   Only transform/opacity animate. Unsupported browsers and reduced motion get the
+   static page. */
+/* Without scroll timelines the progress bar has nothing to track. */
+.scene-progress {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-rise {
+    animation: landing-rise 0.9s var(--ease-out-expo) var(--d, 0s) both;
+  }
+  .landing-pulse {
+    animation: landing-pulse 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  @supports (animation-timeline: view()) {
+    .scene-progress {
+      display: block;
+      animation: landing-grow-x linear both;
+      animation-timeline: scroll(root);
+    }
+    .scene-hero-exit {
+      animation: landing-hero-exit linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+    .scene-tilt {
+      animation: landing-tilt linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+    .scene-zoom {
+      animation: landing-zoom linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+    .scene-reveal {
+      animation: landing-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 30%;
+    }
+    .scene-draw {
+      animation: landing-grow-x linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 55%;
+    }
+    .scene-glide {
+      animation: landing-glide linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+    /* Children share their list's timeline, offset by position for a cascade. */
+    .scene-stagger {
+      view-timeline: --stagger block;
+    }
+    .scene-stagger > * {
+      animation: landing-reveal linear both;
+      animation-timeline: --stagger;
+      animation-range: entry calc(5% + var(--n, 0) * 7%) cover calc(25% + var(--n, 0) * 7%);
+    }
+    .scene-stagger > :nth-child(2) { --n: 1; }
+    .scene-stagger > :nth-child(3) { --n: 2; }
+    .scene-stagger > :nth-child(4) { --n: 3; }
+    .scene-stagger > :nth-child(5) { --n: 4; }
+    .scene-stagger > :nth-child(n + 6) { --n: 5; }
+    /* Single-column lists are taller than the screen: each item reveals on its own. */
+    @media (max-width: 767px) {
+      .scene-stagger > * {
+        animation-timeline: view();
+        animation-range: entry 10% cover 30%;
+      }
+    }
+  }
+}
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes landing-pulse {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(1000%);
+  }
+}
+@keyframes landing-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes landing-hero-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.95);
+  }
+}
+@keyframes landing-tilt {
+  from {
+    transform: translateY(70px) rotateX(24deg) scale(0.88);
+  }
+}
+@keyframes landing-zoom {
+  from {
+    opacity: 0.35;
+    transform: translateY(50px) scale(0.92);
+  }
+}
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+@keyframes landing-glide {
+  from {
+    opacity: 0;
+    transform: translateX(110px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
