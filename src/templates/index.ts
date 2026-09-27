@@ -1,10 +1,36 @@
 import type { PortfolioTemplate } from './types';
-import { createPortfolio } from '@/lib/portfolio-factory';
+import { minimalTemplate } from './minimal';
+import { editorialTemplate } from './editorial';
+import { terminalTemplate } from './terminal';
+import { creativeTemplate } from './creative';
+import { executiveTemplate } from './executive';
+import { cyberTemplate } from './cyber';
+import { brutalistTemplate } from './brutalist';
+import { luxuryTemplate } from './luxury';
+import { glassTemplate } from './glass';
+import { cupertinoTemplate } from './cupertino';
 
+export type { PortfolioTemplate } from './types';
+
+/** Every built-in template, in gallery order. */
 export const TEMPLATES: PortfolioTemplate[] = [
-  { id: 'minimal', name: 'Minimal', description: 'Placeholder', audience: 'Everyone', themeId: 'minimal-developer', tags: [], create: () => createPortfolio() },
+  minimalTemplate,
+  editorialTemplate,
+  terminalTemplate,
+  creativeTemplate,
+  executiveTemplate,
+  cyberTemplate,
+  brutalistTemplate,
+  luxuryTemplate,
+  glassTemplate,
+  cupertinoTemplate,
 ];
 
 export function getTemplate(id: string): PortfolioTemplate | undefined {
   return TEMPLATES.find((t) => t.id === id);
+}
+
+/** All distinct tags, for gallery filters. */
+export function templateTags(): string[] {
+  return [...new Set(TEMPLATES.flatMap((t) => t.tags))].sort((a, b) => a.localeCompare(b));
 }

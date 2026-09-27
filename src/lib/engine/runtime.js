@@ -39,7 +39,10 @@
       $$('[data-anim-child]', t).forEach(function (c, i) { c.style.setProperty('--i', String(Math.min(i, 12))); });
     });
     var load = targets.filter(function (t) { return t.getAttribute('data-trigger') === 'load'; });
-    requestAnimationFrame(function () { load.forEach(function (t) { t.classList.add('is-in'); }); });
+    var reveal = function () { load.forEach(function (t) { t.classList.add('is-in'); }); };
+    requestAnimationFrame(reveal);
+    var fallback = setTimeout(reveal, 120); // rAF is paused in hidden tabs
+    cleanups.push(function () { clearTimeout(fallback); });
     var scroll = targets.filter(function (t) { return t.getAttribute('data-trigger') !== 'load'; });
     if (!('IntersectionObserver' in window)) { scroll.forEach(function (t) { t.classList.add('is-in'); }); return; }
     var io = new IntersectionObserver(function (entries) {
@@ -304,6 +307,19 @@
       $$('[data-pos-asset]', scope).forEach(function (img) { var u = assetUrls[img.getAttribute('data-pos-asset')]; if (u) img.src = u; });
       $$('[data-pos-bg-asset]', scope).forEach(function (el) { var u = assetUrls[el.getAttribute('data-pos-bg-asset')]; if (u) el.style.backgroundImage = 'url("' + u + '")'; });
     };
+    var loadedFonts = {};
+    var applyFonts = function () {
+      if (!cfg.fonts || typeof FontFace === 'undefined') return;
+      cfg.fonts.forEach(function (f) {
+        var u = assetUrls[f.assetId], key = f.family + '|' + f.assetId;
+        if (!u || loadedFonts[key]) return;
+        loadedFonts[key] = true;
+        try {
+          var ff = new FontFace(f.family, 'url("' + u + '")', { weight: f.weight || 'normal', style: f.style || 'normal' });
+          ff.load().then(function () { doc.fonts.add(ff); }, function () { loadedFonts[key] = false; });
+        } catch (err) { loadedFonts[key] = false; }
+      });
+    };
     var markSelected = function () {
       $$('.pos-selected').forEach(function (el) { el.classList.remove('pos-selected'); });
       if (!selected) return;
@@ -337,6 +353,7 @@
         if (m.config) cfg = m.config;
         motion = cfg.animations !== false && !reduce;
         hydrateAssets(doc);
+        applyFonts();
         init();
         if (!m.editing) root.classList.remove('pos-editing');
         markSelected();
@@ -348,6 +365,7 @@
           assetUrls[id] = (typeof Blob !== 'undefined' && v instanceof Blob) ? URL.createObjectURL(v) : String(v);
         });
         hydrateAssets(doc);
+        applyFonts();
       } else if (m.type === 'pos:select') {
         selected = m.id || null; markSelected();
         if (m.scroll && selected) { var el = doc.querySelector('[data-section-id="' + String(selected).replace(/"/g, '') + '"]'); if (el) el.scrollIntoView({ behavior: motion ? 'smooth' : 'auto', block: 'start' }); }

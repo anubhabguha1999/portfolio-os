@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Portfolio, PortfolioSection, SectionStyle, ThemeConfig } from '@/types/portfolio';
-import { SECTION_TYPES, defaultSectionStyle, getDefinition, isSectionType } from '@/sections/registry';
+import { defaultSectionStyle, getDefinition, isSectionType } from '@/sections/registry';
 import { defaultMetadata, defaultSettings } from '@/lib/portfolio-factory';
 import { getTheme, DEFAULT_THEME_ID } from '@/lib/theme/themes';
 import { SCHEMA_VERSION } from '@/config/brand';
@@ -10,7 +10,8 @@ import { migrate } from './migrations';
 
 const sectionShape = z.object({
   id: z.string().min(1),
-  type: z.enum(SECTION_TYPES as [string, ...string[]]),
+  // Unknown types are skipped with a warning (forward compatibility), not rejected.
+  type: z.string().min(1),
   name: z.string().optional(),
   enabled: z.boolean().optional(),
   locked: z.boolean().optional(),

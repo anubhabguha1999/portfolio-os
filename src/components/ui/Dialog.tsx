@@ -54,7 +54,8 @@ export function Dialog({ open, onClose, title, description, children, footer, si
   return (
     <dialog
       ref={ref}
-      className={cn('app-dialog', sheetOnMobile && 'max-sm:m-0 max-sm:mt-auto max-sm:w-full')}
+      className="app-dialog"
+      data-sheet={sheetOnMobile ? '' : undefined}
       aria-labelledby="dlg-title"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();

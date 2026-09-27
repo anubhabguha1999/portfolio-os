@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/Toaster';
 import { Spinner } from '@/components/ui/Button';
 import { PwaPrompt } from '@/features/settings/PwaPrompt';
+import { ScrollToTop } from './ScrollToTop';
 
 const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const ProjectsPage = lazy(() => import('@/features/projects/ProjectsPage'));
@@ -31,6 +32,7 @@ function PageFallback() {
 export function App() {
   return (
     <HashRouter>
+      <ScrollToTop />
       <ErrorBoundary area="Application">
         <Suspense fallback={<PageFallback />}>
           <Routes>

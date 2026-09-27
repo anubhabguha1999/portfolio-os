@@ -34,13 +34,12 @@ export async function storeBlob(projectId: string, blob: Blob, meta: { name: str
   return rec;
 }
 
-export function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result));
-    r.onerror = () => reject(r.error ?? new Error('read failed'));
-    r.readAsDataURL(blob);
-  });
+/** Blob → data URL without FileReader (works in workers and any Blob implementation). */
+export async function blobToDataUrl(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:${blob.type || 'application/octet-stream'};base64,${btoa(bin)}`;
 }
 
 export function dataUrlToBlob(dataUrl: string): Blob {

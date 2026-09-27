@@ -48,6 +48,8 @@ export interface RuntimeConfig {
   scheme: Portfolio['settings']['colorScheme'];
   defaultScheme: 'light' | 'dark';
   preview: boolean;
+  /** Preview only: custom fonts the iframe loads from posted asset blobs. */
+  fonts?: Array<{ family: string; assetId: string; weight: string; style: string }>;
 }
 
 const ANIMATION_EASINGS: Record<string, string> = {
@@ -332,6 +334,9 @@ export function renderPortfolio(portfolio: Portfolio, opts: RenderOptions): Rend
     scheme: portfolio.settings.colorScheme,
     defaultScheme: portfolio.theme.defaultScheme,
     preview: opts.mode === 'preview',
+    ...(opts.mode === 'preview' && portfolio.metadata.customFonts.length
+      ? { fonts: portfolio.metadata.customFonts.map((f) => ({ family: f.family, assetId: f.assetId, weight: f.weight, style: f.style })) }
+      : {}),
   };
   const delivery = opts.fontDelivery ?? portfolio.settings.fontDelivery;
   const t = portfolio.theme.typography;
@@ -343,7 +348,7 @@ export function renderPortfolio(portfolio: Portfolio, opts: RenderOptions): Rend
   const data = opts.embedData ? `<script type="application/json" id="pos-data">${jsonForScript(portfolio)}</script>` : '';
   const csp =
     opts.mode === 'preview'
-      ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob: https:; media-src https: blob:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src data: https://fonts.gstatic.com; script-src 'unsafe-inline'; connect-src 'none'; frame-src 'none'; form-action 'none'">`
+      ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob: https:; media-src https: blob:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src data: blob: https://fonts.gstatic.com; script-src 'unsafe-inline'; connect-src 'none'; frame-src 'none'; form-action 'none'">`
       : '';
   const scheme = portfolio.settings.colorScheme === 'system' ? '' : ` data-scheme="${portfolio.settings.colorScheme}"`;
   const html = `<!doctype html>

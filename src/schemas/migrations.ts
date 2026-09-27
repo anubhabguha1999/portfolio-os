@@ -64,6 +64,8 @@ export function migrate(input: unknown): { value: unknown; from: string | null }
   const original = String(input.version ?? '1.0.0');
   const target = majorOf(SCHEMA_VERSION);
   let major = majorOf(original);
+  const looksLegacy = 'profile' in input || (Array.isArray(input.sections) && !('metadata' in input));
+  if (major < target && !looksLegacy) return { value: input, from: null };
   if (major > target) throw new Error(`This project was created with a newer version (${original}). Please update the app.`);
   let migrated = false;
   while (major < target) {

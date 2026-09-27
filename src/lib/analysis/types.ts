@@ -11,6 +11,8 @@ export interface CheckResult {
   sectionId?: string | null;
   /** Optional specific occurrences. */
   items?: Array<{ message: string; sectionId?: string | null }>;
+  /** Relative importance used for the report score (default 1). */
+  weight?: number;
 }
 
 export interface AnalysisReport {
@@ -31,4 +33,12 @@ export interface PortfolioAnalytics {
   accessibilityScore: number;
   performanceScore: number;
   contentScore: number;
+}
+
+/** Everything the Insights panel shows, computed in one pass. */
+export interface PortfolioInsights {
+  accessibility: AnalysisReport;
+  performance: AnalysisReport;
+  content: AnalysisReport;
+  analytics: PortfolioAnalytics;
 }

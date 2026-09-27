@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+import { BRAND } from './src/config/brand';
 
 export default defineConfig({
   base: './',
@@ -14,27 +15,32 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
-      includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
+      includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Portfolio OS',
-        short_name: 'Portfolio OS',
-        description: 'Build a portfolio in your browser and export it as HTML, PDF, Word or a deployable website.',
-        theme_color: '#0b0b0f',
-        background_color: '#0b0b0f',
+        id: './',
+        name: BRAND.name,
+        short_name: BRAND.shortName,
+        description: BRAND.description,
+        theme_color: '#08080b',
+        background_color: '#08080b',
         display: 'standalone',
+        orientation: 'any',
         start_url: './',
         scope: './',
+        categories: ['productivity', 'design'],
         icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
       },
+      devOptions: { enabled: false },
     }),
   ],
 });
