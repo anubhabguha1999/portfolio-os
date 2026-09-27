@@ -290,6 +290,27 @@
     $$('details[data-print-opened]').forEach(function (d) { d.open = false; d.removeAttribute('data-print-opened'); });
   });
 
+  /* ---------------------------- In-page links ---------------------------- *
+   * Inside an srcdoc iframe (app preview, share view) "#id" resolves against the
+   * host app's URL, so a plain click would load the app inside the frame.
+   * Scroll to the target in place instead. */
+  if (location.protocol === 'about:') {
+    doc.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a) return;
+      e.preventDefault();
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var t = id ? doc.getElementById(id) : null;
+      if (t) {
+        t.scrollIntoView({ behavior: motion ? 'smooth' : 'auto', block: 'start' });
+        if (t.tabIndex >= 0 || t.hasAttribute('tabindex')) t.focus({ preventScroll: true });
+      } else if (!id || id === 'top') {
+        window.scrollTo({ top: 0, behavior: motion ? 'smooth' : 'auto' });
+      }
+    });
+  }
+
   function init() {
     initScheme(); initAnimations(); initTyping(); initParticles(); initPointerEffects(); initCounters(); initNav(); initForms(); initLightbox();
     if (/[?&]present\b/.test(location.search)) setPresent(true);
