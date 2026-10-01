@@ -6,19 +6,6 @@
   "outputDirectory": "dist",
   "cleanUrls": false,
   "trailingSlash": false,
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.portfolioos.online"
-        }
-      ],
-      "destination": "https://portfolioos.online/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/resumes",
