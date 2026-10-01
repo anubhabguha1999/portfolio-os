@@ -71,9 +71,15 @@ export function MarketingFooter() {
         </nav>
       </div>
       <div className="border-t border-line/50">
-        <p className="mx-auto max-w-6xl px-4 py-5 text-[12px] text-fg-subtle sm:px-6">
-          Everything you create is stored in this browser. Download a JSON backup from My Portfolios to keep a copy.
-        </p>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-[12px] text-fg-subtle sm:px-6">
+          <p>Everything you create is stored in this browser. Download a JSON backup from My Portfolios to keep a copy.</p>
+          <p>
+            Made by{' '}
+            <a href="https://anubhab-guha.vercel.app/" target="_blank" rel="author noopener" className="font-medium text-fg-muted underline-offset-2 transition-colors hover:text-fg hover:underline">
+              Anubhab Guha
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

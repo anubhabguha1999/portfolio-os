@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 import { BRAND } from './src/config/brand';
 import { localRuntimeAssets } from './scripts/vite-local-assets';
+import { contentPagesDev } from './scripts/vite-content-pages';
 
 export default defineConfig({
   // Absolute asset paths: the app now uses clean URLs such as /resume/abc.
@@ -15,6 +16,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     localRuntimeAssets(fileURLToPath(new URL('.', import.meta.url))),
+    contentPagesDev(fileURLToPath(new URL('.', import.meta.url))),
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
