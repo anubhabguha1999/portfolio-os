@@ -40,6 +40,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['ad-worker.js'],
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,woff2,webmanifest}'],
         // OCR and PDF runtime files are large and only needed when a PDF is imported.
         globIgnores: ['ocr/**', 'pdfjs/**'],
