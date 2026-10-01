@@ -15,6 +15,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildContentPages } from './content-pages.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -88,6 +89,14 @@ function jsonLdFor(route) {
 
 const NAV_LABELS = { '/': 'Home', '/resumes': 'Resume builder', '/templates': 'Portfolio templates', '/documents': 'Cover letters & documents', '/new': 'Create a portfolio', '/about': 'How it works' };
 
+const HUB_LINKS = [
+  ['/resume-examples', 'Resume examples by job title', 'Sample resumes, ATS keywords and writing tips for each role.'],
+  ['/portfolio-examples', 'Portfolio website examples', 'What to include in a portfolio for developers, designers, photographers and more.'],
+  ['/guides', 'Career guides', 'ATS-friendly resumes, cover letters, tailoring and portfolio websites.'],
+]
+  .map(([path, name, desc]) => `<li><a href="${path}"><strong>${name}</strong></a> — ${desc}</li>`)
+  .join('');
+
 function contentFor(route) {
   const nav = indexable.map((r) => `<li><a href="${r.path}"${r.path === route.path ? ' aria-current="page"' : ''}>${esc(NAV_LABELS[r.path] ?? r.h1 ?? r.title)}</a></li>`).join('');
   const points = (route.points ?? []).map((p) => `<li>${esc(p)}</li>`).join('');
@@ -97,7 +106,7 @@ function contentFor(route) {
     .join('');
   return `<div id="seo-shell"><style>#seo-shell{max-width:72rem;margin:0 auto;padding:1.25rem 1rem 4rem;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#e7e5f0;background:#0b0b0f;min-height:100vh}#seo-shell a{color:#a99cff}#seo-shell nav ul{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;padding:0;margin:0 0 3rem;font-size:14px}#seo-shell h1{font-size:clamp(2rem,5vw,3.25rem);line-height:1.05;letter-spacing:-.03em;margin:0 0 1rem;color:#fff}#seo-shell h2{font-size:1.25rem;margin:2.5rem 0 .75rem;color:#fff}#seo-shell p{max-width:44rem;color:#b9b6c8}#seo-shell ul.points,#seo-shell ul.related{padding-left:1.25rem;color:#b9b6c8}#seo-shell footer{margin-top:3rem;font-size:13px;color:#8f8ba3}</style>
 <header><nav aria-label="Main"><ul><li><a href="/"><strong>${esc(cfg.siteName)}</strong></a></li>${nav}</ul></nav></header>
-<main><h1>${esc(route.h1 ?? route.title)}</h1><p>${esc(route.intro ?? route.description)}</p>${points ? `<h2>Features</h2><ul class="points">${points}</ul>` : ''}<p><a href="${route.path === '/resumes' ? '/resumes' : route.path === '/documents' ? '/documents' : '/new'}">Get started free</a>, no sign-up needed.</p><h2>Explore ${esc(cfg.siteName)}</h2><ul class="related">${related}</ul></main>
+<main><h1>${esc(route.h1 ?? route.title)}</h1><p>${esc(route.intro ?? route.description)}</p>${points ? `<h2>Features</h2><ul class="points">${points}</ul>` : ''}<p><a href="${route.path === '/resumes' ? '/resumes' : route.path === '/documents' ? '/documents' : '/new'}">Get started free</a>, no sign-up needed.</p><h2>Explore ${esc(cfg.siteName)}</h2><ul class="related">${related}${HUB_LINKS}</ul></main>
 <footer>${esc(cfg.siteName)}: a free, private portfolio website, resume and cover letter builder that runs in your browser.</footer></div>`;
 }
 
@@ -139,11 +148,17 @@ let shell = template
   .replace('<!-- seo:content -->', '');
 writeFileSync(join(dist, 'app.html'), shell);
 
+/* --------------------------- content pages --------------------------- */
+
+const contentPages = buildContentPages({ SITE, cfg, dist, today });
+
 /* ------------------------- sitemap / robots -------------------------- */
+
+const sitemapRoutes = [...indexable, ...contentPages];
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${indexable
+${sitemapRoutes
   .map(
     (r) => `  <url>
     <loc>${urlOf(r.path)}</loc>
@@ -177,6 +192,10 @@ ${cfg.siteName} is a free, local-first web app. Everything runs in the browser: 
 
 ${indexable.map((r) => `- [${r.h1 ?? r.title}](${urlOf(r.path)}): ${r.description}`).join('\n')}
 
+## Resume examples, portfolio examples and guides
+
+${contentPages.map((r) => `- [${r.title}](${urlOf(r.path)}): ${r.description}`).join('\n')}
+
 ## Key facts
 
 - Price: free
@@ -187,4 +206,4 @@ ${indexable.map((r) => `- [${r.h1 ?? r.title}](${urlOf(r.path)}): ${r.descriptio
 `;
 writeFileSync(join(dist, 'llms.txt'), llms);
 
-console.log(`prerender: ${indexable.length} pages, app.html, sitemap.xml (${indexable.length} urls), robots.txt, llms.txt → ${SITE}`);
+console.log(`prerender: ${indexable.length} app pages, ${contentPages.length} content pages, app.html, sitemap.xml (${sitemapRoutes.length} urls), robots.txt, llms.txt → ${SITE}`);

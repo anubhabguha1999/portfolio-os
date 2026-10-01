@@ -28,6 +28,30 @@
       "destination": "/about/index.html"
     },
     {
+      "source": "/resume-examples",
+      "destination": "/resume-examples/index.html"
+    },
+    {
+      "source": "/resume-examples/:slug",
+      "destination": "/resume-examples/:slug/index.html"
+    },
+    {
+      "source": "/portfolio-examples",
+      "destination": "/portfolio-examples/index.html"
+    },
+    {
+      "source": "/portfolio-examples/:slug",
+      "destination": "/portfolio-examples/:slug/index.html"
+    },
+    {
+      "source": "/guides",
+      "destination": "/guides/index.html"
+    },
+    {
+      "source": "/guides/:slug",
+      "destination": "/guides/:slug/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/app.html"
     }

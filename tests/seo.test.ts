@@ -54,3 +54,29 @@ describe('legacy hash links', () => {
     expect(legacyHashTarget('#/view?p=ABC_123-x')).toBe('/view#p=ABC_123-x');
   });
 });
+
+describe('static content pages', async () => {
+  const sets = {
+    '/resume-examples': (await import('../scripts/seo-content/resume-examples.mjs')).default,
+    '/portfolio-examples': (await import('../scripts/seo-content/portfolio-examples.mjs')).default,
+    '/guides': (await import('../scripts/seo-content/guides.mjs')).default,
+  };
+  const pages = Object.entries(sets).flatMap(([base, list]) => list.map((p) => ({ ...p, path: `${base}/${p.slug}` })));
+
+  it('keeps titles and descriptions within search-result limits', () => {
+    for (const p of pages) {
+      expect(p.title.length, p.path).toBeLessThanOrEqual(60);
+      expect(p.description.length, p.path).toBeGreaterThanOrEqual(70);
+      expect(p.description.length, p.path).toBeLessThanOrEqual(160);
+      expect(p.slug, p.path).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      expect(p.sections.length, p.path).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('has unique paths, titles and descriptions across the whole site', () => {
+    const titles = [...pages.map((p) => p.title), ...config.routes.filter((r) => r.index).map((r) => r.title)];
+    expect(new Set(pages.map((p) => p.path)).size).toBe(pages.length);
+    expect(new Set(titles).size).toBe(titles.length);
+    expect(new Set(pages.map((p) => p.description)).size).toBe(pages.length);
+  });
+});
