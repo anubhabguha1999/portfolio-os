@@ -6,7 +6,7 @@
 npm install
 npm run dev        # http://localhost:5173
 npm test           # vitest (jsdom + fake-indexeddb)
-npm run build      # static build in dist/ — deploy anywhere
+npm run build      # static build in dist/ (+ prerendered SEO pages, sitemap, robots)
 ```
 
 ## What it does
@@ -27,6 +27,16 @@ npm run build      # static build in dist/ — deploy anywhere
   - HTML files: exact restore from our own exports, heuristic mapping for others
   - Pasted resume text
   - Share links compressed into the URL fragment, with a QR code when the link fits
+
+## SEO & crawling
+
+- **Clean URLs** (`/resumes`, `/templates`…). Old `/#/route` links are redirected on load; share links use `/view#p=…` so the payload never reaches a server.
+- **`src/config/seo-routes.json`** is the single source for every route's title, description, H1, sitemap priority and index/noindex. `src/app/seo.ts` applies it at runtime, and `scripts/prerender.mjs` (run by `npm run build`) uses it to write:
+  - `dist/<route>/index.html` for each public page, with its own head, JSON-LD (Organization, WebSite, WebApplication, WebPage, BreadcrumbList) and readable content, so crawlers don't need JavaScript;
+  - `dist/app.html`, a noindex shell for private routes (editors, share links, settings);
+  - `sitemap.xml`, `robots.txt` and `llms.txt`.
+- **Hosting:** `vercel.json` rewrites the public routes to their prerendered pages and everything else to `app.html`, and sends `X-Robots-Tag: noindex` for private routes. Other hosts need the same rewrites.
+- Set `VITE_SITE_URL` to change the canonical domain (default `https://portfolioos.online`). Regenerate the social image with `npm run og-image`.
 
 ## Studios
 

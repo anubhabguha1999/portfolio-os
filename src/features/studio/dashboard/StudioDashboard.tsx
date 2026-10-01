@@ -74,7 +74,6 @@ export default function StudioDashboard() {
   const avatar = useImageUrls(avatarKey ? [avatarKey] : []);
 
   useEffect(() => {
-    document.title = `Dashboard — ${BRAND.name}`;
     void ensureWorkspace();
     void Promise.all([listProjects().catch(() => []), listResumes().catch(() => []), listDocuments().catch(() => [])]).then(([p, r, d]) => {
       setProjects(p);

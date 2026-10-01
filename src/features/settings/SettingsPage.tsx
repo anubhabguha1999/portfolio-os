@@ -74,7 +74,6 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    document.title = `Settings — ${BRAND.name}`;
     void refresh();
     const on = () => setOnline(navigator.onLine);
     window.addEventListener('online', on);

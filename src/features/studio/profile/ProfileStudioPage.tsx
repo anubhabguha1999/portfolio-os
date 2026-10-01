@@ -29,7 +29,6 @@ import { Badge, Card, SectionLabel } from '@/components/ui/misc';
 import { toast } from '@/stores/ui';
 import { formatBytes } from '@/utils/format';
 import { cn } from '@/utils/cn';
-import { BRAND } from '@/config/brand';
 import { IdentityForm } from './IdentityForm';
 import { ProfileJsonImport } from './ProfileJsonImport';
 import { PhotoEditor, editTarget } from './PhotoEditor';
@@ -43,7 +42,6 @@ export default function ProfileStudioPage() {
   const name = useWorkspace((s) => s.profile.name);
 
   useEffect(() => {
-    document.title = `Profile Studio — ${BRAND.name}`;
     void useWorkspace.getState().init();
   }, []);
 

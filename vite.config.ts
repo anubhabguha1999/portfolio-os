@@ -6,7 +6,8 @@ import { fileURLToPath, URL } from 'node:url';
 import { BRAND } from './src/config/brand';
 
 export default defineConfig({
-  base: './',
+  // Absolute asset paths: the app now uses clean URLs such as /resume/abc.
+  base: '/',
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   worker: { format: 'es' },
   plugins: [
@@ -17,7 +18,7 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'],
       manifest: {
-        id: './',
+        id: '/',
         name: BRAND.name,
         short_name: BRAND.shortName,
         description: BRAND.description,
@@ -25,8 +26,8 @@ export default defineConfig({
         background_color: '#08080b',
         display: 'standalone',
         orientation: 'any',
-        start_url: './',
-        scope: './',
+        start_url: '/',
+        scope: '/',
         categories: ['productivity', 'design'],
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

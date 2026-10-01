@@ -7,7 +7,7 @@ import { generateTheme } from '@/lib/theme/randomizer';
 import type { Portfolio } from '@/types/portfolio';
 
 const payloadOf = (url: string) => {
-  const m = /#\/view\?p=([A-Za-z0-9_-]+)$/.exec(url);
+  const m = /\/view#p=([A-Za-z0-9_-]+)$/.exec(url);
   if (!m) throw new Error(`bad url ${url}`);
   return m[1]!;
 };
@@ -33,7 +33,7 @@ describe('share links', () => {
   it('puts the payload in the URL fragment and round-trips the visible portfolio', async () => {
     const p = sample();
     const res = await buildShareUrl(p, { includeImages: false });
-    expect(res.url).toContain('#/view?p=');
+    expect(res.url).toContain('/view#p=');
     expect(res.url.split('#')[0]).not.toContain('p=');
     expect(res.removedImages).toBe(1);
     expect(res.bytes).toBe(payloadOf(res.url).length);

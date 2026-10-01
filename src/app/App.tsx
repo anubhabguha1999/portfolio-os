@@ -1,11 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { HashRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/Toaster';
 import { Spinner } from '@/components/ui/Button';
 import { PwaPrompt } from '@/features/settings/PwaPrompt';
 import { ScrollToTop } from './ScrollToTop';
 import { VercelAnalytics } from './VercelAnalytics';
+import { RouteSeo } from './RouteSeo';
 
 const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const ProjectsPage = lazy(() => import('@/features/projects/ProjectsPage'));
@@ -33,13 +34,15 @@ function PageFallback() {
 }
 
 /**
- * HashRouter keeps every route (and share payloads) in the URL fragment, so the app
- * works from any static host or file path without server rewrites.
+ * Clean paths (/resumes, /templates…) so every public page is its own crawlable URL.
+ * Share payloads still travel in the fragment (/view#p=…), which is never sent to a server.
+ * Legacy /#/route links are rewritten in main.tsx before the router starts.
  */
 export function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <ScrollToTop />
+      <RouteSeo />
       <VercelAnalytics />
       <ErrorBoundary area="Application">
         <Suspense fallback={<PageFallback />}>
@@ -66,6 +69,6 @@ export function App() {
       </ErrorBoundary>
       <Toaster />
       <PwaPrompt />
-    </HashRouter>
+    </BrowserRouter>
   );
 }

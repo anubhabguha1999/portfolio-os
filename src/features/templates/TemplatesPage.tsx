@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SiteHeader } from '@/components/SiteHeader';
 import { Button } from '@/components/ui/Button';
 import { TEMPLATES, getTemplate, templateTags } from '@/templates';
 import type { PortfolioTemplate } from '@/templates/types';
-import { BRAND } from '@/config/brand';
 import { MarketingFooter } from '@/features/landing/MarketingFooter';
 import { TemplateThumb } from './TemplateThumb';
 import { TemplateDetail, ThemeDots, useUseTemplate } from './TemplateDetail';
@@ -16,10 +15,6 @@ export default function TemplatesPage() {
   const tags = useMemo(() => ['All', ...templateTags()], []);
   const selected = getTemplate(params.get('t') ?? '');
   const { busy, use } = useUseTemplate();
-
-  useEffect(() => {
-    document.title = `Templates — ${BRAND.name}`;
-  }, []);
 
   const visible = tag === 'All' ? TEMPLATES : TEMPLATES.filter((t) => t.tags.includes(tag));
 

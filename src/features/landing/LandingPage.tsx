@@ -70,10 +70,6 @@ export default function LandingPage() {
   // Delay (seconds) for the one-shot `.hero-rise` CSS entrance.
   const rise = (delay: number) => ({ '--d': `${delay}s` }) as CSSProperties;
 
-  useEffect(() => {
-    document.title = `${BRAND.name} — ${BRAND.tagline}`;
-  }, []);
-
   return (
     <div className="relative min-h-full overflow-x-clip bg-bg text-fg">
       <ScrollProgress />

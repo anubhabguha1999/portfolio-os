@@ -1,0 +1,177 @@
+{
+  "siteUrl": "https://portfolioos.online",
+  "siteName": "Portfolio OS",
+  "defaultImage": "/og-image.png",
+  "twitterCard": "summary_large_image",
+  "locale": "en_US",
+  "routes": [
+    {
+      "path": "/",
+      "title": "Free Portfolio Website & Resume Builder — Portfolio OS",
+      "description": "Build a portfolio website, ATS-friendly resume and cover letter free in your browser. Export HTML, PDF, Word or a full site. No sign-up, works offline.",
+      "h1": "Free portfolio website and resume builder that runs in your browser",
+      "intro": "Portfolio OS lets you design a professional portfolio website, write an ATS-friendly resume and cover letter, and export everything as HTML, PDF, Word (DOCX) or a deploy-ready static site. There is no sign-up, nothing is uploaded, and it works offline.",
+      "points": [
+        "Portfolio website builder with designed templates, themes and drag-and-drop sections",
+        "Resume builder with 12 print-grade templates, ATS checks and real pagination",
+        "Cover letters and documents that share one profile with your portfolio",
+        "Export to standalone HTML, PDF, DOCX, a ZIP website, or Next.js and Vite source code",
+        "Private by design: your data stays in your browser"
+      ],
+      "priority": 1.0,
+      "changefreq": "weekly",
+      "index": true
+    },
+    {
+      "path": "/resumes",
+      "title": "Free ATS-Friendly Resume Builder — Portfolio OS",
+      "description": "Make a professional resume free with 12 ATS-friendly templates, example content, JSON Resume import and PDF, Word and TXT export. No sign-up.",
+      "h1": "Free resume builder with ATS-friendly templates",
+      "intro": "Pick a resume template, start from realistic example content or import a JSON Resume file, then tailor a version for every job. Resume Studio checks ATS compatibility, keeps entries together across pages and exports PDF, Word, plain text and JSON.",
+      "points": [
+        "12 resume templates: Slate Banner, Navy Sidebar, ATS Minimal, Modern Professional, Executive, Developer and more",
+        "ATS and content checks for headings, dates, length and keywords",
+        "Fit to one page, page limits and repeated section headings",
+        "Import JSON Resume files and export PDF, DOCX, TXT and JSON",
+        "Application pack: resume, cover letter and portfolio in one ZIP"
+      ],
+      "priority": 0.9,
+      "changefreq": "weekly",
+      "index": true
+    },
+    {
+      "path": "/templates",
+      "title": "Free Portfolio Website Templates — Portfolio OS",
+      "description": "Free, customisable portfolio website templates for developers, designers, writers and consultants. Edit themes and layouts, then export HTML or a site.",
+      "h1": "Free portfolio website templates",
+      "intro": "Each portfolio template comes with its own layout, section order, motion and a realistic sample persona you can rewrite. Switch themes, fonts and spacing at any time, then export a standalone HTML file, PDF, Word document or deploy-ready website.",
+      "points": [
+        "Templates for developers, designers, writers, illustrators, architects and consultants",
+        "Light and dark themes with tunable colour, type, spacing and motion",
+        "Responsive previews for desktop, tablet and phone",
+        "Export to HTML, PDF, DOCX, ZIP or framework source code"
+      ],
+      "priority": 0.9,
+      "changefreq": "weekly",
+      "index": true
+    },
+    {
+      "path": "/documents",
+      "title": "Free Cover Letter & Document Builder — Portfolio OS",
+      "description": "Write cover letters, case studies, proposals and reports with free templates. Uses your resume profile and exports to PDF or Word.",
+      "h1": "Cover letter and document builder",
+      "intro": "Document Studio turns your shared profile into cover letters, case studies, proposals, project reports and portfolio PDFs. Choose from 10 document templates and 4 cover letter templates, then export to PDF or DOCX.",
+      "points": [
+        "4 cover letter templates and 10 document templates",
+        "Block editor with headings, tables, timelines, stats and project cards",
+        "Uses the same profile, experience and projects as your resume",
+        "Vector PDF and editable Word export"
+      ],
+      "priority": 0.8,
+      "changefreq": "monthly",
+      "index": true
+    },
+    {
+      "path": "/new",
+      "title": "Create a Portfolio Website in Minutes — Portfolio OS",
+      "description": "Start a portfolio website from a template, a blank page, your resume text or an existing HTML page. Free, private and no sign-up needed.",
+      "h1": "Create your portfolio website",
+      "intro": "Start from a designed template, a blank page, pasted resume text or an existing HTML page. Your portfolio is saved in your browser and can be exported any time.",
+      "points": [
+        "Start from a template or a blank page",
+        "Import resume text or an HTML page",
+        "Live preview while you edit"
+      ],
+      "priority": 0.8,
+      "changefreq": "monthly",
+      "index": true
+    },
+    {
+      "path": "/about",
+      "title": "How Portfolio OS Works — Private, Offline Builder",
+      "description": "A local-first portfolio and resume builder: no servers, accounts or tracking. Your data lives in your browser and every export is made on your device.",
+      "h1": "How Portfolio OS works",
+      "intro": "Portfolio OS is a local-first app. Projects, images and version history live in your browser's own database, and every export (HTML, PDF, Word, ZIP) is generated on your device. There is no server to upload to.",
+      "points": [
+        "No accounts or sign-in",
+        "No uploads: data stays in your browser",
+        "Installable and works offline",
+        "Open file formats you own"
+      ],
+      "priority": 0.6,
+      "changefreq": "monthly",
+      "index": true
+    },
+    {
+      "path": "/projects",
+      "title": "My Portfolios — Portfolio OS",
+      "description": "Your portfolio projects, stored privately in this browser.",
+      "index": false
+    },
+    {
+      "path": "/studio",
+      "title": "Dashboard — Portfolio OS",
+      "description": "Your portfolios, resumes and documents in one place.",
+      "index": false
+    },
+    {
+      "path": "/profile",
+      "title": "Profile Studio — Portfolio OS",
+      "description": "Your shared profile, photo and contact details.",
+      "index": false
+    },
+    {
+      "path": "/settings",
+      "title": "Settings — Portfolio OS",
+      "description": "Storage, backups and app settings.",
+      "index": false
+    },
+    {
+      "path": "/view",
+      "title": "Shared portfolio — Portfolio OS",
+      "description": "A portfolio shared with Portfolio OS.",
+      "index": false,
+      "dynamic": true
+    },
+    {
+      "path": "/builder/",
+      "prefix": true,
+      "title": "Portfolio Builder — Portfolio OS",
+      "description": "Edit your portfolio.",
+      "index": false,
+      "dynamic": true
+    },
+    {
+      "path": "/preview/",
+      "prefix": true,
+      "title": "Preview — Portfolio OS",
+      "description": "Preview your portfolio.",
+      "index": false,
+      "dynamic": true
+    },
+    {
+      "path": "/export/",
+      "prefix": true,
+      "title": "Export — Portfolio OS",
+      "description": "Export your portfolio.",
+      "index": false,
+      "dynamic": true
+    },
+    {
+      "path": "/resume/",
+      "prefix": true,
+      "title": "Resume Studio — Portfolio OS",
+      "description": "Edit your resume.",
+      "index": false,
+      "dynamic": true
+    },
+    {
+      "path": "/document/",
+      "prefix": true,
+      "title": "Document Studio — Portfolio OS",
+      "description": "Edit your document.",
+      "index": false,
+      "dynamic": true
+    }
+  ]
+}

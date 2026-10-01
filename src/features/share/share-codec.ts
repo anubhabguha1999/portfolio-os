@@ -90,7 +90,7 @@ export async function downscaleToDataUrl(blob: Blob, maxEdge = SHARE_IMAGE_MAX_E
 export function shareBaseUrl(): string {
   if (typeof location === 'undefined') return '';
   const origin = location.origin && location.origin !== 'null' ? location.origin : `${location.protocol}//${location.host}`;
-  return `${origin}${location.pathname}`;
+  return `${origin}/view`;
 }
 
 export function containsContactInfo(p: Portfolio): boolean {
@@ -195,7 +195,7 @@ export async function buildShareUrl(p: Portfolio, opts: ShareOptions): Promise<S
   const { payload, removedImages } = await buildSharePayload(p, opts);
   const encoded = encodePayload(payload);
   // The payload lives in the URL fragment, which browsers never send to a server.
-  const url = `${shareBaseUrl()}#/view?p=${encoded}`;
+  const url = `${shareBaseUrl()}#p=${encoded}`;
   return { url, bytes: encoded.length, removedImages, containsContactInfo: containsContactInfo(p) };
 }
 

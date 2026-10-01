@@ -9,7 +9,6 @@ import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { TextInput } from '@/components/ui/Field';
 import { Menu } from '@/components/ui/Menu';
 import { EmptyState } from '@/components/ui/misc';
-import { BRAND } from '@/config/brand';
 import { DOCUMENT_KINDS } from '@/studio/model/defaults';
 import type { DocumentKind, StudioDocument } from '@/studio/model/types';
 import { deleteDocument, duplicateDocument, getDocument, listDocuments, saveDocument } from '@/studio/storage/repo';
@@ -62,7 +61,6 @@ export default function DocumentsPage() {
   }, []);
 
   useEffect(() => {
-    document.title = `Document Studio — ${BRAND.name}`;
     void refresh();
   }, [refresh]);
 

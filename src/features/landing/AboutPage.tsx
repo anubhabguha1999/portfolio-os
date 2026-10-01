@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Braces, CloudOff, Cpu, Eye, FileArchive, FileCode2, FileText, FileType2, Lock, ShieldCheck } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -30,10 +30,6 @@ const LIBRARIES: Array<{ name: string; role: string; license: string }> = [
 ];
 
 export default function AboutPage() {
-  useEffect(() => {
-    document.title = `About — ${BRAND.name}`;
-  }, []);
-
   return (
     <div className="min-h-full bg-bg text-fg">
       <SiteHeader />

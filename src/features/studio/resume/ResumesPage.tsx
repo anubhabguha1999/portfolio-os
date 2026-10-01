@@ -9,7 +9,6 @@ import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { TextInput } from '@/components/ui/Field';
 import { Menu } from '@/components/ui/Menu';
 import { Badge, EmptyState } from '@/components/ui/misc';
-import { BRAND } from '@/config/brand';
 import { toast } from '@/stores/ui';
 import { timeAgo } from '@/utils/format';
 import type { Library, LocalEntry, Profile, ResumeDoc } from '@/studio/model/types';
@@ -49,7 +48,6 @@ export default function ResumesPage() {
   }, []);
 
   useEffect(() => {
-    document.title = `Resume Studio — ${BRAND.name}`;
     void refresh();
   }, [refresh]);
 

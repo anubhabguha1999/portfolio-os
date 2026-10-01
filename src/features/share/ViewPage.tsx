@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { CopyPlus, Link2Off, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { renderPortfolio } from '@/lib/engine/render';
@@ -24,10 +24,12 @@ function decode(payload: string | null): Decoded {
   }
 }
 
-/** `/view?p=<payload>` — renders a shared portfolio entirely from the URL fragment. */
+/** `/view#p=<payload>` — renders a shared portfolio entirely from the URL fragment. */
 export default function ViewPage() {
   const [params] = useSearchParams();
-  const payload = params.get('p');
+  const { hash } = useLocation();
+  // The fragment is the current format; `?p=` is accepted for links made before clean URLs.
+  const payload = new URLSearchParams(hash.replace(/^#/, '')).get('p') ?? params.get('p');
   const result = useMemo(() => decode(payload), [payload]);
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);

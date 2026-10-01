@@ -52,7 +52,6 @@ export default function ProjectsPage() {
   }, [navigate]);
 
   useEffect(() => {
-    document.title = `My Portfolios — ${BRAND.name}`;
     void refresh();
     const onFocus = () => void refresh();
     window.addEventListener('focus', onFocus);

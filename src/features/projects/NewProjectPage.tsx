@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Check, Eye, FileJson, LayoutTemplate, SquarePen } from 'lucide-react';
@@ -33,10 +33,6 @@ export default function NewProjectPage() {
   const { busy, use } = useUseTemplate();
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const pickerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    document.title = `Create your portfolio — ${BRAND.name}`;
-  }, []);
 
   const choose = async (c: Choice) => {
     setMode(c);
