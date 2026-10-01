@@ -19,6 +19,7 @@ import { useResumeEditor } from '@/studio/store/resume-editor';
 import { useWorkspace } from '@/studio/store/workspace';
 import { getResumeTemplate } from '@/studio/templates/resume';
 import { cn } from '@/utils/cn';
+import { PhotoUploader } from '../shared/PhotoUploader';
 
 /* ------------------------------------------------------------------ */
 /* Field definitions                                                   */
@@ -519,6 +520,31 @@ function ProfileEditor() {
   const variants = profile.profileImage?.variants ?? [];
   return (
     <div className="space-y-4">
+      <div className="rounded-xl border border-line p-3">
+        <SectionLabel className="mb-2">Photo</SectionLabel>
+        <PhotoUploader
+          variantId={resume.photoVariant}
+          // Uploading here means "put it on this resume": switch the photo on if the template can show one.
+          onUploaded={() => {
+            const r = useResumeEditor.getState().resume;
+            if (r && tpl.supportsPhoto && r.style.photo === 'none' && !r.style.atsSafe) ed.setStyle({ photo: tpl.defaults.photo ?? 'circle' });
+          }}
+        />
+        {profile.profileImage && (
+          <div className="mt-3 space-y-3">
+            <Select label="Photo style" value={resume.style.photo} onChange={(e) => ed.setStyle({ photo: e.target.value as PhotoMode })} options={PHOTO_OPTIONS} />
+            {variants.length > 1 && (
+              <Select label="Image variant" value={resume.photoVariant ?? ''} onChange={(e) => ed.apply('Photo variant', (r) => ({ ...r, photoVariant: e.target.value || null }))} options={[{ value: '', label: 'Default (resume)' }, ...variants.map((v) => ({ value: v.id, label: v.name }))]} />
+            )}
+            {!tpl.supportsPhoto && resume.style.photo !== 'none' && <p className="text-[11.5px] text-warn">The {tpl.name} template does not show photos.</p>}
+            {resume.style.atsSafe && resume.style.photo !== 'none' && <p className="text-[11.5px] text-warn">ATS-safe mode is on, so the photo is hidden.</p>}
+          </div>
+        )}
+        <p className="mt-2.5 flex items-start gap-1.5 text-[11px] leading-snug text-fg-subtle">
+          <AlertTriangle className="mt-px size-3 shrink-0 text-warn" />
+          Photos are common in some countries and discouraged in others (e.g. US/UK). Many applicant-tracking systems ignore images. Photos are off unless you choose one.
+        </p>
+      </div>
       <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-fg-subtle">
         <Link2 className="mt-px size-3 shrink-0" /> Name and contact details are shared with your portfolio, every resume and your documents. Change them once, everywhere updates.
       </p>
@@ -550,30 +576,6 @@ function ProfileEditor() {
         <Link to="/profile" className="mt-2.5 inline-block text-[11.5px] text-accent hover:underline">
           Manage social links in Profile Studio →
         </Link>
-      </div>
-      <div className="rounded-xl border border-line p-3">
-        <SectionLabel className="mb-2">Photo</SectionLabel>
-        {!profile.profileImage ? (
-          <p className="text-[12px] text-fg-muted">
-            No profile photo yet.{' '}
-            <Link to="/profile" className="text-accent hover:underline">
-              Upload one in Profile Studio
-            </Link>
-            .
-          </p>
-        ) : (
-          <div className="space-y-3">
-            <Select label="Photo style" value={resume.style.photo} onChange={(e) => ed.setStyle({ photo: e.target.value as PhotoMode })} options={PHOTO_OPTIONS} />
-            {variants.length > 1 && (
-              <Select label="Image variant" value={resume.photoVariant ?? ''} onChange={(e) => ed.apply('Photo variant', (r) => ({ ...r, photoVariant: e.target.value || null }))} options={[{ value: '', label: 'Default (resume)' }, ...variants.map((v) => ({ value: v.id, label: v.name }))]} />
-            )}
-            {!tpl.supportsPhoto && resume.style.photo !== 'none' && <p className="text-[11.5px] text-warn">The {tpl.name} template does not show photos.</p>}
-          </div>
-        )}
-        <p className="mt-2.5 flex items-start gap-1.5 text-[11px] leading-snug text-fg-subtle">
-          <AlertTriangle className="mt-px size-3 shrink-0 text-warn" />
-          Photos are common in some countries and discouraged in others (e.g. US/UK). Many applicant-tracking systems ignore images. Photos are off unless you choose one.
-        </p>
       </div>
     </div>
   );
