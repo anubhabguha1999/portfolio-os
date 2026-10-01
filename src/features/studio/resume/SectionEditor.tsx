@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { AlertTriangle, ChevronDown, Copy, Eye, EyeOff, GripVertical, Link2, Library as LibraryIcon, MoreHorizontal, Plus, Trash2, Unlink, ImageIcon } from 'lucide-react';
+import { AlertTriangle, BookPlus, ChevronDown, Copy, Eye, EyeOff, GripVertical, Link2, Library as LibraryIcon, MoreHorizontal, Plus, Trash2, Unlink, ImageIcon } from 'lucide-react';
 import { restrictToVerticalAxis } from '@/features/builder/dnd-modifiers';
 import { TagsInput } from '@/features/builder/fields/TagsInput';
 import { StringListField } from '@/features/builder/fields/StringListField';
@@ -20,6 +20,10 @@ import { useWorkspace } from '@/studio/store/workspace';
 import { getResumeTemplate } from '@/studio/templates/resume';
 import { cn } from '@/utils/cn';
 import { PhotoUploader } from '../shared/PhotoUploader';
+import { InsertFromLibraryDialog, type InsertPick } from '@/features/knowledge/InsertFromLibrary';
+import { ProvenanceNote } from '@/features/knowledge/Provenance';
+import { adoptCandidates } from '@/knowledge/import/library-source';
+import { addProvenance } from '@/knowledge/storage/repo';
 
 /* ------------------------------------------------------------------ */
 /* Field definitions                                                   */
@@ -252,6 +256,7 @@ function LibrarySectionItems({ section, kind, selectedItem }: { section: ResumeS
   const ed = useResumeEditor.getState();
   const sensors = useSortSensors();
   const [confirm, setConfirm] = useState<{ libId: string; title: string } | null>(null);
+  const [inserting, setInserting] = useState(false);
   const all = sectionRefs(section, library, kind);
   const hiddenRefs = section.refs.filter((r) => r.hidden);
   const visible = all.filter((x) => !x.ref.hidden);
@@ -298,6 +303,7 @@ function LibrarySectionItems({ section, kind, selectedItem }: { section: ResumeS
             <Unlink className="size-3" /> {ref.detached.length} field{ref.detached.length === 1 ? ' is' : 's are'} specific to this resume.
           </p>
         )}
+        <ProvenanceNote kind={kind} itemId={rec.id} item={rec} />
         <LibraryItemFields section={section} ref={ref} item={rec} kind={kind} />
       </SortableItem>
     );
@@ -340,7 +346,18 @@ function LibrarySectionItems({ section, kind, selectedItem }: { section: ResumeS
             items={unattached.map((i) => ({ label: titleOf(kind, i, { id: '', libId: i.id, hidden: false, detached: [], overrides: {} }).title || 'Untitled', onSelect: () => ed.attachLibraryItem(section.id, i.id) }))}
           />
         )}
+        <Button size="sm" variant="ghost" icon={<BookPlus className="size-3.5" />} onClick={() => setInserting(true)}>
+          Insert from Library
+        </Button>
       </div>
+      <InsertFromLibraryDialog
+        open={inserting}
+        onClose={() => setInserting(false)}
+        kinds={[kind]}
+        title={`Insert ${sectionInfo(section.kind).label.toLowerCase()} from Library`}
+        used={visible.map((x) => x.ref.libId)}
+        onInsert={(pick) => insertPicked(section.id, pick)}
+      />
       <Switch label="Include new library items automatically" help="Items you add in your portfolio or another resume appear here too." checked={section.autoInclude} onChange={(v) => ed.patchSection(section.id, { autoInclude: v })} />
       <ConfirmDialog
         open={!!confirm}
@@ -362,6 +379,7 @@ function SkillsEditor({ section }: { section: ResumeSection }) {
   const skills = useWorkspace((s) => s.library.skills);
   const ed = useResumeEditor.getState();
   const [draft, setDraft] = useState({ name: '', category: '' });
+  const [inserting, setInserting] = useState(false);
   const included = (id: string) => (section.skillIds ? section.skillIds.includes(id) : true);
   const toggle = (id: string) => {
     const all = skills.map((s) => s.id);
@@ -414,8 +432,20 @@ function SkillsEditor({ section }: { section: ResumeSection }) {
           Add
         </Button>
       </div>
+      <Button size="sm" variant="ghost" icon={<BookPlus className="size-3.5" />} onClick={() => setInserting(true)}>
+        Insert skills from Library
+      </Button>
+      <InsertFromLibraryDialog open={inserting} onClose={() => setInserting(false)} kinds={['skills']} title="Insert skills from Library" used={skills.filter((x) => included(x.id)).map((x) => x.id)} onInsert={(pick) => insertPicked(section.id, pick)} />
     </div>
   );
+}
+
+/** Adopt picked knowledge into the shared library and attach it to the section (one undo step). */
+function insertPicked(sectionId: string, pick: InsertPick) {
+  if (!pick.items.length) return;
+  const adopted = adoptCandidates(useWorkspace.getState().library, pick.items);
+  useResumeEditor.getState().insertLibraryItems(sectionId, adopted.library, adopted.picks.map((p) => p.id));
+  void addProvenance(adopted.provenance);
 }
 
 /* ------------------------------------------------------------------ */

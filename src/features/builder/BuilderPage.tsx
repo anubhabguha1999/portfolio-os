@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Layers as LayersIcon, Minimize, SlidersHorizontal, Eye, Download, X, Activity } from 'lucide-react';
 import { useEditor } from '@/stores/editor';
@@ -11,6 +11,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button, IconButton, Spinner } from '@/components/ui/Button';
 import { TopBar } from './TopBar';
 import { LayersPanel } from './LayersPanel';
+import { KnowledgeDropOverlay, KnowledgePanel } from './KnowledgePanel';
+import { Segmented } from '@/components/ui/Field';
 import { Inspector } from './Inspector';
 import { Canvas } from './Canvas';
 import { CommandPalette } from './CommandPalette';
@@ -219,12 +221,13 @@ function Builder({ projectId }: { projectId: string }) {
         {!ui.focusMode && (
           <aside aria-label="Sections" className="hidden min-h-0 border-r border-line bg-panel lg:block">
             <ErrorBoundary area="Sections" compact>
-              <LayersPanel />
+              <LeftPanel />
             </ErrorBoundary>
           </aside>
         )}
         <main aria-label="Canvas" className="relative min-h-0 min-w-0 pb-[60px] lg:pb-0">
           <Canvas ref={frame} portfolio={portfolio} onSelect={onSelectFromCanvas} onPresentExit={exitPresent} />
+          {!ui.focusMode && <KnowledgeDropOverlay />}
           {ui.focusMode && (
             <button onClick={exitPresent} className="absolute right-4 top-4 z-40 inline-flex items-center gap-1.5 rounded-full border border-line bg-panel/90 px-3 py-1.5 text-[12px] font-medium shadow-float backdrop-blur hover:bg-hover">
               <Minimize className="size-3.5" /> Exit <kbd className="app-kbd">Esc</kbd>
@@ -286,6 +289,27 @@ function Builder({ projectId }: { projectId: string }) {
       <Button className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[999]" onClick={() => ui.setCommandPalette(true)}>
         Open command palette
       </Button>
+    </div>
+  );
+}
+
+/** Desktop sidebar: the section list, or Extract Your Data items to drag onto the canvas. */
+function LeftPanel() {
+  const [tab, setTab] = useState<'sections' | 'knowledge'>('sections');
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0 px-3 pt-2.5">
+        <Segmented
+          className="w-full [&>button]:flex-1"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'sections', label: 'Sections' },
+            { value: 'knowledge', label: 'Extract Your Data' },
+          ]}
+        />
+      </div>
+      <div className="min-h-0 flex-1">{tab === 'sections' ? <LayersPanel /> : <KnowledgePanel />}</div>
     </div>
   );
 }

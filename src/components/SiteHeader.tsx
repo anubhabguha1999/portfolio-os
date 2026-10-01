@@ -10,6 +10,7 @@ const links = [
   { to: '/projects', label: 'Portfolios' },
   { to: '/resumes', label: 'Resumes' },
   { to: '/documents', label: 'Documents' },
+  { to: '/knowledge', label: 'Extract Your Data' },
   { to: '/profile', label: 'Profile' },
   { to: '/templates', label: 'Templates' },
   { to: '/settings', label: 'Settings' },

@@ -4,6 +4,7 @@
  * Accepted shapes:
  *   - JSON Resume (https://jsonresume.org/schema): basics, work, education, skills, projects…
  *   - Portfolio OS resume export ({ format: 'portfolio-os-resume', profile, library, resume })
+ *   - PDF Intelligence exports (structured or semantic JSON): resume fields are detected locally
  *
  * The file is treated purely as data: every value is coerced to a trimmed, length-capped
  * string, ids are always regenerated, and nothing is ever rendered as HTML.
@@ -23,6 +24,7 @@ import {
 import type { SamplePersona } from '@/studio/model/sample';
 import type { Library, LibraryKind, LocalEntry, Profile, ResumeDoc, ResumeSectionKind, SocialLink } from '@/studio/model/types';
 import { uid } from '@/utils/id';
+import { isKnowledgeExport, resumeFromKnowledgeExport } from '@/knowledge/import/from-export';
 
 export const MAX_JSON_BYTES = 2 * 1024 * 1024;
 
@@ -265,9 +267,20 @@ export function parseResumeJson(text: string): ResumeJsonImport {
   if (!isObj(data)) throw new ResumeJsonError('Expected a JSON object with resume fields, such as "basics" and "work".');
   const warnings: string[] = [];
   let out: ResumeJsonImport;
-  if (data.format === 'portfolio-os-resume' || (isObj(data.profile) && isObj(data.library))) out = fromPortfolioOs(data, warnings);
+  if (isKnowledgeExport(data)) {
+    let found: ReturnType<typeof resumeFromKnowledgeExport> = null;
+    try {
+      found = resumeFromKnowledgeExport(data);
+    } catch {
+      found = null;
+    }
+    if (!found) throw new ResumeJsonError('This Extract Your Data export has no resume content. Export it from a resume or CV, or set the document type to Resume and extract again.');
+    // Same coercion as a Portfolio OS export: the file is data, never trusted.
+    out = fromPortfolioOs({ profile: found.profile, library: found.library, resume: { sections: Object.entries(found.entries).map(([kind, entries]) => ({ kind, entries })) } }, warnings);
+    warnings.push('Fields were detected from a PDF export by local rules. Check them before use.');
+  } else if (data.format === 'portfolio-os-resume' || (isObj(data.profile) && isObj(data.library))) out = fromPortfolioOs(data, warnings);
   else if (isObj(data.basics) || Array.isArray(data.work) || Array.isArray(data.education) || Array.isArray(data.skills)) out = fromJsonResume(data, warnings);
-  else throw new ResumeJsonError('No resume fields found. Use the JSON Resume format ("basics", "work", "education", "skills"…) or a Portfolio OS resume export.');
+  else throw new ResumeJsonError('No resume fields found. Use the JSON Resume format ("basics", "work", "education", "skills"…), a Portfolio OS resume export, or an Extract Your Data JSON export.');
   const c = importCounts(out);
   if (!out.profile.name) warnings.push('No name found. The resume will show "Your Name" until you add one.');
   if (!c.experience && !c.education && !c.projects) warnings.push('No work, education or projects found.');

@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 import { BRAND } from './src/config/brand';
+import { localRuntimeAssets } from './scripts/vite-local-assets';
 
 export default defineConfig({
   // Absolute asset paths: the app now uses clean URLs such as /resume/abc.
@@ -13,6 +14,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    localRuntimeAssets(fileURLToPath(new URL('.', import.meta.url))),
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
@@ -36,7 +38,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,woff2,webmanifest}'],
+        // OCR and PDF runtime files are large and only needed when a PDF is imported.
+        globIgnores: ['ocr/**', 'pdfjs/**'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',
         // Crawler files, verification files and the static content pages (scripts/content-pages.mjs)

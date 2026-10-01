@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { AssetRecord, Portfolio } from '@/types/portfolio';
 import { BRAND } from '@/config/brand';
+import type { Extraction, KnowledgeBlob, KnowledgeDoc } from '@/knowledge/types';
 
 export interface ProjectRecord {
   id: string;
@@ -66,9 +67,13 @@ interface PortfolioDB extends DBSchema {
   renders: { key: string; value: StudioRenderRecord };
   resumes: { key: string; value: StudioDocRecord; indexes: { byUpdated: string } };
   documents: { key: string; value: StudioDocRecord; indexes: { byUpdated: string } };
+  /** Local Knowledge Library: document records, original files (deletable) and extraction versions. */
+  kdocs: { key: string; value: KnowledgeDoc; indexes: { byUpdated: string; byHash: string } };
+  kblobs: { key: string; value: KnowledgeBlob };
+  kextractions: { key: string; value: Extraction; indexes: { byDoc: string } };
 }
 
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase<PortfolioDB>> | null = null;
 
@@ -91,6 +96,13 @@ export function getDb(): Promise<IDBPDatabase<PortfolioDB>> {
           db.createObjectStore('renders', { keyPath: 'key' });
           db.createObjectStore('resumes', { keyPath: 'id' }).createIndex('byUpdated', 'updatedAt');
           db.createObjectStore('documents', { keyPath: 'id' }).createIndex('byUpdated', 'updatedAt');
+        }
+        if (oldVersion < 3) {
+          const kdocs = db.createObjectStore('kdocs', { keyPath: 'id' });
+          kdocs.createIndex('byUpdated', 'updatedAt');
+          kdocs.createIndex('byHash', 'hash');
+          db.createObjectStore('kblobs', { keyPath: 'id' });
+          db.createObjectStore('kextractions', { keyPath: 'id' }).createIndex('byDoc', 'docId');
         }
       },
       blocked() {

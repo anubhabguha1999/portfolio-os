@@ -15,12 +15,14 @@ const HEADINGS: Array<[ResumeSectionKind, RegExp]> = [
   ['contact', /^(contact(\s+(information|details))?|personal\s+details)$/i],
 ];
 
-const BULLET_RE = /^\s*(?:[•●▪◦·*–—-]|•|\d+[.)])\s+/;
+// "+", "»" and "›" are how OCR often reads bullet glyphs.
+const BULLET_RE = /^\s*(?:[•●▪◦·*–—+»›-]|•|\d+[.)])\s+/;
 const PHONE_RE = /\+?\(?\d[\d\s().-]{7,}\d/;
-const URL_RE = /\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|io|dev|app|me|co|ai|xyz|design|tech|site|page|info|us|uk|de|in|ca|eu)(?:\/[^\s,|;)]*)?/gi;
+// Any explicit http(s) URL, or a bare domain with a common TLD.
+const URL_RE = /\bhttps?:\/\/[^\s,|;)<>"]+|\b(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|io|dev|app|me|co|ai|xyz|design|tech|site|page|info|online|store|studio|cloud|live|link|work|codes|blog|art|us|uk|de|in|ca|eu|au|fr|nl|es|it)(?:\/[^\s,|;)]*)?/gi;
 export const DEGREE_RE = /\b(B\.?\s?Sc|M\.?\s?Sc|B\.?\s?A\b|M\.?\s?A\b|B\.?\s?S\b|M\.?\s?S\b|B\.?\s?Tech|M\.?\s?Tech|B\.?\s?E\b|M\.?\s?E\b|B\.?\s?Eng|M\.?\s?Eng|B\.?\s?Com|M\.?\s?Com|BBA|MBA|MCA|BCA|Ph\.?\s?D|Doctor(ate)?|Bachelor'?s?|Master'?s?|Associate'?s?|Diploma|High School|A-Levels?|GCSE|Certificate)\b/i;
 export const INSTITUTION_RE = /\b(universit\w*|universidad|college|institute|instituto|institut|school|academy|polytechnic|politecnico|polytechnique|hochschule|conservatory|iit|mit)\b/i;
-const LOCATION_RE = /^[A-Z][A-Za-z .'-]+,\s*[A-Z][A-Za-z .'-]+$/;
+const LOCATION_RE = /^[A-Z][A-Za-z .'-]+(?:,\s*[A-Z][A-Za-z .'-]+){1,2}$/;
 
 export interface ParsedResume {
   name: string;
@@ -137,6 +139,12 @@ function parseExperience(lines: string[]): ExperienceItem[] {
     }
     if (!e.role && !e.company) {
       const parts = rest.split(/\s+(?:\||·)\s+/);
+      // "Company | City, Region" — the role follows on the next line.
+      if (parts.length === 2 && LOCATION_RE.test(parts[1]!.trim()) && !looksLikeRole(parts[1]!) && !looksLikeRole(parts[0]!)) {
+        e.company = parts[0]!.trim();
+        e.location = parts[1]!.trim();
+        continue;
+      }
       const head = parts.length > 2 ? `${parts[0]} | ${parts[1]}` : rest;
       const { role, company } = splitRoleCompany(head);
       e.role = role;
@@ -311,6 +319,12 @@ function parseProjects(lines: string[]): ProjectItem[] {
     let text = stripDates(line, range);
     for (const m of line.matchAll(URL_RE)) text = text.replace(m[0], '').trim();
     text = text.replace(/[\s|–—-]+$/, '').trim();
+    // A line that is only a link (and/or dates) belongs to the current project.
+    if (!text && cur) {
+      applyLinks(cur);
+      if (range && !cur.duration) cur.duration = range.match.trim();
+      continue;
+    }
     const c: ProjectItem | null = cur;
     const newHeader = !c || c.features.length > 0 || (Boolean(c.description) && text.length < 70 && !/[.!?]$/.test(text));
     if (newHeader) {
@@ -379,8 +393,10 @@ export function parseResumeStructure(text: string): ParsedResume {
   let current: { kind: ResumeSectionKind; heading: string; lines: string[] } | null = null;
   for (const line of lines) {
     const h = line.trim() ? headingKind(line) : null;
-    // The first line is always the name, even when it is written in capitals.
-    if (h && (header.length > 0 || current)) {
+    // The first line is always the name, even when it is written in capitals; a capitalised
+    // line right under it that is not a known section ("CONTENT & SEO SPECIALIST") is the headline.
+    const headlineSlot = !current && header.length === 1 && h?.kind === 'other';
+    if (h && (header.length > 0 || current) && !headlineSlot) {
       current = { ...h, lines: [] };
       blocks.push(current);
       continue;

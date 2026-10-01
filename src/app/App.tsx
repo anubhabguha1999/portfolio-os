@@ -24,6 +24,8 @@ const ResumesPage = lazy(() => import('@/features/studio/resume/ResumesPage'));
 const ResumeStudioPage = lazy(() => import('@/features/studio/resume/ResumeStudioPage'));
 const DocumentsPage = lazy(() => import('@/features/studio/documents/DocumentsPage'));
 const DocumentStudioPage = lazy(() => import('@/features/studio/documents/DocumentStudioPage'));
+const KnowledgePage = lazy(() => import('@/features/knowledge/KnowledgePage'));
+const KnowledgeDocPage = lazy(() => import('@/features/knowledge/KnowledgeDocPage'));
 
 function PageFallback() {
   return (
@@ -63,6 +65,8 @@ export function App() {
             <Route path="/resume/:resumeId" element={<ResumeStudioPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/document/:id" element={<DocumentStudioPage />} />
+            <Route path="/knowledge" element={<KnowledgePage />} />
+            <Route path="/knowledge/:id" element={<KnowledgeDocPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

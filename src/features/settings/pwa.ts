@@ -84,8 +84,30 @@ export function dismissUpdate(): void {
   set({ updateReady: false });
 }
 
-/** Activate the waiting service worker and reload into the new version. */
+/**
+ * Activate the waiting service worker and reload into the new version.
+ *
+ * The plugin's update only reloads on the worker's "controlling" event. That event never comes
+ * when another tab already activated the new worker, or when nothing is waiting any more, which
+ * left the button on "Reloading…" for good. So: reload on any controller change, tell a waiting
+ * worker to take over directly, and reload anyway after a short wait.
+ */
 export async function reloadToUpdate(): Promise<void> {
-  if (applyUpdate) await applyUpdate(true);
-  else window.location.reload();
+  let done = false;
+  const reload = () => {
+    if (done) return;
+    done = true;
+    window.location.reload();
+  };
+  const sw = typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+  sw?.addEventListener('controllerchange', reload, { once: true });
+  window.setTimeout(reload, 4000);
+  try {
+    const reg = await sw?.getRegistration();
+    if (reg?.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    else if (!reg?.installing) return reload(); // Nothing to wait for: the new version is already active.
+    if (applyUpdate) await Promise.race([applyUpdate(true), new Promise((r) => window.setTimeout(r, 4000))]);
+  } catch {
+    reload();
+  }
 }

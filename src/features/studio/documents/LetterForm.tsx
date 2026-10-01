@@ -5,6 +5,7 @@ import { TextArea, TextInput } from '@/components/ui/Field';
 import type { CoverLetterData, StudioDocument } from '@/studio/model/types';
 import { useDocumentEditor } from '@/studio/store/document-editor';
 import { useWorkspace } from '@/studio/store/workspace';
+import { LetterInsertFromLibrary } from './KnowledgeInsert';
 
 export const LETTER_PARTS: Array<{ ref: string; label: string }> = [
   { ref: 'letter:sender', label: 'Sender' },
@@ -78,6 +79,7 @@ export function LetterForm({ doc }: { doc: StudioDocument }) {
       </Part>
       <Part id="letter:body" active={is('letter:body')} title="Body">
         <TextArea aria-label="Body" rows={10} {...f('body')} help="Separate paragraphs with a blank line. **bold** and *italic* work." />
+        <LetterInsertFromLibrary body={l.body} onChange={(body) => update({ body })} />
       </Part>
       <Part id="letter:closing" active={is('letter:closing')} title="Closing">
         <TextArea aria-label="Closing" rows={3} {...f('closing')} />

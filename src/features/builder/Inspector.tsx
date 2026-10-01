@@ -1,5 +1,9 @@
-import { useCallback } from 'react';
-import { Lock, MousePointerClick, Unlock } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { BookPlus, Lock, MousePointerClick, Unlock } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { InsertFromLibraryDialog } from '@/features/knowledge/InsertFromLibrary';
+import { KIND_FOR } from '@/studio/sync/portfolio';
+import { insertKnowledgeIntoBuilder } from './knowledge';
 import { useEditor, selectSelected } from '@/stores/editor';
 import { useUI, type InspectorTab } from '@/stores/ui';
 import { getDefinition } from '@/sections/registry';
@@ -77,6 +81,9 @@ function ContentPanel() {
   const toggleLocked = useEditor((s) => s.toggleLocked);
   const def = getDefinition(section.type);
   const onChange = useCallback((path: PathKey[], value: unknown) => update(section.id, path, value), [section.id, update]);
+  const kind = KIND_FOR[section.type];
+  const [inserting, setInserting] = useState(false);
+  const usedIds = ((section.data as unknown as { items?: Array<{ id?: string }> }).items ?? []).map((i) => String(i.id));
 
   return (
     <div className="p-4">
@@ -96,6 +103,15 @@ function ContentPanel() {
           <button className="inline-flex items-center gap-1 font-semibold hover:underline" onClick={() => toggleLocked(section.id)}>
             <Unlock className="size-3" /> Unlock
           </button>
+        </div>
+      )}
+      {kind && (
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-line bg-bg/60 px-3 py-2">
+          <span className="text-[11.5px] leading-snug text-fg-subtle">Reuse items from your library or imported PDFs.</span>
+          <Button size="xs" icon={<BookPlus className="size-3.5" />} disabled={section.locked} onClick={() => setInserting(true)}>
+            Insert from Library
+          </Button>
+          <InsertFromLibraryDialog open={inserting} onClose={() => setInserting(false)} kinds={[kind]} title={`Insert into ${section.name}`} used={usedIds} onInsert={(pick) => insertKnowledgeIntoBuilder(pick.items, section.id)} />
         </div>
       )}
       <FieldRenderer fields={def.fields} value={section.data as unknown as Record<string, unknown>} basePath={[]} onChange={onChange} disabled={section.locked} />

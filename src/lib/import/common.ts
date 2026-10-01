@@ -67,7 +67,7 @@ export function stripDates(line: string, range: DateRange | null): string {
 /* --------------------------- Role / company split ------------------------- */
 
 const ROLE_WORDS =
-  /\b(engineer|developer|designer|manager|lead|intern|analyst|consultant|director|architect|scientist|specialist|officer|head|founder|co-founder|vp|cto|ceo|cfo|coo|president|researcher|programmer|administrator|coordinator|editor|writer|associate|assistant|technician|strategist|producer|owner|partner|principal|staff|senior|junior|sr\.?|jr\.?|teacher|lecturer|professor|fellow|contractor|freelancer?|advisor|executive|representative|marketer|accountant|nurse|recruiter)\b/i;
+  /\b(engineer|developer|designer|manager|lead|intern|analyst|consultant|director|architect|scientist|specialist|officer|head|founder|co-founder|vp|cto|ceo|cfo|coo|president|researcher|programmer|administrator|coordinator|editor|writer|associate|assistant|technician|strategist|producer|owner|partner|principal|staff|senior|junior|sr\.?|jr\.?|teacher|lecturer|professor|fellow|contractor|freelancer?|advisor|executive|representative|marketer|accountant|nurse|recruiter|expert|tutor|trainer|instructor)\b/i;
 
 export function looksLikeRole(s: string): boolean {
   return ROLE_WORDS.test(s);

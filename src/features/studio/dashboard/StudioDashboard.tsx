@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, FileStack, FileText, Globe, HardDrive, LayoutTemplate, Lock, Package, Plus, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowRight, FileStack, FileText, Globe, HardDrive, LayoutTemplate, Lock, Package, Plus, ScanText, ShieldCheck, UploadCloud, UserRound } from 'lucide-react';
 import { Truncate } from 'dead-lock-react-lib';
 import { SiteHeader } from '@/components/SiteHeader';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import { ProgressBar } from '@/components/ui/misc';
 import { BRAND } from '@/config/brand';
 import { listProjects, type ProjectSummary } from '@/lib/storage/projects';
 import { listDocuments, listResumes, type StudioSummary } from '@/studio/storage/repo';
+import { listDocs } from '@/knowledge/storage/repo';
 import { ensureWorkspace, useWorkspace } from '@/studio/store/workspace';
 import { useImageUrls } from '@/studio/images/service';
 import { createResume } from '@/studio/model/defaults';
@@ -70,11 +71,15 @@ export default function StudioDashboard() {
   const [resumes, setResumes] = useState<StudioSummary[]>([]);
   const [docs, setDocs] = useState<StudioSummary[]>([]);
   const [pack, setPack] = useState(false);
+  const [knowledge, setKnowledge] = useState(0);
   const avatarKey = profile.profileImage ? `profile:${profile.profileImage.usage.portfolio}:circle` : '';
   const avatar = useImageUrls(avatarKey ? [avatarKey] : []);
 
   useEffect(() => {
     void ensureWorkspace();
+    void listDocs()
+      .then((k) => setKnowledge(k.length))
+      .catch(() => {});
     void Promise.all([listProjects().catch(() => []), listResumes().catch(() => []), listDocuments().catch(() => [])]).then(([p, r, d]) => {
       setProjects(p);
       setResumes(r);
@@ -190,6 +195,27 @@ export default function StudioDashboard() {
               </Button>
             }
           />
+          <div className="md:col-span-2">
+            <StudioCard
+              to="/knowledge"
+              icon={<ScanText className="size-5" />}
+              title="Extract Your Data"
+              tagline="Import PDFs and turn them into reusable structured data"
+              body="Extract text, tables, links and metadata locally (OCR for scans), review the detected profile, experience, projects and skills, then reuse them in every portfolio, resume and document. Nothing is uploaded."
+              accent="#5ab0ff"
+              stat={`${knowledge} document${knowledge === 1 ? '' : 's'}`}
+              actions={
+                <>
+                  <Button size="sm" variant="primary" icon={<UploadCloud className="size-3.5" />} onClick={() => navigate('/knowledge')}>
+                    Upload PDF
+                  </Button>
+                  <Button size="sm" iconRight={<ArrowRight className="size-3.5" />} onClick={() => navigate('/knowledge')}>
+                    Open library
+                  </Button>
+                </>
+              }
+            />
+          </div>
         </section>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr]">

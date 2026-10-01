@@ -57,6 +57,8 @@ interface ResumeEditorState {
   /* library-backed items */
   addLibraryItem(sectionId: string): string | null;
   attachLibraryItem(sectionId: string, libId: string): void;
+  /** One undo step: replace the library (with adopted knowledge items) and attach them to the section. */
+  insertLibraryItems(sectionId: string, library: Library, ids: string[]): void;
   hideRef(sectionId: string, refId: string, hidden: boolean): void;
   moveRef(sectionId: string, refId: string, to: number): void;
   duplicateLibraryItem(sectionId: string, refId: string): void;
@@ -319,6 +321,23 @@ export const useResumeEditor = create<ResumeEditorState>()((set, get) => {
           return { ...m, refs: [...m.refs, createRef(libId)] };
         }),
       );
+    },
+
+    insertLibraryItems(sectionId, library, ids) {
+      const s = section(sectionId);
+      const kind = s ? libKind(s) : null;
+      if (!s || !kind || !ids.length) return;
+      get().applyShared('Insert from library', {
+        library: () => library,
+        resume: (r) =>
+          mapSection(r, sectionId, (sec) => {
+            if (kind === 'skills') return sec.skillIds ? { ...sec, skillIds: [...new Set([...sec.skillIds, ...ids])] } : sec;
+            const m = materialize(sec, library);
+            const refs = m.refs.map((x) => (ids.includes(x.libId) ? { ...x, hidden: false } : x));
+            for (const id of ids) if (!refs.some((x) => x.libId === id)) refs.push(createRef(id));
+            return { ...m, refs };
+          }),
+      });
     },
 
     hideRef(sectionId, refId, hidden) {

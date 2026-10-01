@@ -35,6 +35,7 @@ import { BLOCK_KINDS } from '@/studio/model/defaults';
 import type { BlockKind, DocBlockNode } from '@/studio/model/types';
 import { useDocumentEditor } from '@/studio/store/document-editor';
 import { cn } from '@/utils/cn';
+import { DocumentInsertFromLibrary } from './KnowledgeInsert';
 
 export const BLOCK_ICONS: Record<BlockKind, ReactNode> = {
   heading: <Heading />,
@@ -111,6 +112,7 @@ export function BlockPalette({ onAdded }: { onAdded?: () => void }) {
   };
   return (
     <div className="space-y-3.5">
+      <DocumentInsertFromLibrary onDone={onAdded} />
       {groups.map((g) => (
         <div key={g}>
           <SectionLabel className="mb-1.5 px-1">{g}</SectionLabel>

@@ -12,6 +12,8 @@ import { MarketingFooter } from '@/features/landing/MarketingFooter';
 import { buildBackup, deleteProject, duplicateProject, getProject, listProjects, renameProject, type ProjectSummary } from '@/lib/storage/projects';
 import { storageEstimate } from '@/lib/storage/db';
 import { BRAND } from '@/config/brand';
+import { PageThumb, staticHtml } from '@/features/templates/TemplateThumb';
+import { renderPortfolio } from '@/lib/engine/render';
 import { toast } from '@/stores/ui';
 import { downloadBlob } from '@/utils/download';
 import { fileSafeName, formatBytes, timeAgo } from '@/utils/format';
@@ -212,6 +214,12 @@ export default function ProjectsPage() {
   );
 }
 
+/** The saved portfolio as it exports (uploaded images are left out of the miniature). */
+async function portfolioThumbHtml(id: string): Promise<string | null> {
+  const rec = await getProject(id);
+  return rec ? staticHtml(renderPortfolio(rec.portfolio, { mode: 'export' }).html) : null;
+}
+
 function ProjectCard({
   project: p,
   now,
@@ -227,15 +235,11 @@ function ProjectCard({
   onBackup: () => void;
   onDelete: () => void;
 }) {
-  const [bg, primary, accent] = p.colors;
+  const [bg] = p.colors;
   return (
     <li className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-panel transition-colors hover:border-line-strong">
-      <Link to={`/builder/${p.id}`} className="relative block h-32 overflow-hidden" style={{ background: bg }} tabIndex={-1} aria-hidden="true">
-        <span className="absolute left-5 top-6 h-2 w-24 rounded-full opacity-90" style={{ background: primary }} />
-        <span className="absolute left-5 top-11 h-1.5 w-36 rounded-full opacity-25" style={{ background: primary }} />
-        <span className="absolute left-5 top-14 h-1.5 w-28 rounded-full opacity-25" style={{ background: primary }} />
-        <span className="absolute -bottom-10 -right-6 size-32 rounded-full opacity-80 blur-[2px] transition-transform duration-700 group-hover:scale-110" style={{ background: accent }} />
-        <span className="absolute -bottom-6 right-20 size-16 rounded-full opacity-70" style={{ background: primary }} />
+      <Link to={`/builder/${p.id}`} className="relative block overflow-hidden border-b border-line" style={{ background: bg }} tabIndex={-1} aria-hidden="true">
+        <PageThumb title={`${p.name} preview`} cacheKey={`pf:${p.id}:${p.updatedAt}`} load={() => portfolioThumbHtml(p.id)} className="transition-transform duration-700 group-hover:scale-[1.02]" />
       </Link>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-3">

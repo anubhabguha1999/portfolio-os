@@ -15,7 +15,7 @@ import type { Portfolio, PortfolioSection, SectionType } from '@/types/portfolio
 import type { Library, LibraryKind, Profile, SocialLink } from '@/studio/model/types';
 import { LIB_FACTORIES } from '@/studio/model/defaults';
 
-const KIND_FOR: Partial<Record<SectionType, LibraryKind>> = {
+export const KIND_FOR: Partial<Record<SectionType, LibraryKind>> = {
   experience: 'experience',
   projects: 'projects',
   education: 'education',

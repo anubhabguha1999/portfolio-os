@@ -172,6 +172,14 @@
       "description": "Edit your document.",
       "index": false,
       "dynamic": true
+    },
+    {
+      "path": "/knowledge",
+      "prefix": true,
+      "title": "Extract Your Data — Portfolio OS",
+      "description": "Extract your data from PDFs, locally in your browser.",
+      "index": false,
+      "dynamic": true
     }
   ]
 }

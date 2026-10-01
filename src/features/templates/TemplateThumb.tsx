@@ -10,7 +10,7 @@ export function templateHtml(template: PortfolioTemplate): string {
   let html = htmlCache.get(template.id);
   if (!html) {
     // Thumbnails are static (sandbox=""): drop the runtime script, keep JSON data blocks.
-    html = renderPortfolio(template.create(), { mode: 'export' }).html.replace(/<script>[\s\S]*?<\/script>/g, '');
+    html = staticHtml(renderPortfolio(template.create(), { mode: 'export' }).html);
     htmlCache.set(template.id, html);
   }
   return html;
@@ -25,17 +25,50 @@ export interface TemplateThumbProps {
   eager?: boolean;
 }
 
+/** A live, non-interactive miniature of a template. */
+export function TemplateThumb({ template, viewport, className, eager = false }: TemplateThumbProps) {
+  return <PageThumb title={`${template.name} template preview`} cacheKey={`tpl:${template.id}`} load={() => templateHtml(template)} viewport={viewport} className={className} eager={eager} />;
+}
+
+/** Thumbnail HTML per cache key (template id, or portfolio id + last edit). */
+const pageCache = new Map<string, string>();
+
+/** Static page HTML for a miniature: the runtime script is dropped (the iframe is sandbox=""), JSON data blocks stay. */
+export function staticHtml(html: string): string {
+  return html.replace(/<script>[\s\S]*?<\/script>/g, '');
+}
+
 /**
- * A live, non-interactive miniature of a template. The real exported document is
- * rendered into a fully sandboxed iframe (no scripts, no navigation) and scaled
- * with a CSS transform, so what you see is exactly what the export produces.
+ * The real exported document rendered into a fully sandboxed iframe (no scripts, no
+ * navigation) and scaled with a CSS transform, so what you see is what the export produces.
+ * `load` runs once the box scrolls into view; its result is cached under `cacheKey`.
  */
-export function TemplateThumb({ template, viewport = { width: 1280, height: 800 }, className, eager = false }: TemplateThumbProps) {
+export function PageThumb({
+  title,
+  cacheKey,
+  load,
+  viewport = { width: 1280, height: 800 },
+  className,
+  eager = false,
+}: {
+  title: string;
+  cacheKey: string;
+  load: () => string | null | Promise<string | null>;
+  viewport?: { width: number; height: number };
+  className?: string;
+  eager?: boolean;
+}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(eager);
   const [scale, setScale] = useState(0.25);
   const [loaded, setLoaded] = useState(false);
-  const [html, setHtml] = useState<string | null>(() => (eager ? templateHtml(template) : (htmlCache.get(template.id) ?? null)));
+  const [html, setHtml] = useState<string | null>(() => pageCache.get(cacheKey) ?? null);
+
+  // A new key (e.g. the portfolio was edited) means new HTML.
+  useEffect(() => {
+    setHtml(pageCache.get(cacheKey) ?? null);
+    setLoaded(false);
+  }, [cacheKey]);
 
   useEffect(() => {
     const el = boxRef.current;
@@ -69,20 +102,29 @@ export function TemplateThumb({ template, viewport = { width: 1280, height: 800 
 
   useEffect(() => {
     if (!visible || html) return;
+    let live = true;
     // Defer rendering to an idle-ish moment so scrolling stays smooth.
-    const id = window.setTimeout(() => setHtml(templateHtml(template)), 16);
-    return () => window.clearTimeout(id);
-  }, [visible, html, template]);
+    const id = window.setTimeout(() => {
+      void Promise.resolve()
+        .then(load)
+        .then((h) => {
+          if (!h || !live) return;
+          pageCache.set(cacheKey, h);
+          setHtml(h);
+        })
+        .catch(() => undefined);
+    }, 16);
+    return () => {
+      live = false;
+      window.clearTimeout(id);
+    };
+  }, [visible, html, cacheKey]);
 
   return (
-    <div
-      ref={boxRef}
-      className={cn('relative w-full overflow-hidden bg-canvas', className)}
-      style={{ aspectRatio: `${viewport.width} / ${viewport.height}` }}
-    >
+    <div ref={boxRef} className={cn('relative w-full overflow-hidden bg-canvas', className)} style={{ aspectRatio: `${viewport.width} / ${viewport.height}` }}>
       {html && (
         <iframe
-          title={`${template.name} template preview`}
+          title={title}
           sandbox=""
           srcDoc={html}
           tabIndex={-1}
