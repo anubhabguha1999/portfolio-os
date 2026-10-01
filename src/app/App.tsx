@@ -7,6 +7,7 @@ import { PwaPrompt } from '@/features/settings/PwaPrompt';
 import { ScrollToTop } from './ScrollToTop';
 import { VercelAnalytics } from './VercelAnalytics';
 import { RouteSeo } from './RouteSeo';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const ProjectsPage = lazy(() => import('@/features/projects/ProjectsPage'));
@@ -46,6 +47,7 @@ export function App() {
       <ScrollToTop />
       <RouteSeo />
       <VercelAnalytics />
+      <SpeedInsights />
       <ErrorBoundary area="Application">
         <Suspense fallback={<PageFallback />}>
           <Routes>
