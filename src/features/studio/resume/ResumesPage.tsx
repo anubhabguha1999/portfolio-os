@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, Copy, FileText, MoreHorizontal, Package, Pencil, Plus, ShieldCheck, Sparkles, Trash2, Mail, Link2 } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Download, FileJson, FileText, MoreHorizontal, Package, Pencil, Plus, ShieldCheck, Sparkles, Trash2, Mail, Link2, X } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { Button, IconButton } from '@/components/ui/Button';
 import { CardGridSkeleton } from '@/components/ui/Skeletons';
@@ -13,7 +13,8 @@ import { BRAND } from '@/config/brand';
 import { toast } from '@/stores/ui';
 import { timeAgo } from '@/utils/format';
 import type { Library, LocalEntry, Profile, ResumeDoc } from '@/studio/model/types';
-import { createResumeFromStarter } from '@/studio/model/defaults';
+import { createResumeFromStarter, createResumeSection } from '@/studio/model/defaults';
+import { ensureSectionsFor, importCounts, mergeLibrary, mergeProfile, parseResumeJson, personaToJsonResume, ResumeJsonError, type ImportEntries, type ResumeJsonImport } from '@/studio/import/resume-json';
 import { getPersona, SAMPLE_PERSONAS } from '@/studio/model/sample';
 import type { ResumeTemplateDef } from '@/studio/templates/types';
 import { cn } from '@/utils/cn';
@@ -23,6 +24,21 @@ import { RESUME_TEMPLATES, getResumeTemplate } from '@/studio/templates/resume';
 import { ResumeThumb } from './ResumeThumb';
 import { applyTemplateStyle } from './TemplateBrowser';
 import { ApplicationPackDialog } from '../pack/ApplicationPackDialog';
+
+interface ImportChoice {
+  fileName: string;
+  data: ResumeJsonImport;
+  /** replace: the file becomes the shared profile + library; merge: fill blanks and add new items. */
+  mode: 'replace' | 'merge';
+}
+
+type CreateOptions = { name: string; templateId: string; kind?: 'resume' | 'cv'; sample?: boolean; personaId?: string; imported?: ImportChoice };
+
+/** Profile and library a resume will use once an import is applied. */
+function applyImport(profile: Profile, library: Library, i: ImportChoice): { profile: Profile; library: Library } {
+  if (i.mode === 'replace') return { profile: { ...i.data.profile, ...(profile.profileImage ? { profileImage: profile.profileImage } : {}) }, library: i.data.library };
+  return { profile: mergeProfile(profile, i.data.profile), library: mergeLibrary(library, i.data.library) };
+}
 
 const PRESET_NAMES = ['Software Developer Resume', 'Frontend Resume', 'Backend Resume', 'Full Stack Resume', 'Academic CV'];
 
@@ -51,17 +67,29 @@ export default function ResumesPage() {
 
   const empty = !profile.name.trim() && !library.experience.length && !library.projects.length;
 
-  const create = async (opts: { name: string; templateId: string; kind?: 'resume' | 'cv'; sample?: boolean; personaId?: string }) => {
+  const create = async (opts: CreateOptions) => {
     const t = getResumeTemplate(opts.templateId);
-    const persona = getPersona(opts.personaId ?? t.starter?.persona);
-    const seeded = !!opts.sample && empty;
-    if (seeded) {
-      useWorkspace.getState().setProfile({ ...persona.profile(), ...(profile.profileImage ? { profileImage: profile.profileImage } : {}) });
-      useWorkspace.getState().setLibrary(persona.library());
-      await useWorkspace.getState().flush();
+    const ws = useWorkspace.getState();
+    let entries: ImportEntries = {};
+    let lib = library;
+    if (opts.imported) {
+      const next = applyImport(profile, library, opts.imported);
+      ws.setProfile(next.profile);
+      ws.setLibrary(next.library);
+      await ws.flush();
+      entries = opts.imported.data.entries;
+      lib = next.library;
+    } else if (opts.sample && empty) {
+      const persona = getPersona(opts.personaId ?? t.starter?.persona);
+      ws.setProfile({ ...persona.profile(), ...(profile.profileImage ? { profileImage: profile.profileImage } : {}) });
+      ws.setLibrary(persona.library());
+      await ws.flush();
+      entries = persona.entries;
     }
-    const base = newResumeFor(t, opts.name, seeded ? persona.entries : {}, opts.kind);
+    let base = newResumeFor(t, opts.name, entries, opts.kind);
+    if (opts.imported) base = ensureSectionsFor(base, lib, entries, (kind, title) => createResumeSection(kind, title ? { title } : {}));
     const saved = await saveResume(base);
+    if (opts.imported) toast({ tone: 'success', title: 'Resume created from JSON', description: `${opts.imported.fileName} · ${opts.imported.mode === 'replace' ? 'profile replaced' : 'merged into your profile'}` });
     navigate(`/resume/${saved.id}`);
   };
 
@@ -250,13 +278,46 @@ function newResumeFor(t: ResumeTemplateDef, name: string, entries: Record<string
 const NEW_TEMPLATES = new Set(['slate-banner', 'navy-sidebar']);
 const NEW_FILTERS = ['All', 'Premium', 'ATS', 'Two column', 'Photo', 'Serif'] as const;
 
-function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, library }: { open: boolean; onClose: () => void; onCreate: (o: { name: string; templateId: string; sample?: boolean; personaId?: string }) => void; canUseSample: boolean; profile: Profile; library: Library }) {
+function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, library }: { open: boolean; onClose: () => void; onCreate: (o: CreateOptions) => void; canUseSample: boolean; profile: Profile; library: Library }) {
   const [name, setName] = useState(PRESET_NAMES[0]!);
   const [templateId, setTemplateId] = useState(RESUME_TEMPLATES[0]!.id);
   const [sample, setSample] = useState(true);
   const [personaId, setPersonaId] = useState<string>('auto');
   const [filter, setFilter] = useState<(typeof NEW_FILTERS)[number]>('All');
-  const useSample = canUseSample && sample;
+  const [imported, setImported] = useState<ImportChoice | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const useSample = canUseSample && sample && !imported;
+
+  const readJson = async (file: File | undefined) => {
+    if (!file) return;
+    setImportError(null);
+    if (!/\.json$/i.test(file.name) && file.type !== 'application/json') {
+      setImportError(`“${file.name}” is not a .json file.`);
+      return;
+    }
+    try {
+      const data = parseResumeJson(await file.text());
+      setImported({ fileName: file.name, data, mode: canUseSample ? 'replace' : 'merge' });
+      if (data.profile.name && (!name.trim() || PRESET_NAMES.includes(name))) setName(`${data.profile.name} Resume`);
+    } catch (err) {
+      setImportError(err instanceof ResumeJsonError ? err.message : 'The file could not be read.');
+    }
+  };
+
+  const downloadSample = () => {
+    const persona = getPersona(getResumeTemplate(templateId).starter?.persona ?? 'engineer-lead');
+    const blob = new Blob([JSON.stringify(personaToJsonResume(persona), null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'resume-sample.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const submit = (id = templateId) => onCreate({ name: name.trim() || 'My Resume', templateId: id, sample: useSample, ...(personaId !== 'auto' ? { personaId } : {}), ...(imported ? { imported } : {}) });
   const list = RESUME_TEMPLATES.filter((t) => {
     if (filter === 'All') return true;
     if (filter === 'ATS') return t.ats === 'high';
@@ -267,12 +328,17 @@ function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, libra
   // Thumbnails show the user's own content, or each template's example persona when there is none yet.
   const previews = useMemo(() => {
     if (!open) return [];
+    const fromFile = imported ? applyImport(profile, library, imported) : null;
     return RESUME_TEMPLATES.map((t) => {
+      if (fromFile && imported) {
+        const r = ensureSectionsFor(newResumeFor(t, 'Preview', imported.data.entries), fromFile.library, imported.data.entries, (kind, title) => createResumeSection(kind, title ? { title } : {}));
+        return { t, resume: r, profile: fromFile.profile, library: fromFile.library };
+      }
       const persona = getPersona(personaId === 'auto' ? t.starter?.persona : personaId);
       const demo = canUseSample;
       return { t, resume: newResumeFor(t, 'Preview', demo ? persona.entries : {}), profile: demo ? persona.profile() : profile, library: demo ? persona.library() : library };
     });
-  }, [open, personaId, canUseSample, profile, library]);
+  }, [open, personaId, canUseSample, profile, library, imported]);
   const selected = getResumeTemplate(templateId);
   return (
     <Dialog
@@ -286,11 +352,12 @@ function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, libra
           <span className="mr-auto hidden text-[12px] text-fg-subtle sm:block">
             Template: <strong className="text-fg">{selected.name}</strong>
             {useSample && <> · with example content</>}
+            {imported && <> · values from {imported.fileName}</>}
           </span>
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => onCreate({ name: name.trim() || 'My Resume', templateId, sample: useSample, ...(personaId !== 'auto' ? { personaId } : {}) })}>
+          <Button variant="primary" onClick={() => submit()}>
             Create resume
           </Button>
         </>
@@ -299,7 +366,7 @@ function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, libra
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <TextInput label="Name" value={name} onChange={(e) => setName(e.target.value)} list="resume-names" />
-          {canUseSample && (
+          {canUseSample && !imported && (
             <label className="block">
               <span className="app-label">Example content</span>
               <select className="app-input h-9 w-full" value={useSample ? personaId : 'none'} onChange={(e) => (e.target.value === 'none' ? setSample(false) : (setSample(true), setPersonaId(e.target.value)))}>
@@ -319,6 +386,43 @@ function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, libra
             <option key={n} value={n} />
           ))}
         </datalist>
+        <div
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return;
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            void readJson(e.dataTransfer.files[0]);
+          }}
+          className={cn('rounded-xl border border-dashed px-3.5 py-3 transition-colors', dragging ? 'border-accent bg-accent-soft/50' : 'border-line-strong bg-panel/60')}
+        >
+          <input ref={fileInput} type="file" accept=".json,application/json" className="sr-only" aria-label="Import resume values from a JSON file" onChange={(e) => (void readJson(e.target.files?.[0]), (e.target.value = ''))} />
+          {imported ? (
+            <ImportSummary choice={imported} canReplace={!canUseSample} onMode={(mode) => setImported({ ...imported, mode })} onClear={() => setImported(null)} />
+          ) : (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <FileJson className="size-4 shrink-0 text-accent" aria-hidden="true" />
+              <p className="min-w-0 flex-1 text-[12.5px] text-fg-muted">
+                <span className="font-medium text-fg">Pre-fill from a .json file</span> — drop it here or browse. Supports JSON Resume and Portfolio OS exports.
+              </p>
+              <Button size="sm" icon={<FileJson className="size-3.5" />} onClick={() => fileInput.current?.click()}>
+                Import JSON
+              </Button>
+              <Button size="sm" variant="ghost" icon={<Download className="size-3.5" />} onClick={downloadSample}>
+                Sample file
+              </Button>
+            </div>
+          )}
+          {importError && (
+            <p role="alert" className="mt-2 flex items-start gap-1.5 text-[12px] text-danger">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> {importError}
+            </p>
+          )}
+        </div>
         {canUseSample && useSample && (
           <p className="flex items-start gap-2 rounded-xl border border-line bg-panel px-3 py-2 text-[12px] text-fg-muted">
             <Sparkles className="mt-0.5 size-3.5 shrink-0 text-accent" />
@@ -341,7 +445,7 @@ function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, libra
                 <button
                   type="button"
                   onClick={() => setTemplateId(t.id)}
-                  onDoubleClick={() => onCreate({ name: name.trim() || 'My Resume', templateId: t.id, sample: useSample, ...(personaId !== 'auto' ? { personaId } : {}) })}
+                  onDoubleClick={() => submit(t.id)}
                   className={cn('group w-full rounded-2xl border p-2.5 text-left transition', active ? 'border-accent bg-accent-soft/50 ring-2 ring-accent/30' : 'border-line bg-bg hover:border-line-strong')}
                 >
                   <div className="relative grid place-items-center rounded-xl bg-canvas p-2.5">
@@ -371,5 +475,66 @@ function NewResumeDialog({ open, onClose, onCreate, canUseSample, profile, libra
         </ul>
       </div>
     </Dialog>
+  );
+}
+
+function ImportSummary({ choice, canReplace, onMode, onClear }: { choice: ImportChoice; canReplace: boolean; onMode: (m: ImportChoice['mode']) => void; onClear: () => void }) {
+  const c = importCounts(choice.data);
+  const parts = [
+    [c.experience, 'role'],
+    [c.education, 'education entry', 'education entries'],
+    [c.projects, 'project'],
+    [c.skills, 'skill'],
+    [c.certifications, 'certification'],
+    [c.achievements, 'achievement'],
+    [c.languages, 'language'],
+    [c.other, 'other entry', 'other entries'],
+  ] as const;
+  const found = parts.filter(([n]) => n > 0).map(([n, one, many]) => `${n} ${n === 1 ? one : many ?? `${one}s`}`);
+  const p = choice.data.profile;
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-start gap-3">
+        <FileJson className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <Truncate className="font-mono text-[12.5px] font-semibold" style={{ display: 'block', maxWidth: '100%' }}>
+            {choice.fileName}
+          </Truncate>
+          <p className="mt-0.5 text-[12px] text-fg-muted">
+            {choice.data.source === 'json-resume' ? 'JSON Resume' : 'Portfolio OS export'}
+            {p.name && (
+              <>
+                {' '}· <strong className="text-fg">{p.name}</strong>
+                {p.headline && <>, {p.headline}</>}
+              </>
+            )}
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-fg-subtle">{found.length ? found.join(' · ') : 'No items found'}</p>
+        </div>
+        <IconButton size="xs" label="Remove imported file" onClick={onClear}>
+          <X className="size-3.5" />
+        </IconButton>
+      </div>
+      {canReplace && (
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="How to use the imported values">
+          {(
+            [
+              ['merge', 'Add to my profile', 'Fills empty profile fields and adds new library items. Nothing is removed.'],
+              ['replace', 'Replace my profile', 'The file becomes your shared profile and library, which other resumes and linked portfolios also use.'],
+            ] as const
+          ).map(([mode, label, help]) => (
+            <button key={mode} type="button" role="radio" aria-checked={choice.mode === mode} title={help} onClick={() => onMode(mode)} className={cn('rounded-lg border px-2.5 py-1 text-[12px]', choice.mode === mode ? 'border-accent bg-accent-soft text-fg' : 'border-line text-fg-muted hover:border-line-strong')}>
+              {label}
+            </button>
+          ))}
+          {choice.mode === 'replace' && <span className="self-center text-[11.5px] text-warn">Your other resumes will show the imported content too.</span>}
+        </div>
+      )}
+      {choice.data.warnings.map((w) => (
+        <p key={w} className="flex items-start gap-1.5 text-[11.5px] text-warn">
+          <AlertTriangle className="mt-0.5 size-3 shrink-0" /> {w}
+        </p>
+      ))}
+    </div>
   );
 }

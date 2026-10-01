@@ -237,8 +237,10 @@ export function skillGroups(section: ResumeSection, library: Library): SkillGrou
   const hidden = new Set(section.refs.filter((r) => r.hidden).map((r) => r.libId));
   const skills = library.skills.filter((s) => s.name.trim() && (!allowed || allowed.has(s.id)) && !hidden.has(s.id));
   const groups = new Map<string, SkillGroup>();
+  // "Other" only makes sense next to real categories.
+  const anyCategory = skills.some((s) => s.category.trim());
   for (const s of skills) {
-    const cat = s.category.trim() || (section.kind === 'technical-skills' ? 'Other' : '');
+    const cat = s.category.trim() || (section.kind === 'technical-skills' && anyCategory ? 'Other' : '');
     const g = groups.get(cat) ?? { category: cat, names: [], levels: [] };
     g.names.push(s.name.trim());
     g.levels.push(s.level);
