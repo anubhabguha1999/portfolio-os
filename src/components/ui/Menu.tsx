@@ -12,7 +12,7 @@ export interface MenuItem {
 }
 
 /** Accessible dropdown menu (roving focus, Escape, click-outside), rendered in a portal. */
-export function Menu({ trigger, items, align = 'end', label }: { trigger: (props: { ref: (el: HTMLButtonElement | null) => void; onClick: () => void; 'aria-haspopup': 'menu'; 'aria-expanded': boolean; 'aria-controls': string }) => ReactNode; items: Array<MenuItem | 'separator'>; align?: 'start' | 'end'; label: string }) {
+export function Menu({ trigger, items, align = 'end', label, header }: { trigger: (props: { ref: (el: HTMLButtonElement | null) => void; onClick: () => void; 'aria-haspopup': 'menu'; 'aria-expanded': boolean; 'aria-controls': string }) => ReactNode; items: Array<MenuItem | 'separator'>; align?: 'start' | 'end'; label: string; /** Non-interactive content above the items. */ header?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -25,9 +25,9 @@ export function Menu({ trigger, items, align = 'end', label }: { trigger: (props
     const width = 220;
     const left = align === 'end' ? Math.max(8, r.right - width) : Math.min(window.innerWidth - width - 8, r.left);
     const below = r.bottom + 6;
-    const estimated = items.length * 32 + 12;
+    const estimated = items.length * 32 + 12 + (header ? 64 : 0);
     setPos({ top: below + estimated > window.innerHeight ? Math.max(8, r.top - estimated - 6) : below, left });
-  }, [open, align, items.length]);
+  }, [open, align, items.length, header]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +77,12 @@ export function Menu({ trigger, items, align = 'end', label }: { trigger: (props
             style={{ top: pos.top, left: pos.left }}
             className="fixed z-[900] w-[220px] rounded-xl border border-line bg-elevated p-1 shadow-float [animation:app-pop_.14s_var(--ease-out-expo)]"
           >
+            {header && (
+              <>
+                <div className="px-2.5 pb-2 pt-1.5">{header}</div>
+                <div role="separator" className="my-1 h-px bg-line" />
+              </>
+            )}
             {items.map((it, i) =>
               it === 'separator' ? (
                 <div key={`sep-${i}`} role="separator" className="my-1 h-px bg-line" />

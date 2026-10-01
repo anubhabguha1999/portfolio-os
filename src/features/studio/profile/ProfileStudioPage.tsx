@@ -31,6 +31,7 @@ import { formatBytes } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { BRAND } from '@/config/brand';
 import { IdentityForm } from './IdentityForm';
+import { ProfileJsonImport } from './ProfileJsonImport';
 import { PhotoEditor, editTarget } from './PhotoEditor';
 import { PlacementPreviews } from './PlacementPreviews';
 import { StaticVariant, useOriginal, type Decoded } from './EditCanvas';
@@ -66,7 +67,8 @@ export default function ProfileStudioPage() {
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto grid max-w-[1400px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-            <aside className="lg:sticky lg:top-6 lg:self-start">
+            <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
+              <ProfileJsonImport />
               <Card className="p-4 sm:p-5">
                 <h1 className="text-[15px] font-semibold tracking-tight">Profile</h1>
                 <p className="mb-5 mt-1 text-[12px] leading-relaxed text-fg-muted">Edit once — your portfolio, resumes, cover letters and documents all update.</p>

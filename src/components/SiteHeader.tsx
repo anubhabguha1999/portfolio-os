@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { Logo } from './Logo';
+import { ProfileAvatar, ProfileMenu, useProfileSummary } from './profile/ProfileMenu';
 import { cn } from '@/utils/cn';
 
 const links = [
@@ -19,6 +20,9 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { profile, show: hasProfile } = useProfileSummary();
+  // Once there is a profile the avatar menu replaces the plain "Profile" link.
+  const navLinks = hasProfile ? links.filter((l) => l.to !== '/profile') : links;
 
   useEffect(() => setOpen(false), [location.pathname]);
 
@@ -48,7 +52,7 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
           <Logo />
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
@@ -64,6 +68,7 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <ProfileMenu />
           <Link to="/studio" className="hidden h-8 items-center gap-1.5 rounded-lg bg-fg px-3 text-[13px] font-medium text-bg transition-opacity hover:opacity-90 sm:inline-flex">
             Open app
             <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -82,8 +87,17 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
       </div>
       {open && (
         <nav id="site-mobile-nav" aria-label="Mobile" className="border-t border-line/70 px-4 pb-4 pt-2 md:hidden">
+          {hasProfile && (
+            <Link to="/profile" className="mb-2 flex items-center gap-3 rounded-xl border border-line bg-panel p-3">
+              <ProfileAvatar profile={profile} size={40} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-medium">{profile.name.trim() || 'Your profile'}</span>
+                <span className="block truncate text-[12px] text-fg-subtle">{profile.headline.trim() || 'Edit your profile'}</span>
+              </span>
+            </Link>
+          )}
           <ul className="grid gap-0.5">
-            {links.map((l) => (
+            {navLinks.map((l) => (
               <li key={l.to}>
                 <NavLink to={l.to} className={({ isActive }) => cn('flex h-11 items-center rounded-lg px-3 text-[15px]', isActive ? 'bg-hover text-fg' : 'text-fg-muted hover:bg-hover hover:text-fg')}>
                   {l.label}
