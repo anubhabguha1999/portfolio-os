@@ -37,6 +37,7 @@ import { LogoMark } from '@/components/Logo';
 import { cn } from '@/utils/cn';
 import { timeAgo } from '@/utils/format';
 import { modKey } from '@/utils/download';
+import { ProfileLinkButton } from '@/features/studio/sync/ProfileLink';
 
 export interface TopBarActions {
   onPreview: () => void;
@@ -111,6 +112,7 @@ function ProjectName() {
 }
 
 export function TopBar(a: TopBarActions) {
+  const projectId = useEditor((s) => s.projectId);
   const undo = useEditor((s) => s.undo);
   const redo = useEditor((s) => s.redo);
   const canUndo = useEditor((s) => s.past.length > 0);
@@ -127,6 +129,7 @@ export function TopBar(a: TopBarActions) {
       </Link>
       <ProjectName />
       <SaveIndicator />
+      {projectId && <ProfileLinkButton projectId={projectId} />}
       <div className="mx-1 hidden h-5 w-px bg-line sm:block" />
       <IconButton label={canUndo ? `Undo ${nextUndo ?? ''} (${modKey}+Z)` : 'Nothing to undo'} disabled={!canUndo} onClick={undo}>
         <Undo2 className="size-4" />

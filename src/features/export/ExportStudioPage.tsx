@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Check, Download, Eye, FileCode2, FileJson, FileText, FileType, Package, Printer, RefreshCw, Sparkles, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Atom, Braces, Check, Download, Eye, FileCode2, FileJson, FileText, FileType, Package, Printer, RefreshCw, Sparkles, Triangle, TriangleAlert } from 'lucide-react';
 import type { Portfolio } from '@/types/portfolio';
 import { LogoMark } from '@/components/Logo';
 import { Button, Spinner } from '@/components/ui/Button';
@@ -17,7 +17,12 @@ import { BRAND } from '@/config/brand';
 import { downloadBlob } from '@/utils/download';
 import { formatBytes } from '@/utils/format';
 import { cn } from '@/utils/cn';
-import { defaultOptions, isFormatId, resumeDocxOptions, resumePdfOptions, TARGET_LABEL, type ExportTarget, type FormatId, type StudioOptions } from './model';
+import { defaultOptions, isFormatId, isFrameworkFormat, resumeDocxOptions, resumePdfOptions, TARGET_LABEL, type ExportTarget, type FormatId, type StudioOptions } from './model';
+import type { ExportIssue, ExportOptions, Framework } from '@/lib/codegen/types';
+import { frameworkOf, KEY_FILES, loadFrameworkOptions, optionsSignature, saveFrameworkOptions, type FrameworkFormat } from './code/model';
+import { useFrameworkExport, type Fixes } from './code/useFrameworkExport';
+import { ExportCheckPanel, FrameworkCards, FrameworkComparison, FrameworkOptionsPanel } from './code/FrameworkPanel';
+import { SourcePreview } from './code/SourcePreview';
 import { HealthDialog } from './HealthDialog';
 import { DocxOptionsPanel, HtmlOptionsPanel, PdfOptionsPanel, ResumeOptionsPanel, ZipOptionsPanel, Group } from './OptionPanels';
 import { DocOutline, FileTree, HtmlFrame, PdfFrame } from './Previews';
@@ -105,13 +110,42 @@ function useDebouncedAsync<T>(fn: () => Promise<T>, deps: readonly unknown[], de
   return state;
 }
 
-const FORMATS: Array<{ id: FormatId; label: string; description: string; icon: typeof FileText }> = [
-  { id: 'html', label: 'HTML', description: 'One self-contained file', icon: FileCode2 },
-  { id: 'zip', label: 'Website ZIP', description: 'Deploy-ready static site', icon: Package },
-  { id: 'pdf', label: 'PDF', description: 'Portfolio or resume, vector text', icon: FileText },
-  { id: 'docx', label: 'Word', description: 'Editable .docx document', icon: FileType },
-  { id: 'json', label: 'JSON backup', description: 'Re-importable project file', icon: FileJson },
-  { id: 'resume', label: 'Generate Resume', description: 'PDF + DOCX from your content', icon: Sparkles },
+interface FormatEntry {
+  /** Unique key (two Next.js entries share the "next" format). */
+  key: string;
+  id: FormatId;
+  label: string;
+  description: string;
+  icon: typeof FileText;
+  /** Next.js entries preselect a rendering mode. */
+  rendering?: 'static' | 'standard';
+}
+
+const FORMAT_GROUPS: Array<{ title: string; items: FormatEntry[] }> = [
+  {
+    title: 'Website',
+    items: [
+      { key: 'html', id: 'html', label: 'Standalone HTML', description: 'One self-contained file', icon: FileCode2 },
+      { key: 'zip', id: 'zip', label: 'Static Website ZIP', description: 'Deploy-ready static site', icon: Package },
+    ],
+  },
+  { title: 'React', items: [{ key: 'react', id: 'react', label: 'React + Vite Project', description: 'TypeScript source code', icon: Atom }] },
+  {
+    title: 'Next.js',
+    items: [
+      { key: 'next-static', id: 'next', rendering: 'static', label: 'Next.js Static Export', description: 'App Router · any static host', icon: Triangle },
+      { key: 'next-standard', id: 'next', rendering: 'standard', label: 'Next.js Standard Project', description: 'App Router · Next.js hosting', icon: Braces },
+    ],
+  },
+  {
+    title: 'Documents',
+    items: [
+      { key: 'pdf', id: 'pdf', label: 'PDF', description: 'Portfolio or resume, vector text', icon: FileText },
+      { key: 'docx', id: 'docx', label: 'DOCX', description: 'Editable Word document', icon: FileType },
+      { key: 'resume', id: 'resume', label: 'Resume', description: 'PDF + DOCX from your content', icon: Sparkles },
+    ],
+  },
+  { title: 'Backup', items: [{ key: 'json', id: 'json', label: 'Portfolio JSON', description: 'Re-importable project file', icon: FileJson }] },
 ];
 
 const ZIP_DIRS = ['assets', 'assets/images', 'assets/fonts', 'assets/icons', 'css', 'js'].map((d) => `${ZIP_ROOT}/${d}`);
@@ -242,6 +276,11 @@ function Studio({ projectId, portfolio, projectName, assetsReady, assetsError }:
   const [healthPassed, setHealthPassed] = useState<ExportTarget | null>(null);
   const [printing, setPrinting] = useState(false);
   const running = useRef(false);
+  const [fwOpts, setFwOpts] = useState<Record<Framework, ExportOptions>>(() => ({
+    nextjs: loadFrameworkOptions(projectId, portfolio, 'nextjs'),
+    'react-vite': loadFrameworkOptions(projectId, portfolio, 'react-vite'),
+  }));
+  const fw = useFrameworkExport();
 
   // Deep links from the command palette (?format=pdf) preselect a format.
   useEffect(() => {
@@ -263,6 +302,34 @@ function Studio({ projectId, portfolio, projectName, assetsReady, assetsError }:
   );
 
   const update = <K extends keyof StudioOptions>(k: K, v: StudioOptions[K]) => setOpts((o) => ({ ...o, [k]: v }));
+
+  /* --------------------------- framework export ---------------------- */
+
+  const fwFormat: FrameworkFormat | null = isFrameworkFormat(format) ? format : null;
+  const framework: Framework = fwFormat === 'react' ? 'react-vite' : 'nextjs';
+  const currentFw = fwOpts[framework];
+  const setCurrentFw = (o: ExportOptions) => {
+    setFwOpts((all) => ({ ...all, [o.framework]: o }));
+    saveFrameworkOptions(projectId, o);
+  };
+  const fwDone = fw.state.status === 'done' && fw.state.result.project.framework === framework ? fw.state : null;
+  const fwStale = !!fwDone && (fwDone.signature !== optionsSignature(currentFw) || fwDone.portfolio !== portfolio);
+  const generateFramework = (fixes: Fixes = {}) => void fw.run(portfolio, currentFw, fixes);
+  const fixIssue = (issue: ExportIssue) => {
+    if (issue.fix === 'remove-link' || issue.fix === 'remove-image') {
+      const prev = fwDone?.fixes ?? {};
+      generateFramework({ ...prev, ...(issue.fix === 'remove-link' ? { dropInvalidLinks: true } : { dropMissingImages: true }) });
+      return;
+    }
+    navigate(issue.sectionId ? `/builder/${projectId}?section=${encodeURIComponent(issue.sectionId)}` : `/builder/${projectId}`);
+  };
+  const downloadFramework = async () => {
+    if (!fwDone) return;
+    const { projectZip } = await import('@/lib/codegen');
+    const blob = projectZip(fwDone.result.project);
+    downloadBlob(blob, `${fwDone.result.project.name}.zip`);
+    toast({ tone: 'success', title: `${framework === 'nextjs' ? 'Next.js' : 'React + Vite'} project downloaded`, description: `${fwDone.result.project.name}.zip · ${formatBytes(blob.size)} · run ${fwDone.result.project.commands.install} then ${fwDone.result.project.commands.dev}` });
+  };
 
   /* ------------------------------ export ----------------------------- */
 
@@ -461,6 +528,26 @@ function Studio({ projectId, portfolio, projectName, assetsReady, assetsError }:
         </>
       );
       break;
+    case 'react':
+    case 'next':
+      optionsPanel = (
+        <>
+          <FrameworkCards value={format} onChange={(v) => setFormat(v)} />
+          <FrameworkOptionsPanel format={format} value={{ ...currentFw, framework: frameworkOf(format) }} onChange={setCurrentFw} />
+          <FrameworkComparison />
+          <ExportCheckPanel
+            format={format}
+            state={fw.state.status === 'done' && !fwDone ? { status: 'idle' } : fw.state}
+            stale={fwStale}
+            disabled={!assetsReady}
+            onGenerate={() => generateFramework()}
+            onFix={fixIssue}
+            onFixAll={(fixes) => generateFramework({ ...(fwDone?.fixes ?? {}), ...fixes })}
+            onDownload={() => void downloadFramework()}
+          />
+        </>
+      );
+      break;
     case 'pdf':
       optionsPanel = (
         <>
@@ -598,6 +685,41 @@ function Studio({ projectId, portfolio, projectName, assetsReady, assetsError }:
       );
       break;
     }
+    case 'react':
+    case 'next': {
+      const label = format === 'next' ? `Next.js${currentFw.rendering === 'static' ? ' static export' : ''}` : 'React + Vite';
+      preview = (
+        <PanelShell
+          title="Generated source"
+          meta={
+            fwDone ? (
+              <>
+                <Badge>{fwDone.result.project.files.length} files</Badge>
+                <Badge tone={fwDone.result.report.canExport ? 'ok' : 'danger'}>{fwDone.result.report.canExport ? 'Checks passed' : 'Needs fixes'}</Badge>
+                {fwStale && <Badge tone="warn">Out of date — regenerate</Badge>}
+              </>
+            ) : (
+              <Badge>{label}</Badge>
+            )
+          }
+        >
+          {fwDone ? (
+            <SourcePreview project={fwDone.result.project} keyFiles={KEY_FILES[framework]} />
+          ) : fw.state.status === 'running' ? (
+            <Centered>
+              <Spinner className="size-5" />
+            </Centered>
+          ) : (
+            <EmptyState
+              icon={format === 'next' ? <Triangle className="size-5" /> : <Atom className="size-5" />}
+              title={`Generate a ${label} project`}
+              description="Your portfolio becomes real, editable source code: typed data in src/data/portfolio.ts, components, design tokens and images in public/. Inspect every file here before downloading. Nothing leaves your browser."
+            />
+          )}
+        </PanelShell>
+      );
+      break;
+    }
     case 'pdf':
     case 'resume': {
       if (currentPdf) {
@@ -691,32 +813,38 @@ function Studio({ projectId, portfolio, projectName, assetsReady, assetsError }:
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside className="shrink-0 border-b border-line bg-panel lg:w-[360px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
-          <nav aria-label="Export formats" className="grid grid-cols-2 gap-1 p-2 sm:grid-cols-3 lg:grid-cols-1">
-            {FORMATS.map((f) => {
-              const Icon = f.icon;
-              const active = f.id === format;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  aria-current={active ? 'page' : undefined}
-                  onClick={() => setFormat(f.id)}
-                  className={cn(
-                    'group flex min-w-0 items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors',
-                    active ? 'border-line-strong bg-elevated' : 'border-transparent hover:bg-hover',
-                    f.id === 'resume' && 'lg:mt-1.5',
-                  )}
-                >
-                  <span className={cn('grid size-7 shrink-0 place-items-center rounded-md border', active ? 'border-accent/30 bg-accent-soft text-accent' : 'border-line bg-bg text-fg-muted group-hover:text-fg')}>
-                    <Icon className="size-3.5" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className={cn('block truncate text-[13px] font-medium', active ? 'text-fg' : 'text-fg-muted group-hover:text-fg')}>{f.label}</span>
-                    <span className="hidden truncate text-[11.5px] text-fg-subtle sm:block">{f.description}</span>
-                  </span>
-                </button>
-              );
-            })}
+          <nav aria-label="Export formats" className="space-y-2.5 p-2">
+            {FORMAT_GROUPS.map((g) => (
+              <div key={g.title}>
+                <p className="px-2.5 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">{g.title}</p>
+                <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
+                  {g.items.map((f) => {
+                    const Icon = f.icon;
+                    const active = f.id === format && (!f.rendering || f.rendering === fwOpts.nextjs.rendering);
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        aria-current={active ? 'page' : undefined}
+                        onClick={() => {
+                          if (f.rendering && fwOpts.nextjs.rendering !== f.rendering) setCurrentFw({ ...fwOpts.nextjs, rendering: f.rendering });
+                          setFormat(f.id);
+                        }}
+                        className={cn('group flex min-w-0 items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors', active ? 'border-line-strong bg-elevated' : 'border-transparent hover:bg-hover')}
+                      >
+                        <span className={cn('grid size-7 shrink-0 place-items-center rounded-md border', active ? 'border-accent/30 bg-accent-soft text-accent' : 'border-line bg-bg text-fg-muted group-hover:text-fg')}>
+                          <Icon className="size-3.5" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className={cn('block truncate text-[13px] font-medium', active ? 'text-fg' : 'text-fg-muted group-hover:text-fg')}>{f.label}</span>
+                          <span className="hidden truncate text-[11.5px] text-fg-subtle sm:block">{f.description}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
           <div className="space-y-6 border-t border-line p-4">
             {assetsError && (

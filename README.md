@@ -28,6 +28,39 @@ npm run build      # static build in dist/ — deploy anywhere
   - Pasted resume text
   - Share links compressed into the URL fragment, with a QR code when the link fits
 
+## Studios
+
+The app now has four studios that share one identity (`/studio` is the dashboard):
+
+- **Portfolio Studio** (`/projects`): the website builder described above. A portfolio can be *linked* to the shared profile (builder top bar → "Link profile"). Linked items sync both ways by id; portfolio-only content (images, case studies, layout) is never touched, and deleting in the portfolio never deletes from the library.
+- **Profile Studio** (`/profile`): name, headline, bio, contact and social links, plus a local image editor. It supports crop and aspect presets, pan and zoom, rotation and flips, six adjustments, filters, backgrounds, seven shapes and a ring. You can make multiple variants from one stored original and override the smart-fit crop per placement.
+- **Resume Studio** (`/resumes`, `/resume/:id`): multiple resume and CV versions and 10 templates.
+  - Sections can be dragged, duplicated, hidden and edited.
+  - Per-field *Shared ⇄ This resume* detaching.
+  - Real pagination and fit-to-N-pages.
+  - ATS and content checks.
+  - Export to PDF, DOCX, TXT and JSON.
+- **Document Studio** (`/documents`, `/document/:id`): block-based documents with 10 templates and cover letters with 4 templates.
+- **Application pack**: resume PDF+DOCX, cover letter PDF+DOCX and the portfolio as standalone HTML, zipped locally.
+
+### Document engine (`src/studio`)
+
+```
+Resume / Letter / Blocks ──template.compose()──► FlowDoc (serialisable)
+                                                  │            │
+                                     layoutFlow() │            │ renderFlowDocx() / renderFlowText()
+                                                  ▼            ▼
+                            LaidDocument (positioned prims)   DOCX · TXT
+                                   │               │
+                           PageSvg (preview)   renderLaidPdf (vector PDF)
+```
+
+- **Measurement:** text is measured with the same font metrics jsPDF uses, so the on-screen pages and the PDF break identically.
+- **Pagination:** it honours keep-together groups, keep-with-next chains, orphan and widow control, repeated "(continued)" headings and multi-column flows.
+- **Where it runs:** PDF, DOCX and ZIP generation runs in `src/workers/studio.worker.ts`, with a main-thread fallback.
+- **Storage:** studio data lives in IndexedDB v2 stores `studio`, `images`, `renders`, `resumes` and `documents`.
+- **Fonts:** PDFs use the standard core fonts (Helvetica, Times and Courier). Characters those fonts cannot encode, such as emoji and CJK, are removed from PDFs and reported by the document check. DOCX keeps full Unicode.
+
 ## Architecture
 
 ```

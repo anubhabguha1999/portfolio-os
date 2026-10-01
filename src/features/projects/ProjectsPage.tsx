@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Link, useNavigate } from 'react-router-dom';
 import { Copy, Download, Eye, HardDrive, Pencil, Plus, Search, Share, Trash2, Upload } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
-import { Button, IconButton, Spinner } from '@/components/ui/Button';
+import { Button, IconButton } from '@/components/ui/Button';
+import { CardGridSkeleton } from '@/components/ui/Skeletons';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { TextInput } from '@/components/ui/Field';
 import { ProgressBar } from '@/components/ui/misc';
@@ -135,9 +136,7 @@ export default function ProjectsPage() {
         )}
 
         {projects === null ? (
-          <div className="grid min-h-[40vh] place-items-center text-fg-subtle" role="status" aria-label="Loading portfolios">
-            <Spinner className="size-5" />
-          </div>
+          <CardGridSkeleton label="Loading portfolios" count={3} thumb="aspect-[16/10]" className="mt-8 gap-5 sm:grid-cols-2 lg:grid-cols-3" />
         ) : (
           <>
             {query && filtered.length === 0 && <p className="mt-10 text-[14px] text-fg-muted">No portfolios match “{query}”.</p>}

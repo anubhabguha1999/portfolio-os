@@ -5,10 +5,13 @@ import { Logo } from './Logo';
 import { cn } from '@/utils/cn';
 
 const links = [
+  { to: '/studio', label: 'Dashboard' },
+  { to: '/projects', label: 'Portfolios' },
+  { to: '/resumes', label: 'Resumes' },
+  { to: '/documents', label: 'Documents' },
+  { to: '/profile', label: 'Profile' },
   { to: '/templates', label: 'Templates' },
-  { to: '/projects', label: 'My Portfolios' },
   { to: '/settings', label: 'Settings' },
-  { to: '/about', label: 'About' },
 ];
 
 /** Header for marketing and management pages (not the builder). */
@@ -61,7 +64,7 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link to="/projects" className="hidden h-8 items-center gap-1.5 rounded-lg bg-fg px-3 text-[13px] font-medium text-bg transition-opacity hover:opacity-90 sm:inline-flex">
+          <Link to="/studio" className="hidden h-8 items-center gap-1.5 rounded-lg bg-fg px-3 text-[13px] font-medium text-bg transition-opacity hover:opacity-90 sm:inline-flex">
             Open app
             <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
@@ -88,7 +91,7 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
               </li>
             ))}
           </ul>
-          <Link to="/projects" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-fg text-[14px] font-medium text-bg">
+          <Link to="/studio" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-fg text-[14px] font-medium text-bg">
             Open app
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>

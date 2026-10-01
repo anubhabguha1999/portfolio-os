@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Accessibility,
@@ -29,10 +29,15 @@ import { TemplateThumb } from '@/features/templates/TemplateThumb';
 import { createEntryRoute } from '@/features/projects/actions';
 import { ExportDemo } from './ExportDemo';
 import { MarketingFooter } from './MarketingFooter';
+import { Skeleton } from 'dead-lock-skeleton';
+import { RESUME_TEMPLATE_COUNT } from '@/studio/templates/count';
 import { cn } from '@/utils/cn';
 import { Reveal, ScrollProgress, Stagger, StaggerItem } from './motion';
 
 /** "Create Portfolio" goes to the dashboard when projects exist, onboarding otherwise. */
+// The showcase lays out real resumes with the PDF engine, so it loads after the page.
+const ResumeShowcase = lazy(() => import('./ResumeShowcase'));
+
 function useCreatePortfolio(): () => void {
   const navigate = useNavigate();
   const [route, setRoute] = useState<'/projects' | '/new' | null>(null);
@@ -282,6 +287,57 @@ export default function LandingPage() {
               </StaggerItem>
             ))}
           </TemplateReel>
+        </section>
+
+        {/* --------------------------- Resume highlights -------------------------- */}
+        <section id="resumes" aria-labelledby="resumes-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+          <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.05fr]">
+            <Reveal>
+              <p className="text-[12px] font-medium uppercase tracking-[0.16em] text-accent">Resume Studio</p>
+              <h2 id="resumes-title" className="mt-3 max-w-xl text-[clamp(1.8rem,4vw,2.8rem)] font-semibold leading-[1.05] tracking-[-0.03em]">
+                Resumes that look <Serif>designed,</Serif> not typed.
+              </h2>
+              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-fg-muted">
+                Pick from {RESUME_TEMPLATE_COUNT} print-grade templates, each with a realistic example already filled in. Rewrite it with your own details and tailor a version for every role, all from the one profile your portfolio uses.
+              </p>
+              <ul className="mt-7 grid gap-x-6 gap-y-3.5 text-[14px] sm:grid-cols-2">
+                {[
+                  { icon: LayoutTemplate, t: `${RESUME_TEMPLATE_COUNT} templates`, d: 'Sidebars, banners, serif and ATS-safe layouts' },
+                  { icon: ShieldCheck, t: 'ATS & content checks', d: 'Standard headings, dates, length and keywords' },
+                  { icon: FileText, t: 'Real pagination', d: 'Fit to one page, keep entries together' },
+                  { icon: FileArchive, t: 'PDF, DOCX, TXT, JSON', d: 'Plus a zipped application pack' },
+                ].map((f) => (
+                  <li key={f.t} className="flex gap-3">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-elevated text-accent">
+                      <f.icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <span className="block font-medium">{f.t}</span>
+                      <span className="block text-[12.5px] text-fg-subtle">{f.d}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <Link to="/resumes" className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-[14px] font-semibold text-accent-fg transition-colors hover:bg-accent-strong">
+                  Build a resume
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </Link>
+                <Link to="/documents" className="inline-flex h-11 items-center justify-center rounded-xl border border-line-strong px-5 text-[14px] font-medium text-fg-muted hover:bg-hover hover:text-fg">
+                  Write a cover letter
+                </Link>
+              </div>
+            </Reveal>
+            <Suspense
+              fallback={
+                <div className="mx-auto grid h-[min(118vw,470px)] w-full max-w-[560px] place-items-center" role="status" aria-label="Loading example resumes">
+                  <Skeleton width={232} height={328} borderRadius={4} />
+                </div>
+              }
+            >
+              <ResumeShowcase />
+            </Suspense>
+          </div>
         </section>
 
         {/* -------------------------------- CTA --------------------------------- */}

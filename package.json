@@ -17,6 +17,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
+    "dead-lock-react-lib": "^0.2.2",
+    "dead-lock-skeleton": "^1.0.1",
     "docx": "^9.7.2",
     "dompurify": "^3.4.16",
     "fflate": "^0.8.3",

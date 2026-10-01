@@ -17,6 +17,12 @@ const ExportStudioPage = lazy(() => import('@/features/export/ExportStudioPage')
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
 const AboutPage = lazy(() => import('@/features/landing/AboutPage'));
 const ViewPage = lazy(() => import('@/features/share/ViewPage'));
+const StudioDashboard = lazy(() => import('@/features/studio/dashboard/StudioDashboard'));
+const ProfileStudioPage = lazy(() => import('@/features/studio/profile/ProfileStudioPage'));
+const ResumesPage = lazy(() => import('@/features/studio/resume/ResumesPage'));
+const ResumeStudioPage = lazy(() => import('@/features/studio/resume/ResumeStudioPage'));
+const DocumentsPage = lazy(() => import('@/features/studio/documents/DocumentsPage'));
+const DocumentStudioPage = lazy(() => import('@/features/studio/documents/DocumentStudioPage'));
 
 function PageFallback() {
   return (
@@ -48,6 +54,12 @@ export function App() {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/view" element={<ViewPage />} />
+            <Route path="/studio" element={<StudioDashboard />} />
+            <Route path="/profile" element={<ProfileStudioPage />} />
+            <Route path="/resumes" element={<ResumesPage />} />
+            <Route path="/resume/:resumeId" element={<ResumeStudioPage />} />
+            <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/document/:id" element={<DocumentStudioPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

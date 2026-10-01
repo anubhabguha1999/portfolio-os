@@ -1,9 +1,13 @@
 import type { Portfolio } from '@/types/portfolio';
 import type { DocxExportOptions, HtmlExportOptions, PdfExportOptions, ZipExportOptions } from '@/lib/export';
 
-export type FormatId = 'html' | 'zip' | 'pdf' | 'docx' | 'json' | 'resume';
+export type FormatId = 'html' | 'zip' | 'react' | 'next' | 'pdf' | 'docx' | 'json' | 'resume';
 
-export const FORMAT_IDS: readonly FormatId[] = ['html', 'zip', 'pdf', 'docx', 'json', 'resume'];
+export const FORMAT_IDS: readonly FormatId[] = ['html', 'zip', 'react', 'next', 'pdf', 'docx', 'json', 'resume'];
+
+export function isFrameworkFormat(f: FormatId): f is 'react' | 'next' {
+  return f === 'react' || f === 'next';
+}
 
 export function isFormatId(v: string | null): v is FormatId {
   return !!v && (FORMAT_IDS as readonly string[]).includes(v);

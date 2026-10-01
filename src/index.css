@@ -363,3 +363,10 @@ dialog.app-dialog[open] > .app-dialog-panel {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* dead-lock-skeleton follows the app theme rather than the OS colour scheme. */
+:root {
+  --skeleton-bg: color-mix(in srgb, var(--app-fg) 9%, var(--app-panel));
+  --skeleton-shimmer: color-mix(in srgb, var(--app-fg) 3%, var(--app-panel));
+  --skeleton-radius: 8px;
+}

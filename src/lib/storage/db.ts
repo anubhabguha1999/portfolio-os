@@ -26,26 +26,72 @@ export interface SnapshotRecord {
   size: number;
 }
 
+/** Original uploads for the studios (profile photo, document images). Stored once. */
+export interface StudioImageRecord {
+  id: string;
+  name: string;
+  mime: string;
+  width: number;
+  height: number;
+  size: number;
+  blob: Blob;
+  createdAt: string;
+}
+
+/** Cached processed render of an image variant (regenerated when its edit changes). */
+export interface StudioRenderRecord {
+  key: string;
+  hash: string;
+  blob: Blob;
+  width: number;
+  height: number;
+  updatedAt: string;
+}
+
+export interface StudioDocRecord<T = unknown> {
+  id: string;
+  name: string;
+  updatedAt: string;
+  data: T;
+}
+
 interface PortfolioDB extends DBSchema {
   projects: { key: string; value: ProjectRecord; indexes: { byUpdated: string } };
   snapshots: { key: string; value: SnapshotRecord; indexes: { byProject: string } };
   assets: { key: [string, string]; value: AssetRecord; indexes: { byProject: string } };
   meta: { key: string; value: unknown };
+  /** Key-value: 'profile', 'library', 'links'. */
+  studio: { key: string; value: unknown };
+  images: { key: string; value: StudioImageRecord };
+  renders: { key: string; value: StudioRenderRecord };
+  resumes: { key: string; value: StudioDocRecord; indexes: { byUpdated: string } };
+  documents: { key: string; value: StudioDocRecord; indexes: { byUpdated: string } };
 }
+
+export const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<PortfolioDB>> | null = null;
 
 export function getDb(): Promise<IDBPDatabase<PortfolioDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<PortfolioDB>(`${BRAND.storageNamespace}`, 1, {
-      upgrade(db) {
-        const projects = db.createObjectStore('projects', { keyPath: 'id' });
-        projects.createIndex('byUpdated', 'updatedAt');
-        const snaps = db.createObjectStore('snapshots', { keyPath: 'id' });
-        snaps.createIndex('byProject', 'projectId');
-        const assets = db.createObjectStore('assets', { keyPath: ['projectId', 'id'] });
-        assets.createIndex('byProject', 'projectId');
-        db.createObjectStore('meta');
+    dbPromise = openDB<PortfolioDB>(`${BRAND.storageNamespace}`, DB_VERSION, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          const projects = db.createObjectStore('projects', { keyPath: 'id' });
+          projects.createIndex('byUpdated', 'updatedAt');
+          const snaps = db.createObjectStore('snapshots', { keyPath: 'id' });
+          snaps.createIndex('byProject', 'projectId');
+          const assets = db.createObjectStore('assets', { keyPath: ['projectId', 'id'] });
+          assets.createIndex('byProject', 'projectId');
+          db.createObjectStore('meta');
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore('studio');
+          db.createObjectStore('images', { keyPath: 'id' });
+          db.createObjectStore('renders', { keyPath: 'key' });
+          db.createObjectStore('resumes', { keyPath: 'id' }).createIndex('byUpdated', 'updatedAt');
+          db.createObjectStore('documents', { keyPath: 'id' }).createIndex('byUpdated', 'updatedAt');
+        }
       },
       blocked() {
         console.warn('Database upgrade blocked by another open tab.');

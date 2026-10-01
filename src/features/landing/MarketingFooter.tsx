@@ -6,9 +6,12 @@ const columns = [
   {
     title: 'Product',
     links: [
-      { to: '/new', label: 'Create a portfolio' },
+      { to: '/studio', label: 'Dashboard' },
+      { to: '/projects', label: 'Portfolio Studio' },
+      { to: '/resumes', label: 'Resume Studio' },
+      { to: '/documents', label: 'Document Studio' },
+      { to: '/profile', label: 'Profile Studio' },
       { to: '/templates', label: 'Templates' },
-      { to: '/projects', label: 'My Portfolios' },
     ],
   },
   {

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import 'dead-lock-skeleton/dist/style.css';
 import './index.css';
 import '@/hooks/useAppTheme';
 import { App } from '@/app/App';

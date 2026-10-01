@@ -57,6 +57,13 @@ const FILLED: Record<string, string> = {
   x: '<path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.4l-5.8-7.59-6.64 7.59H.47l8.6-9.83L0 1.15h7.6l5.24 6.93zm-1.29 19.5h2.04L6.49 3.24H4.3z"/>',
 };
 
+/** Raw SVG body for code generators (no wrapper). */
+export function iconBody(name: string): { filled: boolean; body: string } {
+  const filled = FILLED[name];
+  if (filled) return { filled: true, body: filled };
+  return { filled: false, body: STROKE[name] ?? STROKE['link']! };
+}
+
 export const ICON_NAMES = [...Object.keys(STROKE), ...Object.keys(FILLED)].sort();
 
 export function iconSvg(name: string, className = 'pi'): string {

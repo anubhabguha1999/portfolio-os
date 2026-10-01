@@ -22,6 +22,7 @@ import { InsightsPanel } from '@/features/analysis/InsightsPanel';
 import { ImportDialog } from '@/features/importers/ImportDialog';
 import type { PreviewFrameHandle } from '@/features/preview/PreviewFrame';
 import { cn } from '@/utils/cn';
+import { usePortfolioProfileSync } from '@/features/studio/sync/ProfileLink';
 
 export default function BuilderPage() {
   const { projectId } = useParams();
@@ -67,6 +68,7 @@ function Builder({ projectId }: { projectId: string }) {
   const rejection = useEditor((s) => s.rejection);
   const ui = useUI();
   const { saveNow } = useAutosave();
+  usePortfolioProfileSync(projectId);
   const frame = useRef<PreviewFrameHandle>(null);
   const shell = useRef<HTMLDivElement>(null);
 
