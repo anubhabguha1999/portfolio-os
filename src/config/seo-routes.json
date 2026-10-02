@@ -89,7 +89,7 @@
     {
       "path": "/about",
       "title": "How Portfolio OS Works — Private, Offline Builder",
-      "description": "A local-first portfolio and resume builder: no servers, accounts or tracking. Your data lives in your browser and every export is made on your device.",
+      "description": "A local-first portfolio and resume builder: no accounts and no uploads. Your data lives in your browser and every export is made on your device.",
       "h1": "How Portfolio OS works",
       "intro": "Portfolio OS is a local-first app. Projects, images and version history live in your browser's own database, and every export (HTML, PDF, Word, ZIP) is generated on your device. There is no server to upload to.",
       "points": [

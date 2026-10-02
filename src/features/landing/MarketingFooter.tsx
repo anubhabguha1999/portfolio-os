@@ -39,7 +39,7 @@ export function MarketingFooter() {
         <div className="max-w-sm">
           <Logo />
           <p className="mt-4 text-[13px] leading-relaxed text-fg-muted">
-            {BRAND.tagline} A portfolio studio that runs entirely in your browser. No accounts, no servers, no tracking.
+            {BRAND.tagline} A portfolio studio that runs entirely in your browser. No accounts, no uploads: your work stays on your device.
           </p>
           <p className="mt-4 font-mono text-[11px] text-fg-subtle">Schema v{SCHEMA_VERSION}</p>
         </div>

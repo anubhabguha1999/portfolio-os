@@ -56,11 +56,11 @@ export default function AboutPage() {
           <ul className="grid gap-3 sm:grid-cols-2">
             <Fact icon={Lock} title="No accounts">There is nothing to sign up for and no identity to link your work to.</Fact>
             <Fact icon={CloudOff} title="No servers">Projects and images are stored in IndexedDB in this browser. Exports are generated locally and downloaded directly.</Fact>
-            <Fact icon={ShieldCheck} title="No tracking">No analytics, cookies, fingerprinting or third-party scripts in the app.</Fact>
+            <Fact icon={ShieldCheck} title="Your work stays private">Your portfolios, resumes, documents and photos are never sent anywhere. The site itself shows ads (Google AdSense) and counts page views (Vercel Analytics); those use cookies, but they cannot see what you create.</Fact>
             <Fact icon={Braces} title="Open formats">Backups are plain JSON; exports are standard HTML, PDF and DOCX files that open anywhere.</Fact>
           </ul>
           <p className="mt-5 text-[13px] leading-relaxed text-fg-subtle">
-            Two things touch the network only when you ask them to: exported pages may load web fonts if you choose “CDN fonts”, and links you add point wherever you point them. Share links carry the portfolio inside the URL fragment, which browsers never send to servers.
+            Apart from the ads and page-view analytics, two things touch the network only when you ask them to: exported pages may load web fonts if you choose “CDN fonts”, and links you add point wherever you point them. Share links carry the portfolio inside the URL fragment, which browsers never send to servers.
           </p>
         </Block>
 

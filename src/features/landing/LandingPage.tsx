@@ -222,7 +222,7 @@ export default function LandingPage() {
                 {[
                   { icon: Lock, t: 'No accounts or sign-in' },
                   { icon: CloudOff, t: 'No servers, no uploads' },
-                  { icon: ShieldCheck, t: 'No analytics or tracking' },
+                  { icon: ShieldCheck, t: 'Your work is never shared' },
                   { icon: WifiOff, t: 'Installable, works offline' },
                 ].map((i) => (
                   <StaggerItem key={i.t} className="flex items-center gap-3 text-[14px]">

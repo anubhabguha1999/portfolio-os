@@ -17,11 +17,12 @@ const FINAL: Phase = 3;
 const SECTIONS = ['Hero', 'About', 'Projects', 'Experience', 'Contact'];
 const SWATCHES = ['#8b7cff', '#3ecf8e', '#f5b455', '#ff7a8a'];
 
+/** Chip colours keep white 8px labels above 4.5:1 contrast. */
 const OUTPUTS = [
-  { ext: 'HTML', file: 'index.html', note: 'Single file', color: '#f97316' },
-  { ext: 'PDF', file: 'portfolio.pdf', note: 'Print-ready', color: '#ef4444' },
-  { ext: 'DOCX', file: 'resume.docx', note: 'Editable', color: '#3b82f6' },
-  { ext: 'ZIP', file: 'website.zip', note: 'Deploy-ready', color: '#a78bfa' },
+  { ext: 'HTML', file: 'index.html', note: 'Single file', color: '#c2410c' },
+  { ext: 'PDF', file: 'portfolio.pdf', note: 'Print-ready', color: '#b91c1c' },
+  { ext: 'DOCX', file: 'resume.docx', note: 'Editable', color: '#1d4ed8' },
+  { ext: 'ZIP', file: 'website.zip', note: 'Deploy-ready', color: '#6d28d9' },
 ] as const;
 
 const ease = [0.16, 1, 0.3, 1] as const;

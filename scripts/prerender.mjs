@@ -186,7 +186,7 @@ const llms = `# ${cfg.siteName}
 
 > ${indexable[0].description}
 
-${cfg.siteName} is a free, local-first web app. Everything runs in the browser: there are no accounts, no uploads and no tracking, and it works offline once installed.
+${cfg.siteName} is a free, local-first web app. Everything runs in the browser: there are no accounts and no uploads (your content never leaves the device), and it works offline once installed. The site is supported by ads.
 
 ## Pages
 
