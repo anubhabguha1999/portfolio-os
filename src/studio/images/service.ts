@@ -48,8 +48,30 @@ export function placementFor(img: ProfileImage, variant: ImageVariant, target: R
   if (Math.abs(own - target.aspect) < 0.01) return { zoom: variant.edit.zoom, panX: variant.edit.panX, panY: variant.edit.panY };
   const override = variant.placements[key];
   if (override) return override;
-  const fit = smartFit(img.asset, target.aspect, target.shape);
-  return { ...fit, zoom: fit.zoom * Math.max(1, variant.edit.zoom * 0.5 + 0.5) };
+  // Without dimensions there is nothing to carry over; fall back to the automatic fit.
+  if (!img.asset.width || !img.asset.height) return smartFit(img.asset, target.aspect, target.shape);
+  return reframe(img.asset.width, img.asset.height, own, variant.edit, target.aspect);
+}
+
+/**
+ * The user's own crop, carried to another frame shape: the same point of the photo stays in the
+ * centre and the subject keeps the same size (zooming in only as far as the new frame needs to
+ * stay covered). A portrait therefore shows the face the user framed, not a fresh guess.
+ */
+export function reframe(iw: number, ih: number, fromAspect: number, from: Placement, toAspect: number): Placement {
+  // Source frame in units: width = fromAspect, height = 1 (as drawEdited uses w×h).
+  const s0 = Math.max(fromAspect / iw, 1 / ih) * Math.max(0.2, from.zoom);
+  const u = 0.5 - (from.panX * fromAspect) / (iw * s0);
+  const v = 0.5 - from.panY / (ih * s0);
+  const visibleH = 1 / (ih * s0);
+  const base = Math.max(toAspect / iw, 1 / ih);
+  const zoom = Math.max(1, 1 / (ih * visibleH * base));
+  const s1 = base * zoom;
+  const maxX = Math.max(0, (iw * s1 - toAspect) / 2);
+  const maxY = Math.max(0, (ih * s1 - 1) / 2);
+  const ox = Math.min(maxX, Math.max(-maxX, (0.5 - u) * iw * s1));
+  const oy = Math.min(maxY, Math.max(-maxY, (0.5 - v) * ih * s1));
+  return { zoom, panX: ox / toAspect, panY: oy };
 }
 
 export function parseKey(key: string): { kind: 'profile'; variantId: string; mode: string } | { kind: 'simg'; imageId: string } | null {

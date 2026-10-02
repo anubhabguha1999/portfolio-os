@@ -805,7 +805,7 @@ const slateBanner: ResumeTemplateDef = {
           t: 'row',
           gap: 7,
           cols: [
-            { width: photoW / (innerW - 7), nodes: [ringedPortrait(r.photo, r.name, d, photoW, { ring: accent, ringWidth: 1, disc: mix(band, '#ffffff', 0.14), discText: '#ffffff', align: 'left' })] },
+            { width: photoW / (innerW - 7), nodes: [ringedPortrait(r.photo, r.name, d, photoW, { ring: accent, ringWidth: 1, disc: mix(band, '#ffffff', 0.14), discText: '#ffffff', align: 'left', mode: r.style.photo })] },
             { nodes: text, vAlign: 'middle' },
           ],
         }
@@ -936,7 +936,7 @@ const navySidebar: ResumeTemplateDef = {
     const { main, side } = placeBy(r, NAVY_SIDE);
 
     const sideNodes: FlowNode[] = [];
-    if (r.style.photo !== 'none') sideNodes.push({ ...ringedPortrait(r.photo, r.name, 30 * st.head, sideW, { ring: mix(navy, '#ffffff', 0.35), ringWidth: 1.1, disc: mix(navy, '#ffffff', 0.18), discText: '#ffffff' }), after: 7 * look.sp });
+    if (r.style.photo !== 'none') sideNodes.push({ ...ringedPortrait(r.photo, r.name, 30 * st.head, sideW, { ring: mix(navy, '#ffffff', 0.35), ringWidth: 1.1, disc: mix(navy, '#ffffff', 0.18), discText: '#ffffff', mode: r.style.photo }), after: 7 * look.sp });
     if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, color: sideText, labelColor: gold }) });
     side.forEach((sec, i) => {
       const before = i === 0 && !r.contact.length ? 0 : 5.5 * look.sp;

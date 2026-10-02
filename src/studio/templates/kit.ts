@@ -504,29 +504,47 @@ export function initials(name: string): string {
   return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]![0] ?? '' : '')).toUpperCase() || '?';
 }
 
+/** Frame aspect (width / height) and corner radius (fraction of the short side) per photo style. */
+const PHOTO_FRAME: Record<Exclude<ResumeStyle['photo'], 'none'>, { aspect: number; radius: number }> = {
+  circle: { aspect: 1, radius: 0.5 },
+  square: { aspect: 1, radius: 0 },
+  // Matches the rounded mask the image pipeline cuts (edit.radius default 0.18).
+  rounded: { aspect: 1, radius: 0.18 },
+  'small-portrait': { aspect: 22 / 28, radius: 0 },
+  'large-portrait': { aspect: 32 / 42, radius: 0 },
+};
+
 /**
- * A circular photo with a coloured ring, or an initials disc when there is no photo.
- * Returns a centred row so the ring hugs the image instead of spanning the column.
+ * The profile photo in a coloured frame shaped like the chosen photo style (circle, square,
+ * rounded, portrait), or an initials badge of the same shape when there is no photo.
+ * `d` is the photo height; portraits are narrower so they are never squashed.
+ * Returns a row so the frame hugs the image instead of spanning the column.
  */
-export function ringedPortrait(src: string | null, name: string, d: number, colW: number, opts: { ring: string; ringWidth?: number; disc: string; discText: string; align?: 'left' | 'center' }): RowNode {
+export function ringedPortrait(src: string | null, name: string, d: number, colW: number, opts: { ring: string; ringWidth?: number; disc: string; discText: string; align?: 'left' | 'center'; mode?: ResumeStyle['photo'] }): RowNode {
+  const frame = PHOTO_FRAME[opts.mode && opts.mode !== 'none' ? opts.mode : 'circle'];
   const rw = opts.ringWidth ?? 0.9;
-  const outer = Math.min(colW, d + rw * 2);
-  const inner = outer - rw * 2;
-  const textSize = inner * 0.36 / PT;
+  // Fit the outer frame into the column, keeping the aspect.
+  const scale = Math.min(1, colW / (d * frame.aspect + rw * 2));
+  const innerH = d * scale;
+  const innerW = innerH * frame.aspect;
+  const outerW = innerW + rw * 2;
+  const innerR = Math.min(innerW, innerH) * frame.radius;
+  const outerR = frame.radius ? innerR + (frame.radius >= 0.5 ? rw : rw * 0.6) : 0;
+  const textSize = (Math.min(innerW, innerH) * 0.36) / PT;
   const textH = textSize * PT * 1.05;
   const face: FlowNode = src
-    ? { t: 'image', src, width: inner, height: inner, alt: 'Profile photo' }
+    ? { t: 'image', src, width: innerW, height: innerH, alt: 'Profile photo' }
     : {
         t: 'box',
         fill: opts.disc,
-        radius: inner / 2,
-        padding: [(inner - textH) / 2, 0, (inner - textH) / 2, 0],
+        radius: innerR,
+        padding: [(innerH - textH) / 2, 0, (innerH - textH) / 2, 0],
         keep: 'together',
         nodes: [{ t: 'text', runs: [{ text: initials(name) }], style: { font: 'helvetica', size: textSize, bold: true, color: opts.discText, lineHeight: 1.05, tracking: 0.4 }, align: 'center' }],
       };
-  // An initials disc is ornament; a real photo still goes into the DOCX.
-  const ring: BoxNode = { t: 'box', fill: opts.ring, radius: outer / 2, padding: [rw, rw, rw, rw], keep: 'together', nodes: [face], ...(src ? {} : { decorative: true }) };
-  const frac = outer / colW;
+  // An initials badge is ornament; a real photo still goes into the DOCX.
+  const ring: BoxNode = { t: 'box', fill: opts.ring, radius: outerR, padding: [rw, rw, rw, rw], keep: 'together', nodes: [face], ...(src ? {} : { decorative: true }) };
+  const frac = Math.min(1, outerW / colW);
   if (opts.align === 'left') return { t: 'row', gap: 0, cols: [{ width: frac, nodes: [ring] }, { nodes: [] }] };
   const side = (1 - frac) / 2;
   return { t: 'row', gap: 0, cols: [{ width: side, nodes: [] }, { width: frac, nodes: [ring] }, { nodes: [] }] };
