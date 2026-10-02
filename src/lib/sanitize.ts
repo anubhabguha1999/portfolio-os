@@ -9,6 +9,9 @@ import { safeHref } from '@/utils/url';
  */
 const FORBID_TAGS = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select', 'meta', 'link', 'base', 'frame', 'frameset', 'noscript', 'template'];
 
+/** Allowed values for src / xlink:href / poster. */
+const SAFE_URL = /^(?:https?:|#|\/(?!\/)|\.\/|data:image\/(?:png|jpe?g|gif|webp|avif);base64,)/i;
+
 let hooksInstalled = false;
 function installHooks(): void {
   if (hooksInstalled) return;
@@ -24,6 +27,11 @@ function installHooks(): void {
         node.setAttribute('rel', 'noopener noreferrer');
       }
     }
+    // URL-bearing attributes other than href (handled above): web, relative or inline-image URLs only.
+    for (const attr of ['src', 'xlink:href', 'poster']) {
+      const v = node.getAttribute(attr);
+      if (v !== null && !SAFE_URL.test(v.trim())) node.removeAttribute(attr);
+    }
     if (node.hasAttribute('style')) {
       const style = node.getAttribute('style') ?? '';
       if (/expression\s*\(|javascript:|url\s*\(\s*['"]?\s*(?!https?:|data:image)/i.test(style)) node.removeAttribute('style');
@@ -38,7 +46,8 @@ export function sanitizeHtml(dirty: string): string {
     FORBID_TAGS,
     FORBID_ATTR: ['srcdoc', 'formaction', 'action'],
     ALLOW_DATA_ATTR: false,
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|#|\/|\.\/|data:image\/(?:png|jpe?g|gif|webp|avif);base64,)/i,
+    // No ALLOWED_URI_REGEXP here: DOMPurify applies it to every attribute that is not URI-safe,
+    // which stripped plain values such as viewBox, points or colspan. URLs are checked in the hook.
   });
 }
 

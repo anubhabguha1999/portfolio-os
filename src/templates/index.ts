@@ -9,11 +9,19 @@ import { brutalistTemplate } from './brutalist';
 import { luxuryTemplate } from './luxury';
 import { glassTemplate } from './glass';
 import { cupertinoTemplate } from './cupertino';
+import { auroraTemplate } from './aurora';
+import { monographTemplate } from './monograph';
+import { signalTemplate } from './signal';
+import { atelierTemplate } from './atelier';
 
 export type { PortfolioTemplate } from './types';
 
 /** Every built-in template, in gallery order. */
 export const TEMPLATES: PortfolioTemplate[] = [
+  auroraTemplate,
+  monographTemplate,
+  signalTemplate,
+  atelierTemplate,
   minimalTemplate,
   editorialTemplate,
   terminalTemplate,
