@@ -28,6 +28,7 @@ import { TEMPLATES } from '@/templates';
 import { TemplateThumb } from '@/features/templates/TemplateThumb';
 import { createEntryRoute } from '@/features/projects/entry-route';
 import { ExportDemo } from './ExportDemo';
+import { WhatYouMake } from './WhatYouMake';
 import { MarketingFooter } from './MarketingFooter';
 import { Skeleton } from 'dead-lock-skeleton';
 import { RESUME_TEMPLATE_COUNT } from '@/studio/templates/count';
@@ -108,26 +109,29 @@ export default function LandingPage() {
             <span className="bg-[linear-gradient(100deg,var(--app-fg)_10%,var(--app-accent)_55%,#e9a6ff_92%)] bg-clip-text pr-[0.06em] font-display font-normal italic tracking-[-0.02em] text-transparent">everywhere.</span>
           </h1>
           <p style={rise(0.14)} className="hero-rise mx-auto mt-6 max-w-2xl text-center text-[clamp(1rem,2.2vw,1.2rem)] leading-relaxed text-fg-muted">
-            {BRAND.description}
+            Create a portfolio website and an ATS-friendly resume entirely in your browser, then export HTML, PDF, Word or a deploy-ready site.
           </p>
-          <div style={rise(0.22)} className="hero-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div style={rise(0.22)} className="hero-rise mt-7 flex flex-wrap items-center justify-center gap-2 sm:mt-9 sm:gap-3">
             <button
               type="button"
               onClick={goCreate}
-              className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 text-[15px] font-semibold text-accent-fg shadow-[0_1px_0_rgba(255,255,255,.3)_inset,0_14px_40px_-12px_var(--app-accent)] transition-[background,transform] hover:bg-accent-strong active:translate-y-px sm:w-auto"
+              className="group inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-accent px-4 text-[13.5px] font-semibold text-accent-fg shadow-[0_1px_0_rgba(255,255,255,.3)_inset,0_8px_24px_-12px_var(--app-accent)] transition-[background,transform] hover:bg-accent-strong active:translate-y-px sm:h-11 sm:gap-2 sm:rounded-xl sm:px-5 sm:text-[14px] sm:shadow-[0_1px_0_rgba(255,255,255,.3)_inset,0_14px_40px_-12px_var(--app-accent)]"
             >
               Create Portfolio
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5 sm:size-4" aria-hidden="true" />
             </button>
             <Link
-              to="/templates"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-panel/50 px-6 text-[15px] font-medium text-fg backdrop-blur transition-colors hover:bg-hover sm:w-auto"
+              to="/resumes"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-line-strong bg-panel/50 px-4 text-[13.5px] font-medium text-fg backdrop-blur transition-colors hover:bg-hover sm:h-11 sm:gap-2 sm:rounded-xl sm:px-5 sm:text-[14px]"
             >
-              Explore Templates
+              Build a Resume
             </Link>
           </div>
           <p style={rise(0.3)} className="hero-rise mt-5 text-center text-[12px] text-fg-subtle">
-            Free to use · Open file formats · Nothing to install
+            Free to use · Open file formats · Nothing to install ·{' '}
+            <a href="#make" className="underline decoration-line-strong underline-offset-4 hover:text-fg">
+              See what you can make
+            </a>
           </p>
           </div>
 
@@ -139,6 +143,9 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ---------------- The two main things: portfolio + resume ---------------- */}
+        <WhatYouMake onCreatePortfolio={goCreate} />
 
         {/* ---------------------------- How it works ---------------------------- */}
         <Section
@@ -332,12 +339,12 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <Link to="/resumes" className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-[14px] font-semibold text-accent-fg transition-colors hover:bg-accent-strong">
+              <div className="mt-8 flex flex-wrap items-center gap-2.5">
+                <Link to="/resumes" className="group inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-[13.5px] font-semibold text-accent-fg transition-colors hover:bg-accent-strong">
                   Build a resume
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                 </Link>
-                <Link to="/documents" className="inline-flex h-11 items-center justify-center rounded-xl border border-line-strong px-5 text-[14px] font-medium text-fg-muted hover:bg-hover hover:text-fg">
+                <Link to="/documents" className="inline-flex h-10 items-center justify-center rounded-lg border border-line-strong px-4 text-[13.5px] font-medium text-fg-muted hover:bg-hover hover:text-fg">
                   Write a cover letter
                 </Link>
               </div>
@@ -362,11 +369,11 @@ export default function LandingPage() {
             </h2>
             <p className="relative mx-auto mt-4 max-w-lg text-[15px] text-fg-muted">No sign-up. Close the tab and everything is still here when you come back.</p>
             <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button type="button" onClick={goCreate} className="group inline-flex h-12 items-center gap-2 rounded-xl bg-fg px-6 text-[15px] font-semibold text-bg transition-[opacity,scale] hover:scale-[1.03] hover:opacity-90 active:scale-100">
+              <button type="button" onClick={goCreate} className="group inline-flex h-10 items-center gap-1.5 rounded-lg bg-fg px-4 text-[13.5px] font-semibold text-bg transition-[opacity,scale] hover:scale-[1.03] hover:opacity-90 active:scale-100 sm:h-11 sm:gap-2 sm:rounded-xl sm:px-5 sm:text-[14px]">
                 Create Portfolio
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </button>
-              <Link to="/about" className="inline-flex h-12 items-center rounded-xl px-5 text-[14px] text-fg-muted hover:text-fg">
+              <Link to="/about" className="inline-flex h-10 items-center rounded-lg px-3 text-[13.5px] text-fg-muted hover:text-fg sm:h-11 sm:px-4 sm:text-[14px]">
                 How it works under the hood
               </Link>
             </div>
