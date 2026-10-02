@@ -39,7 +39,7 @@ export function sanitizeProjectName(name: string): string {
 
 export async function generateFrameworkProject(portfolio: Portfolio, options: ExportOptions, env: BuildEnv = {}): Promise<FrameworkExport> {
   const opts: ExportOptions = { ...options, projectName: sanitizeProjectName(options.projectName) };
-  const build = await buildSiteData(portfolio, { ...env, structure: opts.structure, siteUrl: opts.siteUrl });
+  const build = await buildSiteData(portfolio, { ...env, structure: opts.structure, siteUrl: opts.siteUrl, animations: opts.animations });
   const project = await GENERATORS[opts.framework].generateProject(portfolio, opts, build);
   const report = validateProject(project, opts, build);
   return { project, build, report };

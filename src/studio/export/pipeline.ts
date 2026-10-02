@@ -163,7 +163,9 @@ export interface FileResult {
 
 export async function flowToPdf(flow: FlowDoc, settings: PdfExportSettings = DEFAULT_PDF_SETTINGS, progress?: Progress): Promise<FileResult> {
   const input = settings.includeImages ? flow : withoutImages(flow);
-  const f: FlowDoc = { ...input, links: settings.links, meta: settings.metadata ? input.meta : { title: '', author: '', subject: '', keywords: [], creator: input.meta.creator } };
+  const { data, ...rest } = input;
+  // "Document metadata" off: no title/author and no embedded content copy either.
+  const f: FlowDoc = { ...rest, links: settings.links, meta: settings.metadata ? input.meta : { title: '', author: '', subject: '', keywords: [], creator: input.meta.creator }, ...(settings.metadata && data ? { data } : {}) };
   progress?.('Rendering images…', 0.15);
   const { images, warnings } = await resolveFlowImages(f, settings);
   progress?.('Laying out pages…', 0.4);
@@ -181,17 +183,19 @@ export async function flowToPdf(flow: FlowDoc, settings: PdfExportSettings = DEF
   }
 }
 
-export async function flowToDocx(flow: FlowDoc, settings: Pick<PdfExportSettings, 'includeImages' | 'quality'> = { includeImages: true, quality: 'high' }, progress?: Progress): Promise<FileResult> {
+export async function flowToDocx(flow: FlowDoc, settings: Pick<PdfExportSettings, 'includeImages' | 'quality'> & Partial<Pick<PdfExportSettings, 'links' | 'metadata'>> = { includeImages: true, quality: 'high' }, progress?: Progress): Promise<FileResult> {
+  // Same "Clickable links" and "Document metadata" switches as the PDF.
+  const f: FlowDoc = { ...flow, links: settings.links ?? true, meta: settings.metadata === false ? { title: '', author: '', subject: '', keywords: [], creator: flow.meta.creator } : flow.meta };
   progress?.('Rendering images…', 0.15);
-  const { images, warnings } = await resolveFlowImages(flow, settings);
+  const { images, warnings } = await resolveFlowImages(f, settings);
   try {
-    const msg = await runInWorker({ kind: 'docx', flow, images, includeImages: settings.includeImages }, progress);
+    const msg = await runInWorker({ kind: 'docx', flow: f, images, includeImages: settings.includeImages }, progress);
     if (msg.type !== 'docx') throw new WorkerUnavailable();
     return { blob: new Blob([msg.buffer], { type: MIME.docx }), warnings };
   } catch (err) {
     if (!(err instanceof WorkerUnavailable)) throw err;
     await yieldUi();
-    const buffer = await renderFlowDocx(flow, { images, includeImages: settings.includeImages });
+    const buffer = await renderFlowDocx(f, { images, includeImages: settings.includeImages });
     return { blob: new Blob([buffer], { type: MIME.docx }), warnings };
   }
 }

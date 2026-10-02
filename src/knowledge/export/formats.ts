@@ -201,7 +201,4 @@ export async function libraryZip(entries: LibraryEntry[], profile: Profile, libr
   return new Blob([zipped as BlobPart], { type: 'application/zip' });
 }
 
-/** Text of a single block for copy / insert actions. */
-export const blockPlainText = (b: ExtractedBlock) => (b.type === 'list' ? (b.items ?? []).map((i) => `• ${i}`).join('\n') : b.type === 'table' ? (b.rows ?? []).map((r) => r.join(' | ')).join('\n') : b.text);
-
 export { pageText };

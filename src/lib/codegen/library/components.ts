@@ -3,6 +3,7 @@
  * genuinely interactive pieces (Navbar, ThemeToggle, Reveal, ContactForm, TypingText,
  * Carousel) are client components.
  */
+import { BRAND } from '@/config/brand';
 import { iconBody } from '@/sections/icons';
 import { text } from '../context';
 import type { LibOut } from './emit';
@@ -285,7 +286,7 @@ export function SectionShell({ section, children }: SectionShellProps) {
       ${ss.c('root')}
     >
       <div ${ss.c('inner')} data-width={section.width}>
-        ${reveal ? '<Reveal animation={section.animation}>{children}</Reveal>' : '{children}'}
+        ${reveal ? '<Reveal animation={section.animation} motion={section.motion}>{children}</Reveal>' : '{children}'}
       </div>
     </section>
   );
@@ -354,7 +355,7 @@ export function Tags({ items, label }: { items: string[]; label?: string }) {
       'Reveal',
       null,
       `
-type Animation = 'none' | 'fade' | 'slide' | 'scale' | 'blur';
+type Animation = SectionBase['animation'];
 
 const HIDDEN = {
   fade: { opacity: 0 },
@@ -365,21 +366,40 @@ const HIDDEN = {
 
 const SHOWN = { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' };
 
+const EASE = {
+  ease: [0.25, 0.1, 0.25, 1],
+  'ease-out': [0.16, 1, 0.3, 1],
+  'ease-in-out': [0.65, 0, 0.35, 1],
+  linear: 'linear',
+} as const;
+
+/** The section's own duration, delay and easing (ms in the data, seconds for motion). */
+function transitionOf(m: SectionBase['motion']): Transition {
+  const timing = { duration: m.duration / 1000, delay: m.delay / 1000 };
+  return m.easing === 'spring' ? { type: 'spring', bounce: 0.25, ...timing } : { ease: EASE[m.easing] as Transition['ease'], ...timing };
+}
+
 /**
  * Entrance animation for a block of server-rendered content. The smallest possible
  * client boundary: the children stay Server Components. Honours reduced motion.
+ * Plays when scrolled into view, or straight away for sections set to animate on load.
  */
-export function Reveal({ animation, children }: { animation: Animation; children: ReactNode }) {
+export function Reveal({ animation, motion: timing, children }: { animation: Animation; motion: SectionBase['motion']; children: ReactNode }) {
   const reduceMotion = useReducedMotion();
   if (animation === 'none' || reduceMotion) return <>{children}</>;
-  return (
-    <motion.div initial={HIDDEN[animation]} whileInView={SHOWN} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
+  const transition = transitionOf(timing);
+  return timing.onLoad ? (
+    <motion.div initial={HIDDEN[animation]} animate={SHOWN} transition={transition}>
+      {children}
+    </motion.div>
+  ) : (
+    <motion.div initial={HIDDEN[animation]} whileInView={SHOWN} viewport={{ once: true, margin: '-60px' }} transition={transition}>
       {children}
     </motion.div>
   );
 }
 `,
-      { client: true, imports: [`import { motion, useReducedMotion } from 'motion/react';`, `import type { ReactNode } from 'react';`] },
+      { client: true, imports: [`import { motion, useReducedMotion, type Transition } from 'motion/react';`, `import type { ReactNode } from 'react';`, `import type { SectionBase } from '@/types/portfolio';`] },
     );
   }
 
@@ -596,26 +616,71 @@ ${pathLine}
     inner: r('mx-auto flex w-full max-w-(--max-w) flex-col items-center justify-between gap-4 px-(--pad-x) md:flex-row', `margin-inline: auto;\ndisplay: flex;\nflex-direction: column;\nalign-items: center;\njustify-content: space-between;\ngap: 1rem;\nwidth: 100%;\nmax-width: var(--max-w);\npadding-inline: var(--pad-x);\n${MD} { flex-direction: row; }`),
     text: r('m-0', 'margin: 0;'),
   });
+  const { credit } = ctx.data.footer;
+  const { backToTop } = ctx.data.chrome;
   out.component(
     'components',
     'Footer',
     fs,
     `
 export function Footer() {
-  if (!portfolio.footer.enabled) return null;
   const year = new Date().getFullYear();
   return (
-    <footer ${fs.c('root')}>
-      <div ${fs.c('inner')}>
-        <p ${fs.c('text')}>{portfolio.footer.text || \`© \${year} \${portfolio.person.name}\`}</p>
-        <SocialLinks />
-      </div>
-    </footer>
+    <>
+      {portfolio.footer.enabled && (
+        <footer ${fs.c('root')}>
+          <div ${fs.c('inner')}>
+            <p ${fs.c('text')}>
+              {(portfolio.footer.text || \`© {year} \${portfolio.person.name}\`).replace(/\\{year\\}/g, String(year))}${credit ? ` · Built with ${BRAND.name}` : ''}
+            </p>
+            <SocialLinks />
+          </div>
+        </footer>
+      )}${backToTop ? '\n      <BackToTop />' : ''}
+    </>
   );
 }
 `,
-    { imports: [`import { portfolio } from '@/data/portfolio';`, `import { SocialLinks } from './SocialLinks';`] },
+    { imports: [`import { portfolio } from '@/data/portfolio';`, `import { SocialLinks } from './SocialLinks';`, backToTop ? `import { BackToTop } from './BackToTop';` : ''] },
   );
+
+  // BackToTop (client): appears after scrolling down, like the HTML export.
+  if (backToTop) {
+    out.icon('arrow-up');
+    const bs = out.sheet('BackToTop', {
+      root: r(
+        'fixed right-5 bottom-5 z-40 inline-grid size-11 place-items-center rounded-full border border-border bg-surface text-text shadow-md transition hover:border-primary focus-visible:outline-2 focus-visible:outline-primary data-[hidden=true]:pointer-events-none data-[hidden=true]:translate-y-2 data-[hidden=true]:opacity-0',
+        'position: fixed;\nright: 1.25rem;\nbottom: 1.25rem;\nz-index: 40;\ndisplay: inline-grid;\nplace-items: center;\nwidth: 2.75rem;\nheight: 2.75rem;\nborder-radius: 999px;\nborder: 1px solid var(--c-border);\nbackground: var(--c-surface);\ncolor: var(--c-text);\nbox-shadow: var(--shadow-md);\ncursor: pointer;\ntransition: opacity 0.3s, transform 0.3s, border-color 0.2s;\n&:hover { border-color: var(--c-primary); }\n&:focus-visible { outline: 2px solid var(--c-primary); }\n&[data-hidden="true"] { opacity: 0; pointer-events: none; transform: translateY(0.5rem); }',
+      ),
+    });
+    out.component(
+      'components',
+      'BackToTop',
+      bs,
+      `
+/** Floating "back to top" button, shown once the visitor has scrolled down. */
+export function BackToTop() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 700);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  const toTop = () => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  };
+  return (
+    <button type="button" aria-label="Back to top" onClick={toTop} data-hidden={!visible} tabIndex={visible ? 0 : -1} ${bs.c('root')}>
+      <Icon name="arrow-up" />
+    </button>
+  );
+}
+`,
+      { client: true, imports: [`import { useEffect, useState } from 'react';`, `import { Icon } from './Icon';`] },
+    );
+  }
 }
 
 /* ------------------------------------------------------------------ */

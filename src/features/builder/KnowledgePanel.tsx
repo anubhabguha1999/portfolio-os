@@ -8,6 +8,7 @@ import { cn } from '@/utils/cn';
 import { KIND_LABELS, KNOWLEDGE_MIME, LIBRARY_KINDS, type Candidate } from '@/knowledge/import/library-source';
 import { startKnowledgeDrag, useKnowledgeDrag, useKnowledgeSources } from '@/features/knowledge/InsertFromLibrary';
 import { ConfidenceBadge } from '@/features/knowledge/shared';
+import { REVIEW_THRESHOLD } from '@/knowledge/import/review';
 import { insertKnowledgeIntoBuilder, sectionTypeFor } from './knowledge';
 
 /**
@@ -91,7 +92,7 @@ function KnowledgeRow({ c, fromDoc, onAdd }: { c: Candidate; fromDoc: boolean; o
         {(c.sublabel || fromDoc) && (
           <span className="flex items-center gap-2">
             {c.sublabel && <span className="truncate text-[11px] text-fg-subtle">{c.sublabel}</span>}
-            {fromDoc && c.confidence < 0.75 && <ConfidenceBadge value={c.confidence} />}
+            {fromDoc && c.confidence < REVIEW_THRESHOLD && <ConfidenceBadge value={c.confidence} />}
           </span>
         )}
       </span>

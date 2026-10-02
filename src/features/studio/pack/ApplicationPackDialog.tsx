@@ -54,6 +54,7 @@ export async function buildApplicationPack(o: PackOptions, progress: Progress): 
     if (o.resumeDocx) {
       const res = await flowToDocx(flow, { includeImages: true, quality: 'high' }, sub(`${label}.docx`));
       files.push({ path: documentFileName(person, label, 'docx', r.fileName), blob: res.blob });
+      warnings.push(...res.warnings);
       step();
     }
   }
@@ -64,11 +65,13 @@ export async function buildApplicationPack(o: PackOptions, progress: Progress): 
     if (o.letterPdf) {
       const res = await flowToPdf(flow, DEFAULT_PDF_SETTINGS, sub('Cover letter PDF'));
       files.push({ path: documentFileName(person, 'Cover_Letter', 'pdf', d.fileName), blob: res.blob });
+      warnings.push(...res.warnings);
       step();
     }
     if (o.letterDocx) {
       const res = await flowToDocx(flow, { includeImages: true, quality: 'high' }, sub('Cover letter DOCX'));
       files.push({ path: documentFileName(person, 'Cover_Letter', 'docx', d.fileName), blob: res.blob });
+      warnings.push(...res.warnings);
       step();
     }
   }

@@ -112,6 +112,8 @@ export interface RawPage {
   images: RawImage[];
   /** Text came from OCR. */
   ocr: boolean;
+  /** Plain text / Markdown: every line break was typed by the author, so lines are never re-joined. */
+  hardBreaks?: boolean;
 }
 
 export interface PdfMetadata {
@@ -178,6 +180,8 @@ export interface ExtractedPage {
   width: number;
   height: number;
   ocr: boolean;
+  /** See RawPage.hardBreaks. */
+  hardBreaks?: boolean;
   blocks: ExtractedBlock[];
 }
 

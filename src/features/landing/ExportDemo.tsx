@@ -127,10 +127,10 @@ export function ExportDemo() {
             <span className="size-2 rounded-full bg-black/10" />
             <span className="size-2 rounded-full bg-black/10" />
             <span className="size-2 rounded-full bg-black/10" />
-            <span className="ml-2 flex-1 truncate rounded bg-black/[.05] px-2 py-0.5 text-center font-mono text-[9px] text-black/45">maya-lindqvist.dev</span>
+            <span className="ml-2 flex-1 truncate rounded bg-black/[.05] px-2 py-0.5 text-center font-mono text-[9px] text-black/[.62]">maya-lindqvist.dev</span>
           </div>
           <div className="p-4">
-            <div className="mb-4 flex items-center justify-between text-[9px] text-black/45">
+            <div className="mb-4 flex items-center justify-between text-[9px] text-black/[.62]">
               <span className="font-semibold text-black/70">ML</span>
               <span className="flex gap-2">
                 <span>Work</span>
@@ -181,7 +181,7 @@ export function ExportDemo() {
               key={o.ext}
               className="flex items-center gap-2.5 rounded-xl border border-line bg-panel/90 p-2 pr-3 shadow-float backdrop-blur"
               initial={false}
-              animate={exporting ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 } : { opacity: 0.18, x: -18, y: (1.5 - i) * 10, scale: 0.94, rotate: (i - 1.5) * 2 }}
+              animate={exporting ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 } : { opacity: 0, x: -18, y: (1.5 - i) * 10, scale: 0.94, rotate: (i - 1.5) * 2 }}
               transition={{ duration: reduced ? 0 : 0.55, delay: reduced || !exporting ? 0 : 0.12 * i, ease }}
             >
               <span className="grid h-9 w-8 shrink-0 place-items-end rounded-[5px] pb-1 font-mono text-[8px] font-bold text-white" style={{ background: o.color }}>

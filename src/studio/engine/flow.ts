@@ -34,6 +34,8 @@ export interface TextStyle {
 
 export interface Run {
   text: string;
+  /** Inline vector icon (see engine/icons.ts) drawn instead of text, glued to the following word. */
+  icon?: string;
   bold?: boolean;
   italic?: boolean;
   link?: string;
@@ -219,17 +221,21 @@ export interface FlowDoc {
   repeatHeadings?: boolean;
   /** Links become clickable annotations in the PDF. */
   links?: boolean;
+  /** Machine-readable copy of the content (JSON), embedded as PDF XMP metadata for lossless re-import. */
+  data?: string;
 }
 
 /* --------------------------- Display list --------------------------- */
 
 export type Prim =
-  | { k: 'text'; x: number; y: number; w: number; text: string; font: FontFamily; bold: boolean; italic: boolean; size: number; color: string; underline?: boolean; tracking?: number; link?: string }
+  | { k: 'text'; x: number; y: number; w: number; text: string; font: FontFamily; bold: boolean; italic: boolean; size: number; color: string; underline?: boolean; tracking?: number; link?: string; /** Selectable/extractable but not painted (text twin of a drawn marker). */ invisible?: boolean }
   | { k: 'rect'; x: number; y: number; w: number; h: number; fill?: string; stroke?: string; lw?: number; r?: number }
   | { k: 'line'; x1: number; y1: number; x2: number; y2: number; color: string; lw: number; dash?: number[] }
   | { k: 'circle'; cx: number; cy: number; r: number; fill?: string; stroke?: string; lw?: number }
   | { k: 'image'; src: string; x: number; y: number; w: number; h: number; alt?: string }
-  | { k: 'link'; x: number; y: number; w: number; h: number; url: string };
+  | { k: 'link'; x: number; y: number; w: number; h: number; url: string }
+  /** Vector icon in a size×size box (mm) at x, y (top-left). */
+  | { k: 'icon'; name: string; x: number; y: number; size: number; color: string };
 
 export interface RefBox {
   ref: string;
@@ -274,4 +280,5 @@ export interface LaidDocument {
   stats: LayoutStats;
   issues: LayoutIssue[];
   meta: FlowDoc['meta'];
+  data?: string;
 }

@@ -3,6 +3,7 @@
  * (fonts, colours, rhythm, ornaments) and arrange sections; the kit turns resolved
  * content into FlowNodes with sensible pagination hints.
  */
+import { contactIcon } from '@/studio/engine/icons';
 import type { BoxNode, FlowNode, RowNode, FontFamily, GroupNode, ImageNode, Run, TextNode, TextStyle } from '@/studio/engine/flow';
 import { getMeasurer, PT } from '@/studio/engine/measure';
 import type { ContactItem, ResolvedItem, ResolvedSection } from '@/studio/model/resolve';
@@ -455,12 +456,14 @@ export function sectionNode(sec: ResolvedSection, look: Look, width: number, opt
 
 const LABELS: Record<ContactItem['kind'], string> = { email: 'Email', phone: 'Phone', location: 'Location', website: 'Web', social: '' };
 
-export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: string; icon?: ResumeStyle['iconStyle']; color?: string; linkColor?: string } = {}): Run[] {
+/** Contact line. `icon: 'glyph'` puts a real vector icon (mail, phone, GitHub, LinkedIn…) before each item. */
+export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: string; icon?: ResumeStyle['iconStyle']; color?: string; linkColor?: string; iconColor?: string } = {}): Run[] {
   const sep = opts.sep ?? '  ·  ';
   const out: Run[] = [];
   items.forEach((c, i) => {
     if (i > 0) out.push({ text: sep, color: look.muted });
     if (opts.icon === 'label') out.push({ text: `${LABELS[c.kind] || c.platform || 'Link'}: `, bold: true, ...(opts.color ? { color: opts.color } : {}) });
+    if (opts.icon === 'glyph') out.push({ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: opts.iconColor ?? look.accent, ...(c.url ? { link: c.url } : {}) });
     const color = c.url ? opts.linkColor ?? opts.color : opts.color;
     out.push({ text: c.label, ...(c.url ? { link: c.url } : {}), ...(color ? { color } : {}) });
   });
@@ -471,12 +474,12 @@ export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: stri
 export function contactList(items: ContactItem[], look: Look, opts: { icon?: ResumeStyle['iconStyle']; color?: string; labelColor?: string } = {}): FlowNode[] {
   return items.map((c, i) => {
     const label = opts.icon === 'label' ? [{ text: `${LABELS[c.kind] || c.platform || 'Link'}`, bold: true, color: opts.labelColor ?? look.muted, size: look.size - 1.5 }] : [];
+    const icon: Run[] = opts.icon === 'glyph' ? [{ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: opts.labelColor ?? look.accent, ...(c.url ? { link: c.url } : {}) }] : [];
     const node: TextNode = {
       t: 'text',
-      runs: [{ text: c.label, ...(c.url ? { link: c.url } : {}), ...(opts.color ? { color: opts.color } : {}) }],
+      runs: [...icon, { text: c.label, ...(c.url ? { link: c.url } : {}), ...(opts.color ? { color: opts.color } : {}) }],
       style: ts(look, { size: look.size - 0.6, ...(opts.color ? { color: opts.color } : {}) }),
       before: i > 0 ? 1 * look.sp : 0,
-      ...(opts.icon === 'glyph' ? { marker: { kind: 'square' as const, color: opts.labelColor ?? look.accent } } : {}),
     };
     return label.length ? ({ t: 'group', keep: 'together', nodes: [{ t: 'text', runs: label, style: ts(look, { size: look.size - 1.5, uppercase: true, tracking: 0.25 }), before: i > 0 ? 1.2 * look.sp : 0 }, { ...node, before: 0.2 }] } as GroupNode) : node;
   });

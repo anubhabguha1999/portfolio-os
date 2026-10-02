@@ -398,7 +398,8 @@ function PrivacyCard({ hasImage }: { hasImage: boolean }) {
 
   return (
     <Card className="p-4 sm:p-5">
-      <div className="flex flex-wrap items-start gap-4">
+      <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start">
+        <div className="flex min-w-0 items-start gap-3 sm:contents">
         <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-ok/10 text-ok">
           <ShieldCheck className="size-5" />
         </div>
@@ -408,12 +409,13 @@ function PrivacyCard({ hasImage }: { hasImage: boolean }) {
             Photos are processed in your browser and stored in this browser’s local database (IndexedDB). There is no upload endpoint — nothing is sent to a server.
           </p>
           {usage && (
-            <p className="mt-2 font-mono text-[11.5px] text-fg-subtle">
+            <p className="mt-2 break-words font-mono text-[11.5px] text-fg-subtle">
               {usage.images} image{usage.images === 1 ? '' : 's'} · {formatBytes(usage.imageBytes)} · {usage.resumes} resume{usage.resumes === 1 ? '' : 's'} · {usage.documents} document{usage.documents === 1 ? '' : 's'}
             </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        </div>
+        <div className="flex flex-wrap gap-2 max-sm:[&>button]:flex-1">
           {hasImage && (
             <Button size="sm" variant="secondary" icon={<Trash2 className="size-3.5" />} onClick={() => void deleteProfilePhoto().then(() => toast({ title: 'Photo deleted' }))}>
               Delete image

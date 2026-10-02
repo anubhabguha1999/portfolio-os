@@ -96,6 +96,11 @@ export function resumeFromKnowledgeExport(data: Obj): { profile: Profile; librar
     if (pages.some((p) => p.blocks.length)) resume = extractResume(pages, linksOf(data), 'import', name);
   }
   if (!resume || !isObj(resume.profile)) return null;
+  return resumeDataFromSemantic(resume, name);
+}
+
+/** Detected resume fields → profile, library and resume-only entries, every detection accepted. */
+export function resumeDataFromSemantic(resume: SemanticResume, name: string): { profile: Profile; library: Library; entries: Record<string, Array<Partial<LocalEntry>>> } {
   // Older or hand-edited files may miss lists: default them so the review rules stay total.
   const r = { socialLinks: [], experience: [], education: [], projects: [], skills: [], certifications: [], achievements: [], languages: [], ...(resume as Partial<SemanticResume>) } as SemanticResume;
   const review = buildReview(r, 'import', name, emptyProfile(), emptyLibrary());

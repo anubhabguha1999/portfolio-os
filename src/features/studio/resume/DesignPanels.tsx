@@ -76,7 +76,7 @@ export function DesignPanel({ onBrowse }: { onBrowse: () => void }) {
         {has('headerAlign') && <Segmented label="Header alignment" value={st.headerAlign} onChange={set('headerAlign')} options={[{ value: 'left', label: 'Left' }, { value: 'center', label: 'Centre' }]} />}
         {has('headerHeight') && <Segmented label="Header size" value={st.headerHeight} onChange={set('headerHeight')} options={[{ value: 'compact', label: 'Compact' }, { value: 'normal', label: 'Normal' }, { value: 'tall', label: 'Tall' }]} />}
         {has('borderStyle') && <Segmented label="Rules & borders" value={st.borderStyle} onChange={set('borderStyle')} options={[{ value: 'none', label: 'None' }, { value: 'hairline', label: 'Hairline' }, { value: 'thick', label: 'Bold' }]} />}
-        {has('iconStyle') && <Segmented label="Contact markers" value={st.iconStyle} onChange={set('iconStyle')} options={[{ value: 'none', label: 'None' }, { value: 'label', label: 'Labels' }, { value: 'glyph', label: 'Glyphs' }]} />}
+        {has('iconStyle') && <Segmented label="Contact markers" value={st.iconStyle} onChange={set('iconStyle')} options={[{ value: 'none', label: 'None' }, { value: 'label', label: 'Labels' }, { value: 'glyph', label: 'Icons' }]} />}
       </Group>
 
       {tpl.supportsPhoto && (

@@ -80,6 +80,17 @@ export function pdfDate(raw: unknown): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+/** Raw XMP metadata packet (where Portfolio OS embeds a copy of a resume), or null. */
+export async function readXmp(doc: PDFDocumentProxy): Promise<string | null> {
+  try {
+    const m = (await doc.getMetadata()).metadata as { getRaw?: () => unknown } | null;
+    const raw = m?.getRaw?.();
+    return typeof raw === 'string' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function readMetadata(doc: PDFDocumentProxy): Promise<PdfMetadata> {
   let info: Record<string, unknown> = {};
   try {

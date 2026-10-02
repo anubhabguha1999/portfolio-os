@@ -36,6 +36,8 @@ export interface BuildSiteOptions {
   convert?: ImageConverter;
   /** Applied by the validator's "Fix" action. */
   fixes?: { dropInvalidLinks?: boolean; dropMissingImages?: boolean };
+  /** Entrance animations in the generated site. Defaults to the portfolio's own setting (site animations and theme motion). */
+  animations?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -177,6 +179,7 @@ export async function buildSiteData(p: Portfolio, o: BuildSiteOptions): Promise<
   const sections = visibleSections(p);
   const hero = heroOf(p);
   const anchors = new Set<string>();
+  const animationsOn = o.animations ?? (p.settings.animations && p.theme.motion.enabled);
   const base = (s: PortfolioSection, heading: string, intro = ''): SectionBase => {
     const st = s.style;
     const anchor = uniqueSlug(slugify(st.anchor || heading || s.type, s.type), anchors);
@@ -190,7 +193,8 @@ export async function buildSiteData(p: Portfolio, o: BuildSiteOptions): Promise<
       width: st.width,
       align: st.align,
       spacing: st.paddingY,
-      animation: !p.settings.animations || anim === 'none' ? 'none' : anim === 'scale' ? 'scale' : anim === 'blur' ? 'blur' : anim === 'slide' || anim === 'reveal' || anim === 'stagger' || anim === 'parallax' ? 'slide' : 'fade',
+      animation: !animationsOn || anim === 'none' ? 'none' : anim === 'scale' ? 'scale' : anim === 'blur' ? 'blur' : anim === 'slide' || anim === 'reveal' || anim === 'stagger' || anim === 'parallax' ? 'slide' : 'fade',
+      motion: { duration: Math.max(0, st.animation.duration), delay: Math.max(0, st.animation.delay), easing: st.animation.easing, onLoad: st.animation.trigger === 'load' },
       hideOn: { ...st.hideOn },
     };
   };
@@ -383,7 +387,8 @@ export async function buildSiteData(p: Portfolio, o: BuildSiteOptions): Promise<
     },
     theme: { scheme: p.settings.colorScheme, toggle: p.settings.showThemeToggle, cardStyle: p.theme.cardStyle, buttonStyle: p.theme.buttonStyle },
     nav: { enabled: p.settings.navigation.enabled, brand: p.settings.navigation.brand || person || m.title, style: p.settings.navigation.style, sticky: p.settings.navigation.sticky, links: navLinks },
-    footer: { enabled: p.settings.footer.enabled, text: p.settings.footer.text },
+    footer: { enabled: p.settings.footer.enabled, text: p.settings.footer.text, credit: p.settings.footer.showCredit },
+    chrome: { smoothScroll: p.settings.smoothScroll, backToTop: p.settings.backToTop, grain: p.theme.effects.grain },
     social,
     sections: out,
     projects,

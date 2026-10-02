@@ -101,7 +101,7 @@ export function textToRawPages(text: string, kind: 'txt' | 'md'): RawPage[] {
       y += size * 1.4;
       return [{ text: t.trim(), x: 40 + indent, y: top, width: t.trim().length * size * 0.5, height: size, fontSize: size, fontName: '', bold }];
     });
-    pages.push({ page: pages.length + 1, width: 612, height: Math.max(792, y + 40), items, links: [], images: [], ocr: false });
+    pages.push({ page: pages.length + 1, width: 612, height: Math.max(792, y + 40), items, links: [], images: [], ocr: false, hardBreaks: true });
   }
   return pages;
 }

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Accessibility,
@@ -26,7 +26,7 @@ import { BRAND } from '@/config/brand';
 import { THEMES } from '@/lib/theme/themes';
 import { TEMPLATES } from '@/templates';
 import { TemplateThumb } from '@/features/templates/TemplateThumb';
-import { createEntryRoute } from '@/features/projects/actions';
+import { createEntryRoute } from '@/features/projects/entry-route';
 import { ExportDemo } from './ExportDemo';
 import { MarketingFooter } from './MarketingFooter';
 import { Skeleton } from 'dead-lock-skeleton';
@@ -37,6 +37,24 @@ import { Reveal, ScrollProgress, Stagger, StaggerItem } from './motion';
 /** "Create Portfolio" goes to the dashboard when projects exist, onboarding otherwise. */
 // The showcase lays out real resumes with the PDF engine, so it loads after the page.
 const ResumeShowcase = lazy(() => import('./ResumeShowcase'));
+
+/**
+ * Renders `children` (a lazy component) only once the spot is near the viewport. The resume
+ * showcase pulls in the layout engine and jsPDF's font metrics (~400 KB), which the first
+ * screen doesn't need.
+ */
+function WhenNear({ children, fallback }: { children: ReactNode; fallback: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return void setNear(true);
+    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && (setNear(true), io.disconnect()), { rootMargin: '800px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return <div ref={ref}>{near ? <Suspense fallback={fallback}>{children}</Suspense> : fallback}</div>;
+}
 
 function useCreatePortfolio(): () => void {
   const navigate = useNavigate();
@@ -324,7 +342,7 @@ export default function LandingPage() {
                 </Link>
               </div>
             </Reveal>
-            <Suspense
+            <WhenNear
               fallback={
                 <div className="mx-auto grid h-[min(118vw,470px)] w-full max-w-[560px] place-items-center" role="status" aria-label="Loading example resumes">
                   <Skeleton width={232} height={328} borderRadius={4} />
@@ -332,7 +350,7 @@ export default function LandingPage() {
               }
             >
               <ResumeShowcase />
-            </Suspense>
+            </WhenNear>
           </div>
         </section>
 

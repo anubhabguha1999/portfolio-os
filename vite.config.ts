@@ -47,7 +47,7 @@ export default defineConfig({
         navigateFallback: 'index.html',
         // Crawler files, verification files and the static content pages (scripts/content-pages.mjs)
         // must come from the network, not the SPA shell.
-        navigateFallbackDenylist: [/\.(xml|txt)$/, /^\/google[0-9a-f]+\.html$/, /^\/(resume-examples|portfolio-examples|guides)(\/|$)/],
+        navigateFallbackDenylist: [/\.(xml|txt|json)$/, /^\/\.well-known\//, /^\/google[0-9a-f]+\.html$/, /^\/(resume-examples|portfolio-examples|guides)(\/|$)/],
         cleanupOutdatedCaches: true,
       },
       devOptions: { enabled: false },

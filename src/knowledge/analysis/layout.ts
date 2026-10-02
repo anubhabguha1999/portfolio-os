@@ -91,14 +91,23 @@ function toSegments(items: RawTextItem[]): Segment[] {
       let text = '';
       let prev: RawTextItem | null = null;
       for (const it of cur) {
+        const em = Math.max(prev?.fontSize ?? 0, it.fontSize);
+        // A blank stretch of 1.5em+ inside a line separates items (skill chips, "A   B" lists): keep that as " · ".
+        if (!it.text.trim()) {
+          if (it.width > em * 1.5 && text && !/·\s*$/.test(text)) text = `${text.trimEnd()} · `;
+          else if (!/\s$/.test(text)) text += ' ';
+          prev = it;
+          continue;
+        }
         if (prev) {
           const gap = it.x - (prev.x + prev.width);
-          const needsSpace = gap > Math.max(prev.fontSize, it.fontSize) * 0.12 && !/\s$/.test(text) && !/^\s/.test(it.text);
-          if (needsSpace) text += ' ';
+          if (gap > em * 1.5 && !/·\s*$/.test(text)) text = `${text.trimEnd()} · `;
+          else if (gap > em * 0.12 && !/\s$/.test(text) && !/^\s/.test(it.text)) text += ' ';
         }
         text += it.text;
         prev = it;
       }
+      text = text.replace(/\s·\s*$/, '');
       const box = union(cur);
       const confs = cur.map((c) => c.confidence).filter((c): c is number => typeof c === 'number');
       const sizes = cur.map((c) => c.fontSize);
@@ -169,9 +178,14 @@ function readingOrder(segs: Segment[], pageWidth: number): Segment[] {
   const rows = rowsOf(byY);
   const size = median(segs.map((s) => s.fontSize)) || 10;
   const locked = new Set<Segment>();
+  // In a two-column page, lines of the sidebar and the main column often share baselines and
+  // look like a 2-cell table. Cells that split exactly at the page gutter are columns, not a table.
+  const pageGutter = findGutter(segs, pageWidth);
+  const splitsAtGutter = (run: Row[]) =>
+    pageGutter !== null && run.every((r) => r.segs.length <= 2 && r.segs.every((s) => s.x + s.width <= pageGutter || s.x >= pageGutter) && (r.segs.length < 2 || (r.segs[0]!.x + r.segs[0]!.width <= pageGutter && r.segs[1]!.x >= pageGutter)));
   for (const t of findTables(rows, size)) {
     const run = rows.slice(t.from, t.to + 1);
-    if (tableLike(run)) for (const r of run) for (const s of r.segs) locked.add(s);
+    if (tableLike(run) && !splitsAtGutter(run)) for (const r of run) for (const s of r.segs) locked.add(s);
   }
   const gutter = findGutter(segs.filter((s) => !locked.has(s)), pageWidth);
   if (gutter === null) return byY;
@@ -451,7 +465,7 @@ export function analyseLayout(raw: RawPage[], opts: LayoutOptions = { tables: tr
 
     if (opts.images) for (const img of p.images) blocks.push({ id: blockId(p.page), page: p.page, type: 'image', ...img, text: '', lines: [] });
     if (footer.length) blocks.push(makeBlock(p.page, 'footer', footer));
-    return { page: p.page, width: p.width, height: p.height, ocr: p.ocr, blocks };
+    return { page: p.page, width: p.width, height: p.height, ocr: p.ocr, ...(p.hardBreaks ? { hardBreaks: true } : {}), blocks };
   });
 }
 
@@ -549,7 +563,7 @@ export function pageText(page: ExtractedPage, opts: { headersFooters?: boolean }
     if ((b.type === 'header' || b.type === 'footer') && !opts.headersFooters) continue;
     if (b.type === 'list') parts.push((b.items ?? []).map((i) => `• ${i}`).join('\n'));
     else if (b.type === 'table') parts.push((b.rows ?? []).map((r) => r.join(' | ')).join('\n'));
-    else if (b.type === 'paragraph') parts.push(reflow(b.lines, right).join('\n'));
+    else if (b.type === 'paragraph') parts.push((page.hardBreaks ? b.lines.map((l) => l.text) : reflow(b.lines, right)).join('\n'));
     else parts.push(b.text);
   }
   return parts.join('\n\n');

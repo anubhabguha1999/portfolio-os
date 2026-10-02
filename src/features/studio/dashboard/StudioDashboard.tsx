@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/misc';
 import { BRAND } from '@/config/brand';
+import { RESUME_TEMPLATE_COUNT } from '@/studio/templates/count';
 import { listProjects, type ProjectSummary } from '@/lib/storage/projects';
 import { listDocuments, listResumes, type StudioSummary } from '@/studio/storage/repo';
 import { listDocs } from '@/knowledge/storage/repo';
@@ -153,7 +154,7 @@ export default function StudioDashboard() {
             icon={<FileText className="size-5" />}
             title="Resume Studio"
             tagline="Build professional resumes and CVs"
-            body="Ten templates, real pagination, fit-to-one-page, ATS checks — export vector PDF, editable DOCX, TXT and JSON."
+            body={`${RESUME_TEMPLATE_COUNT} templates, real pagination, fit-to-one-page, ATS checks — export vector PDF, editable DOCX, TXT and JSON.`}
             accent="#3ecf8e"
             stat={`${resumes.length} version${resumes.length === 1 ? '' : 's'}`}
             actions={

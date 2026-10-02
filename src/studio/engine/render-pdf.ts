@@ -6,6 +6,8 @@ import { jsPDF } from 'jspdf';
 import type { LaidDocument, Prim } from './flow';
 import type { RasterImage } from '@/lib/export/assets';
 import { variantOf } from './measure';
+import { ICON_STROKE, vectorIcon } from './icons';
+import { EMBED_NS } from '@/studio/export/embedded';
 
 export type RasterMap = Record<string, RasterImage>;
 
@@ -28,6 +30,8 @@ export function renderLaidPdf(laid: LaidDocument, images: RasterMap, o: PdfOutpu
       keywords: laid.meta.keywords.join(', '),
       creator: laid.meta.creator,
     });
+    // A copy of the printed content, so this PDF imports back exactly (see export/embedded.ts).
+    if (laid.data) doc.addMetadata(laid.data, EMBED_NS);
     try {
       doc.setLanguage((laid.meta.lang || 'en-US') as Parameters<typeof doc.setLanguage>[0]);
     } catch {
@@ -46,7 +50,7 @@ export function renderLaidPdf(laid: LaidDocument, images: RasterMap, o: PdfOutpu
           fontKey = key;
         }
         doc.setTextColor(p.color);
-        doc.text(p.text, p.x, p.y, p.tracking ? { charSpace: p.tracking } : undefined);
+        doc.text(p.text, p.x, p.y, { ...(p.tracking ? { charSpace: p.tracking } : {}), ...(p.invisible ? { renderingMode: 'invisible' as const } : {}) });
         if (p.underline) {
           doc.setDrawColor(p.color);
           doc.setLineWidth(Math.max(0.12, p.size * 0.012));
@@ -96,6 +100,35 @@ export function renderLaidPdf(laid: LaidDocument, images: RasterMap, o: PdfOutpu
       case 'link':
         if (o.links !== false) doc.link(p.x, p.y, p.w, p.h, { url: p.url });
         break;
+      case 'icon': {
+        // Real vector paths, scaled from the icon's 24-unit grid.
+        const icon = vectorIcon(p.name);
+        const k = p.size / 24;
+        const X = (v: number) => p.x + v * k;
+        const Y = (v: number) => p.y + v * k;
+        if (icon.filled) doc.setFillColor(p.color);
+        else {
+          doc.setDrawColor(p.color);
+          doc.setLineWidth(ICON_STROKE * k);
+          doc.setLineCap('round');
+          doc.setLineJoin('round');
+        }
+        for (const shape of icon.shapes) {
+          for (const c of shape) {
+            if (c.op === 'M') doc.moveTo(X(c.x), Y(c.y));
+            else if (c.op === 'L') doc.lineTo(X(c.x), Y(c.y));
+            else if (c.op === 'C') doc.curveTo(X(c.x1), Y(c.y1), X(c.x2), Y(c.y2), X(c.x), Y(c.y));
+            else doc.close();
+          }
+          if (icon.filled) doc.fill();
+          else doc.stroke();
+        }
+        if (!icon.filled) {
+          doc.setLineCap('butt');
+          doc.setLineJoin('miter');
+        }
+        break;
+      }
     }
   };
   laid.pages.forEach((page, i) => {

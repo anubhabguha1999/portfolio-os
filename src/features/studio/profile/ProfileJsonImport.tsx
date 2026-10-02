@@ -29,7 +29,7 @@ export function ProfileJsonImport() {
     const skipped = Object.values(c.data.entries).reduce((k, l) => k + l.length, 0);
     toast({
       tone: 'success',
-      title: c.mode === 'replace' ? 'Profile replaced from JSON' : 'Profile updated from JSON',
+      title: c.mode === 'replace' ? 'Profile replaced from your resume' : 'Profile updated from your resume',
       description: `${added !== null ? `${added} new item${added === 1 ? '' : 's'} added. ` : ''}Now ${n.experience} roles, ${n.education} education, ${n.projects} projects, ${n.skills} skills.${skipped ? ` ${skipped} resume-only entr${skipped === 1 ? 'y' : 'ies'} (languages etc.) are added when you create a resume from this file.` : ''}`,
     });
     setChoice(null);
@@ -37,9 +37,9 @@ export function ProfileJsonImport() {
 
   return (
     <Card className="p-4 sm:p-5">
-      <h2 className="text-[13.5px] font-semibold tracking-tight">Import from JSON</h2>
-      <p className="mb-3 mt-1 text-[12px] leading-relaxed text-fg-muted">Fill your profile, roles, education, projects and skills from a resume file. Your photo is kept.</p>
-      <JsonImportBox value={choice} onChange={setChoice} canReplace={hasContent} defaultMode={hasContent ? 'merge' : 'replace'} title="Choose a .json file" />
+      <h2 className="text-[13.5px] font-semibold tracking-tight">Import a resume</h2>
+      <p className="mb-3 mt-1 text-[12px] leading-relaxed text-fg-muted">Fill your profile, roles, education, projects and skills from a PDF, Word, text or JSON resume. Your photo is kept.</p>
+      <JsonImportBox value={choice} onChange={setChoice} canReplace={hasContent} defaultMode={hasContent ? 'merge' : 'replace'} title="Choose a resume file" />
       {choice && (
         <div className="mt-3 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setChoice(null)}>

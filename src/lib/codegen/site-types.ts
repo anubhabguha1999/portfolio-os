@@ -46,6 +46,8 @@ export interface SectionBase {
   spacing: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   /** Entrance animation (only used when animations are enabled). */
   animation: 'none' | 'fade' | 'slide' | 'scale' | 'blur';
+  /** Timing of the entrance animation: milliseconds, easing, and whether it plays on load instead of on scroll. */
+  motion: { duration: number; delay: number; easing: 'ease' | 'ease-out' | 'ease-in-out' | 'spring' | 'linear'; onLoad: boolean };
   hideOn: { mobile: boolean; tablet: boolean; desktop: boolean };
 }
 
@@ -286,7 +288,10 @@ export interface PortfolioData {
     sticky: boolean;
     links: SiteLink[];
   };
-  footer: { enabled: boolean; text: string };
+  /** `text` may contain {year}; `credit` adds a "Built with Portfolio OS" note. */
+  footer: { enabled: boolean; text: string; credit: boolean };
+  /** Site-wide extras: smooth in-page scrolling, a back-to-top button and a film-grain overlay. */
+  chrome: { smoothScroll: boolean; backToTop: boolean; grain: boolean };
   social: SocialLink[];
   sections: Section[];
   projects: Project[];

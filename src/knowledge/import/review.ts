@@ -294,12 +294,3 @@ export function applyReview(review: Review, profile: Profile, library: Library, 
   const languages = review.languages.filter((l) => l.decision === 'accept' && l.language.trim()).map((l) => ({ title: l.language.trim(), subtitle: l.fluency.trim() }));
   return { profile: nextProfile, library: next, entries: languages.length ? { languages } : {}, provenance: prov, counts, touched };
 }
-
-/** Lower confidence than this needs a human look. */
-export const needsReview = (confidence: number) => confidence < REVIEW_THRESHOLD;
-
-export function reviewSummary(r: Review): Record<LibraryKind | 'profile', number> {
-  const c = { profile: r.profile.length, experience: 0, projects: 0, education: 0, skills: 0, certifications: 0, achievements: 0 };
-  for (const it of r.items) c[it.kind]++;
-  return c;
-}

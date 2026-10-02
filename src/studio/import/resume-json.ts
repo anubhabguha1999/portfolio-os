@@ -24,14 +24,16 @@ import {
 import type { SamplePersona } from '@/studio/model/sample';
 import type { Library, LibraryKind, LocalEntry, Profile, ResumeDoc, ResumeSectionKind, SocialLink } from '@/studio/model/types';
 import { uid } from '@/utils/id';
-import { isKnowledgeExport, resumeFromKnowledgeExport } from '@/knowledge/import/from-export';
+import { isKnowledgeExport, resumeDataFromSemantic, resumeFromKnowledgeExport } from '@/knowledge/import/from-export';
+import type { SemanticResume } from '@/knowledge/types';
 
 export const MAX_JSON_BYTES = 2 * 1024 * 1024;
 
 export type ImportEntries = Record<string, Array<Partial<LocalEntry>>>;
 
 export interface ResumeJsonImport {
-  source: 'json-resume' | 'portfolio-os';
+  /** 'document': detected from a PDF, Word or text resume. */
+  source: 'json-resume' | 'portfolio-os' | 'document';
   profile: Profile;
   library: Library;
   /** Resume-only entries keyed by section kind (languages, interests, volunteer…). */
@@ -254,6 +256,24 @@ function fromPortfolioOs(data: Obj, warnings: string[]): ResumeJsonImport {
   return { source: 'portfolio-os', profile, library: lib, entries, warnings };
 }
 
+/* -------------------------- detected resumes ------------------------- */
+
+/** Same coercion as a Portfolio OS export: detected values are data, never trusted. */
+function sanitizedDetected(found: ReturnType<typeof resumeDataFromSemantic>, warnings: string[]): ResumeJsonImport {
+  return fromPortfolioOs({ profile: found.profile, library: found.library, resume: { sections: Object.entries(found.entries).map(([kind, entries]) => ({ kind, entries })) } }, warnings);
+}
+
+/** A resume detected from a PDF, Word or text file, in the same shape as a JSON import. */
+export function importFromSemanticResume(r: SemanticResume, fileName: string): ResumeJsonImport {
+  const warnings: string[] = [];
+  const out = { ...sanitizedDetected(resumeDataFromSemantic(r, fileName), warnings), source: 'document' as const };
+  const c = importCounts(out);
+  if (!out.profile.name) warnings.push('No name found. The resume will show "Your Name" until you add one.');
+  if (!c.experience && !c.education && !c.projects) warnings.push('No work, education or projects were recognised. Check the file, or add them in the editor.');
+  warnings.push('Fields were detected by local rules. Check them in the editor.');
+  return out;
+}
+
 /* ------------------------------ entry ------------------------------- */
 
 export function parseResumeJson(text: string): ResumeJsonImport {
@@ -275,8 +295,7 @@ export function parseResumeJson(text: string): ResumeJsonImport {
       found = null;
     }
     if (!found) throw new ResumeJsonError('This Extract Your Data export has no resume content. Export it from a resume or CV, or set the document type to Resume and extract again.');
-    // Same coercion as a Portfolio OS export: the file is data, never trusted.
-    out = fromPortfolioOs({ profile: found.profile, library: found.library, resume: { sections: Object.entries(found.entries).map(([kind, entries]) => ({ kind, entries })) } }, warnings);
+    out = sanitizedDetected(found, warnings);
     warnings.push('Fields were detected from a PDF export by local rules. Check them before use.');
   } else if (data.format === 'portfolio-os-resume' || (isObj(data.profile) && isObj(data.library))) out = fromPortfolioOs(data, warnings);
   else if (isObj(data.basics) || Array.isArray(data.work) || Array.isArray(data.education) || Array.isArray(data.skills)) out = fromJsonResume(data, warnings);

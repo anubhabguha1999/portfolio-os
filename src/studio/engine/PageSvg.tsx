@@ -5,6 +5,7 @@
  */
 import { memo } from 'react';
 import type { FontFamily, LaidPage, Prim } from './flow';
+import { ICON_STROKE, iconPathData, vectorIcon } from './icons';
 
 export const FONT_STACKS: Record<FontFamily, string> = {
   helvetica: 'Helvetica, Arial, "Liberation Sans", "Nimbus Sans", sans-serif',
@@ -17,6 +18,7 @@ const PT_MM = 25.4 / 72;
 function PrimEl({ p, imageUrl, links = true }: { p: Prim; imageUrl: (src: string) => string | undefined; links?: boolean }) {
   switch (p.k) {
     case 'text': {
+      if (p.invisible) return null;
       const el = (
         <text
           x={p.x}
@@ -53,6 +55,20 @@ function PrimEl({ p, imageUrl, links = true }: { p: Prim; imageUrl: (src: string
       const url = imageUrl(p.src);
       if (!url) return <rect x={p.x} y={p.y} width={p.w} height={p.h} fill="#e5e7eb" />;
       return <image href={url} x={p.x} y={p.y} width={p.w} height={p.h} preserveAspectRatio="none" />;
+    }
+    case 'icon': {
+      const filled = vectorIcon(p.name).filled;
+      return (
+        <path
+          d={iconPathData(p.name)}
+          transform={`translate(${p.x} ${p.y}) scale(${p.size / 24})`}
+          fill={filled ? p.color : 'none'}
+          stroke={filled ? undefined : p.color}
+          strokeWidth={filled ? undefined : ICON_STROKE}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
     }
     default:
       return null;

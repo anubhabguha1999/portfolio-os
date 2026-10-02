@@ -100,7 +100,12 @@ function doc(input: LetterInput, m: ReturnType<typeof metrics>, nodes: FlowNode[
     columns: [{ id: 'main', x: m.margin.left, width: m.contentW, nodes }],
     meta: input.meta,
     links: true,
-    footer: p.pageNumbers ? { runs: [{ text: '{page} / {pages}' }], style: { font: 'helvetica', size: 7.5, color: '#6b7280' }, align: 'center', pages: 'rest' } : null,
+    // Footer text runs on every page (with the page number after it); a number alone skips page 1.
+    footer: p.footerText.trim()
+      ? { runs: [{ text: p.footerText.trim() }, ...(p.pageNumbers ? [{ text: '    ·    {page} / {pages}' }] : [])], style: { font: 'helvetica', size: 7.5, color: '#6b7280' }, align: 'center', pages: 'all' }
+      : p.pageNumbers
+        ? { runs: [{ text: '{page} / {pages}' }], style: { font: 'helvetica', size: 7.5, color: '#6b7280' }, align: 'center', pages: 'rest' }
+        : null,
     header: p.headerText.trim() ? { runs: [{ text: p.headerText.trim() }], style: { font: 'helvetica', size: 7.5, color: '#6b7280' }, align: 'left', pages: 'all' } : null,
     ...extra,
   };

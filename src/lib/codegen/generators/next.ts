@@ -333,7 +333,7 @@ export class NextJsGenerator implements ProjectGenerator {
   readonly framework = 'nextjs' as const;
 
   async generateProject(portfolio: Portfolio, options: ExportOptions, build?: SiteBuild): Promise<GeneratedProject> {
-    const b = build ?? (await buildSiteData(portfolio, { structure: options.structure, siteUrl: options.siteUrl }));
+    const b = build ?? (await buildSiteData(portfolio, { structure: options.structure, siteUrl: options.siteUrl, animations: options.animations }));
     const ctx = createContext(portfolio, { ...options, framework: 'nextjs' }, b);
     const files: GeneratedFile[] = [...libraryFiles(ctx)];
     const tailwind = ctx.styling === 'tailwind';

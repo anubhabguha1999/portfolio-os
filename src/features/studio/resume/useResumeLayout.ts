@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo } from 'react';
+import { embeddedResumeData } from '@/studio/export/embedded';
 import type { FlowDoc, LaidDocument } from '@/studio/engine/flow';
 import { layoutFlow } from '@/studio/engine/layout';
 import { resolveResume, type ResolvedResume } from '@/studio/model/resolve';
@@ -20,7 +21,8 @@ export function composeResume(resume: ResumeDoc, library: Library, profile: Prof
   const template = getResumeTemplate(templateId);
   const style = fit === undefined ? resume.style : { ...resume.style, fit };
   const resolved = resolveResume({ ...resume, style }, library, profile);
-  return { resolved, flow: template.compose(resolved), template };
+  // Embedded in the PDF (when document metadata is on) so it imports back exactly.
+  return { resolved, flow: { ...template.compose(resolved), data: JSON.stringify(embeddedResumeData(resolved)) }, template };
 }
 
 export function layoutResume(resume: ResumeDoc, library: Library, profile: Profile, templateId?: string): ResumeLayout {

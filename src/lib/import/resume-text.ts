@@ -100,9 +100,35 @@ function parseExperience(lines: string[]): ExperienceItem[] {
     headerLines = 0;
     return it;
   };
-  for (const raw of lines) {
+  // After "Key achievements" / "Highlights", lines are achievements even without bullet characters
+  // (PDFs that draw bullets as shapes). A line continues the previous one until a sentence ends.
+  let inAchievements = false;
+  const startsEntry = (i: number) =>
+    lines
+      .slice(i + 1)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .slice(0, 2)
+      .some((l) => !!findDateRange(l) && !isBullet(l));
+  for (const [i, raw] of lines.entries()) {
     const line = raw.trim();
     if (!line) continue;
+    if (/^(key\s+)?(achievements|highlights|accomplishments|responsibilities)\s*:?$/i.test(line)) {
+      if (!cur) cur = start();
+      inAchievements = true;
+      continue;
+    }
+    if (inAchievements && cur && !isBullet(line)) {
+      if (findDateRange(line) || startsEntry(i)) inAchievements = false;
+      else {
+        const a = cur.achievements;
+        const last = a[a.length - 1];
+        if (last !== undefined && !/[.!?]["')]?$/.test(last)) a[a.length - 1] = `${last} ${line}`.replace(/(\w)- (\w)/g, '$1$2');
+        else a.push(line);
+        lastWasBullet = true;
+        continue;
+      }
+    }
     if (isBullet(line)) {
       if (!cur) cur = start();
       cur.achievements.push(unbullet(line));
@@ -326,7 +352,9 @@ function parseProjects(lines: string[]): ProjectItem[] {
       continue;
     }
     const c: ProjectItem | null = cur;
-    const newHeader = !c || c.features.length > 0 || (Boolean(c.description) && text.length < 70 && !/[.!?]$/.test(text));
+    // A wrapped description line (mid-sentence, or starting in lower case / "(") is not a new project.
+    const continues = !!c?.description && (!/[.!?]["')]?$/.test(c.description) || /^[a-z(]/.test(text));
+    const newHeader = !c || c.features.length > 0 || (Boolean(c.description) && !continues && text.length < 70 && !/[.!?]$/.test(text));
     if (newHeader) {
       const m = /^(.+?)\s+(?:—|–|-|\||:)\s+(.+)$/.exec(text);
       let fresh: ProjectItem;
@@ -386,8 +414,33 @@ function parseAchievements(lines: string[]): AchievementItem[] {
 
 /* --------------------------------- Parser --------------------------------- */
 
+/** Section names that are not one of the parsed kinds but still end the current section. */
+const OTHER_SECTIONS = /^(languages?|interests|hobbies|strengths|references|volunteer(ing)?|publications|activities|extra[-\s]?curricular( activities)?|additional information|personal (details|information)|declaration|links|social|soft skills)$/i;
+/** Sections whose entries often have ALL-CAPS titles ("PERSONAL CHATBOT WITH AI"). */
+const ENTRY_SECTIONS = new Set<ResumeSectionKind>(['projects', 'experience', 'education', 'certifications', 'achievements']);
+
+/** "Bachelor of Technology, Computer Science and" + "Engineering": a line ending in a joining word continues. */
+function joinWrapped(lines: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]!;
+    while (/\b(and|of|in|for|the|with|&)$/i.test(line.trim()) && !isBullet(line)) {
+      // Blank lines can sit between the two halves (separate blocks in a PDF).
+      let j = i + 1;
+      while (j < lines.length && !lines[j]!.trim() && j - i <= 2) j++;
+      const next = lines[j]?.trim();
+      const h = next ? headingKind(next) : null;
+      if (!next || next.length > 60 || isBullet(next) || findDateRange(next) || (h && h.kind !== 'other')) break;
+      line = `${line.trimEnd()} ${next}`;
+      i = j;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
 export function parseResumeStructure(text: string): ParsedResume {
-  const lines = text.replace(/\r\n?/g, '\n').replace(/\t/g, '  ').split('\n').map((l) => l.replace(/\s+$/, ''));
+  const lines = joinWrapped(text.replace(/\r\n?/g, '\n').replace(/\t/g, '  ').split('\n').map((l) => l.replace(/\s+$/, '')));
   const blocks: Array<{ kind: ResumeSectionKind; heading: string; lines: string[] }> = [];
   const header: string[] = [];
   let current: { kind: ResumeSectionKind; heading: string; lines: string[] } | null = null;
@@ -396,7 +449,9 @@ export function parseResumeStructure(text: string): ParsedResume {
     // The first line is always the name, even when it is written in capitals; a capitalised
     // line right under it that is not a known section ("CONTENT & SEO SPECIALIST") is the headline.
     const headlineSlot = !current && header.length === 1 && h?.kind === 'other';
-    if (h && (header.length > 0 || current) && !headlineSlot) {
+    // Inside Projects / Experience…, an unknown ALL-CAPS line is an entry title, not a new section.
+    const entryTitle = !!current && ENTRY_SECTIONS.has(current.kind) && h?.kind === 'other' && !OTHER_SECTIONS.test(line.trim().replace(/:$/, ''));
+    if (h && (header.length > 0 || current) && !headlineSlot && !entryTitle) {
       current = { ...h, lines: [] };
       blocks.push(current);
       continue;

@@ -46,7 +46,8 @@ export function defaultFrameworkOptions(p: Portfolio, framework: Framework): Exp
   return {
     ...DEFAULT_EXPORT_OPTIONS,
     framework,
-    animations: p.settings.animations,
+    // The site's own animation settings: Site › Animations and Theme › Enable animations.
+    animations: p.settings.animations && p.theme.motion.enabled,
     siteUrl: p.metadata.siteUrl && checkSiteUrl(p.metadata.siteUrl).ok ? p.metadata.siteUrl.trim() : '',
     projectName: previewProjectName(p.metadata.title || 'my-portfolio'),
     images: framework === 'nextjs' ? 'optimized' : 'img',

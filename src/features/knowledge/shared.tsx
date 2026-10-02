@@ -6,6 +6,7 @@ import { Segmented, Switch, TextInput } from '@/components/ui/Field';
 import { ProgressBar } from '@/components/ui/misc';
 import { cn } from '@/utils/cn';
 import { useKnowledgeJobs, type Job } from '@/knowledge/store/jobs';
+import { REVIEW_THRESHOLD } from '@/knowledge/import/review';
 import { DEFAULT_EXTRACTION_OPTIONS, DOCUMENT_TYPES, type DocStatus, type DocumentType, type ExtractionOptions, type KnowledgeDoc } from '@/knowledge/types';
 
 export const ACCEPT = '.pdf,.txt,.md,.markdown,.json,application/pdf,text/plain,text/markdown,application/json';
@@ -38,7 +39,7 @@ export function ConfidenceBadge({ value, className }: { value: number; className
         <CheckCircle2 className="size-3" aria-hidden="true" /> High confidence
       </span>
     );
-  if (value >= 0.75)
+  if (value >= REVIEW_THRESHOLD)
     return (
       <span className={cn('inline-flex items-center gap-1 text-[11px] text-fg-muted', className)} title={`${pct}% confidence`}>
         <CheckCircle2 className="size-3" aria-hidden="true" /> {pct}%
@@ -183,6 +184,7 @@ export function PasswordDialog() {
 
 /* --------------------------- extraction settings --------------------- */
 
+/** "1-3, 5" → [1, 2, 3, 5], clamped to the document; null when nothing valid was typed. */
 export function parsePages(input: string, max: number): number[] | null {
   const s = input.trim();
   if (!s) return null;
@@ -217,6 +219,7 @@ export function ExtractionSettingsDialog({
   const [o, setO] = useState<ExtractionOptions>(initial);
   const [type, setType] = useState<DocumentType | 'auto'>('auto');
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [range, setRange] = useState('');
   useEffect(() => {
     if (!open) return;
     setO({ ...initial, password: undefined });
@@ -255,8 +258,8 @@ export function ExtractionSettingsDialog({
       }
     >
       <div className="grid gap-5">
+        <p className="-mb-2 text-[12px] text-fg-subtle">Text is always extracted. Choose what else to include:</p>
         <div className="grid gap-2.5 sm:grid-cols-2">
-          <Switch checked={o.text} onChange={set('text')} label="Text" disabled />
           <Switch checked={o.metadata} onChange={set('metadata')} label="Metadata" />
           <Switch checked={o.links} onChange={set('links')} label="Links" />
           <Switch checked={o.tables} onChange={set('tables')} label="Tables" />
@@ -268,7 +271,7 @@ export function ExtractionSettingsDialog({
           value={o.ocr}
           onChange={(v) => setO((x) => ({ ...x, ocr: v }))}
           options={[
-            { value: 'auto', label: 'Auto', title: 'Run OCR when pages contain no selectable text' },
+            { value: 'auto', label: 'Auto', title: 'Run OCR when the selected pages have no selectable text. In a partly scanned file, the scanned pages are offered for OCR afterwards.' },
             { value: 'always', label: 'Always' },
             { value: 'never', label: 'Never' },
           ]}
@@ -300,14 +303,25 @@ export function ExtractionSettingsDialog({
             <legend className="flex w-full items-center justify-between text-[12.5px] font-medium">
               Import pages
               <span className="flex gap-1">
-                <Button size="xs" variant="ghost" onClick={() => setSelected(new Set(Array.from({ length: pageCount }, (_, i) => i + 1)))}>
+                <Button size="xs" variant="ghost" onClick={() => (setSelected(new Set(Array.from({ length: pageCount }, (_, i) => i + 1))), setRange(''))}>
                   All
                 </Button>
-                <Button size="xs" variant="ghost" onClick={() => setSelected(new Set())}>
+                <Button size="xs" variant="ghost" onClick={() => (setSelected(new Set()), setRange(''))}>
                   None
                 </Button>
               </span>
             </legend>
+            <input
+              className="app-input mt-2 !h-8 !text-[12.5px]"
+              placeholder={`Type pages, e.g. 1-3, ${Math.min(pageCount, 5)}`}
+              aria-label="Pages to import"
+              value={range}
+              onChange={(e) => {
+                setRange(e.target.value);
+                const pages = parsePages(e.target.value, pageCount);
+                if (pages) setSelected(new Set(pages));
+              }}
+            />
             <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-auto">
               {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
                 <label key={n} className={cn('inline-flex h-8 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2 text-[12px] tabular-nums', selected.has(n) ? 'border-accent bg-accent-soft text-fg' : 'border-line text-fg-muted')}>

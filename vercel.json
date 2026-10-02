@@ -52,7 +52,7 @@
       "destination": "/guides/:slug/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!\\.well-known/)(?!.*\\.[A-Za-z0-9]+$).*)",
       "destination": "/app.html"
     }
   ],

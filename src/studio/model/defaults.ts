@@ -182,7 +182,7 @@ export const DEFAULT_RESUME_STYLE: ResumeStyle = {
   headerAlign: 'left',
   headerHeight: 'normal',
   borderStyle: 'hairline',
-  iconStyle: 'none',
+  iconStyle: 'glyph',
   photo: 'none',
   pageNumbers: false,
   pageLimit: 0,

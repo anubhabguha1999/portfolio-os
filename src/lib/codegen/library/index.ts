@@ -19,8 +19,13 @@ export const GLOBALS_PATH: Record<'nextjs' | 'react-vite', string> = { nextjs: '
 export { COMPONENT_NAME };
 
 /** Shared base styles. In Tailwind mode the colliding tokens are prefixed with --pos-. */
-export function baseCss(tailwind: boolean): string {
+export function baseCss(tailwind: boolean, chrome: { smoothScroll: boolean; grain: boolean } = { smoothScroll: true, grain: false }): string {
   const v = (name: string) => `var(--${tailwind ? 'pos-' : ''}${name})`;
+  const smooth = chrome.smoothScroll ? `\n\n@media (prefers-reduced-motion: no-preference) {\n  html {\n    scroll-behavior: smooth;\n  }\n}` : '';
+  // Film grain: the same SVG noise overlay as the HTML export.
+  const grain = chrome.grain
+    ? `\n\nbody::after {\n  content: "";\n  position: fixed;\n  inset: 0;\n  z-index: 90;\n  pointer-events: none;\n  opacity: 0.06;\n  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");\n}`
+    : '';
   return `*,
 *::before,
 *::after {
@@ -28,9 +33,8 @@ export function baseCss(tailwind: boolean): string {
 }
 
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
-}
+}${smooth}${grain}
 
 body {
   margin: 0;
@@ -265,13 +269,13 @@ function styleFiles(ctx: GenCtx, out: LibOut): GeneratedFile[] {
 ${TAILWIND_THEME}
 
 @layer base {
-${indent(baseCss(true))}
+${indent(baseCss(true, ctx.data.chrome))}
 }
 ${custom}`,
       ),
     );
   } else {
-    files.push(text('src/styles/base.css', baseCss(false)));
+    files.push(text('src/styles/base.css', baseCss(false, ctx.data.chrome)));
     const imports = [`@import "${toStyles}tokens.css";`, `@import "${toStyles}base.css";`];
     if (ctx.styling === 'css') {
       files.push(text('src/styles/components.css', `/* Component styles. Values come from tokens.css. */\n\n${out.collector.output()}`));

@@ -151,12 +151,21 @@ export function extractResume(pages: ExtractedPage[], links: ExtractedLink[], do
   if (!skills.length) for (const s of findSkillsInText(text)) addSkill(s.original, 0.5, s.category);
 
   const languages: SemanticResume['languages'] = [];
+  const FLUENCY = /\b(native|bilingual|fluent|proficien|professional|intermediate|advanced|basic|beginner|elementary|limited|conversational|working|mother tongue|[abc][12])\b/i;
   for (const o of parsed.other) {
     if (!/^languages?$/i.test(o.heading.trim())) continue;
+    // Grids print names in one row and levels in the next: pair them in reading order.
+    const names: string[] = [];
+    const levels: string[] = [];
     for (const part of o.content.split(/[\n,;]|\s[|·•]\s/)) {
-      const m = /^[-•\s]*([A-Za-zÀ-ÿ ]{2,30}?)\s*(?:[(:–-]\s*([^)]+?)\)?)?\s*$/.exec(part.trim());
-      if (m?.[1] && !/^\d/.test(m[1])) languages.push({ language: m[1].trim(), fluency: (m[2] ?? '').trim() });
+      const t = part.replace(/^[-•\s]+/, '').trim();
+      if (!t) continue;
+      const m = /^([A-Za-zÀ-ÿ ]{2,30}?)\s*[(:–-]\s*([^)]+?)\)?\s*$/.exec(t);
+      if (m?.[1] && !FLUENCY.test(m[1])) languages.push({ language: m[1].trim(), fluency: m[2]!.trim() });
+      else if (FLUENCY.test(t)) levels.push(t);
+      else if (/^[A-Za-zÀ-ÿ ]{2,30}$/.test(t)) names.push(t);
     }
+    names.forEach((n, i) => languages.push({ language: n, fluency: levels[i] ?? '' }));
   }
 
   return {

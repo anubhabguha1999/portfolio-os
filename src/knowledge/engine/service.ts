@@ -10,7 +10,7 @@ import { parseResumeJson, ResumeJsonError } from '@/studio/import/resume-json';
 import type { AnalyseOutput } from '../analysis/pipeline';
 import { textToRawPages } from '../analysis/pipeline';
 import { OcrCancelled, OcrSession, OCR_SCALE } from '../ocr/ocr';
-import { closePdf, looksScanned, openPdf, PdfOpenError, PdfPasswordError, readMetadata, readPage, renderPage } from '../pdf/pdf';
+import { closePdf, looksScanned, openPdf, PdfOpenError, PdfPasswordError, readMetadata, readPage, readXmp, renderPage } from '../pdf/pdf';
 import { createDoc, currentExtraction, findByHash, getDoc, getOriginal, listDocs, patchDoc, saveExtraction } from '../storage/repo';
 import { DEFAULT_EXTRACTION_OPTIONS, type DocumentType, type Extraction, type ExtractionOptions, type KnowledgeDoc, type PdfMetadata, type RawPage, type SemanticData, type SemanticResume } from '../types';
 import { analyseInWorker, indexInWorker, searchInWorker } from './worker-client';
@@ -73,6 +73,8 @@ export interface PdfRead {
   metadata: PdfMetadata;
   /** Selected pages that look like scans (no real text). */
   scanned: number[];
+  /** Raw XMP metadata (resumes exported from Portfolio OS carry their content here). */
+  xmp: string | null;
 }
 
 /** Read the selected pages of a PDF. Throws PdfPasswordError when a password is needed. */
@@ -81,6 +83,7 @@ export async function readPdf(bytes: ArrayBuffer, options: ExtractionOptions, ct
   const pdf = await openPdf(bytes, options.password);
   try {
     const metadata = await readMetadata(pdf);
+    const xmp = await readXmp(pdf);
     const pages = (options.pages?.length ? options.pages : Array.from({ length: pdf.numPages }, (_, i) => i + 1)).filter((n) => n >= 1 && n <= pdf.numPages);
     const raw: RawPage[] = [];
     for (let i = 0; i < pages.length; i++) {
@@ -89,7 +92,7 @@ export async function readPdf(bytes: ArrayBuffer, options: ExtractionOptions, ct
       ctl.onProgress?.({ stage: 'Extracting text', page: i + 1, total: pages.length, value: 0.05 + 0.75 * (i / pages.length) });
       raw.push(await readPage(pdf, n, { images: options.images, links: options.links }));
     }
-    return { raw, metadata, scanned: raw.filter(looksScanned).map((p) => p.page) };
+    return { raw, metadata, scanned: raw.filter(looksScanned).map((p) => p.page), xmp };
   } finally {
     closePdf(pdf);
   }

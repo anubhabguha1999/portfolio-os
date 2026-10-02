@@ -212,7 +212,7 @@ export function Hero({ section }: { section: HeroSection }) {
         </div>
       )}
       <div ${s.c('inner')} data-layout={layout}>
-        ${reveal ? '<Reveal animation={section.animation}>{content}</Reveal>' : '{content}'}
+        ${reveal ? '<Reveal animation={section.animation} motion={section.motion}>{content}</Reveal>' : '{content}'}
         {section.image && <Img image={section.image} className={${s.x('image')}} sizes="(min-width: 768px) 420px, 60vw" priority />}
       </div>
     </section>

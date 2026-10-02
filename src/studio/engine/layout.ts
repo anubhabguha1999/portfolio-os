@@ -89,6 +89,8 @@ interface Word {
   w: number;
   /** Width of the space preceding this word (0 at line start / glued). */
   gap: number;
+  /** Icon word: drawn as a vector icon, never left alone at a line end. */
+  icon?: string;
 }
 
 interface Line {
@@ -135,6 +137,8 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
     let x = 0;
     let maxSize = st.size;
     let pendingSpace = false;
+    /** Gap owed after an icon: its word follows on the same line. */
+    let gluedIcon = 0;
     const flush = (last = false) => {
       lines.push({ words: cur, width: x, size: maxSize, last });
       cur = [];
@@ -144,6 +148,20 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
     };
     const tracking = st.tracking ?? 0;
     for (const r of runs) {
+      if (r.icon) {
+        // An icon is one em-ish box, glued to the next word with a small fixed gap.
+        const size = r.size ?? st.size;
+        const box = size * PT * 0.9;
+        const g = pendingSpace && cur.length ? M.width(' ', r.font ?? st.font, false, false, size, tracking) : 0;
+        if (cur.length && x + g + box > maxW + 0.001) flush();
+        const gx = cur.length ? g : 0;
+        cur.push({ text: '', icon: r.icon, font: r.font ?? st.font, bold: false, italic: false, size, color: r.color ?? st.color, underline: false, tracking: 0, link: linksOn ? safeLink(r.link) : undefined, x: x + gx, w: box, gap: gx });
+        x += gx + box;
+        maxSize = Math.max(maxSize, size);
+        pendingSpace = false;
+        gluedIcon = box * 0.45;
+        continue;
+      }
       const font = r.font ?? st.font;
       const bold = r.bold ?? st.bold ?? false;
       const italic = r.italic ?? st.italic ?? false;
@@ -161,6 +179,28 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
         }
         let word = part;
         let w = M.width(word, font, bold, italic, size, tracking);
+        if (gluedIcon) {
+          // Keep the icon with its word: carry it to the next line if the pair does not fit.
+          const icon = cur[cur.length - 1];
+          if (icon?.icon && cur.length > 1 && x + gluedIcon + w > maxW + 0.001) {
+            cur.pop();
+            x = icon.x - icon.gap;
+            flush();
+            cur.push({ ...icon, x: 0, gap: 0 });
+            x = icon.w;
+            maxSize = Math.max(maxSize, icon.size);
+          }
+          const gx = gluedIcon;
+          gluedIcon = 0;
+          pendingSpace = false;
+          if (w <= maxW - x - gx + 0.001 || word.length <= 1) {
+            cur.push({ text: word, font, bold, italic, size, color, underline, tracking, link, x: x + gx, w, gap: 0 });
+            x += gx + w;
+            maxSize = Math.max(maxSize, size);
+            continue;
+          }
+          x += gx;
+        }
         if (cur.length && x + (pendingSpace ? spaceW : 0) + w > maxW + 0.001) flush();
         // Words longer than a whole line are broken by characters.
         if (w > maxW + 0.001 && word.length > 1) clippedWords++;
@@ -217,6 +257,18 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
     line.words.forEach((wd, i) => {
       if (justify && i > 0 && wd.gap > 0) shift += extra;
       const wx = x + off + wd.x + shift;
+      if (wd.icon) {
+        // Centred on the x-height of the line's text.
+        emit();
+        const mid = baseline - fsLine * 0.3;
+        out.push({ k: 'icon', name: wd.icon, x: wx, y: mid - wd.w / 2, size: wd.w, color: wd.color });
+        stats.shapes++;
+        if (wd.link) {
+          stats.links++;
+          out.push({ k: 'link', x: wx, y, w: wd.w, h: lh, url: wd.link });
+        }
+        return;
+      }
       const same =
         run &&
         !justify &&
@@ -267,9 +319,13 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
             const color = m.color ?? st.color;
             const fs = st.size * PT;
             const baseline = y + (lh - (ln.size * PT)) / 2 + ln.size * PT * 0.78;
-            if (m.kind === 'bullet') out.push({ k: 'circle', cx: x + indent * 0.4, cy: baseline - fs * 0.3, r: Math.max(0.35, fs * 0.13), fill: color });
-            else if (m.kind === 'square') out.push({ k: 'rect', x: x + indent * 0.4 - fs * 0.13, y: baseline - fs * 0.43, w: fs * 0.26, h: fs * 0.26, fill: color });
-            else {
+            if (m.kind === 'bullet' || m.kind === 'square') {
+              if (m.kind === 'bullet') out.push({ k: 'circle', cx: x + indent * 0.4, cy: baseline - fs * 0.3, r: Math.max(0.35, fs * 0.13), fill: color });
+              else out.push({ k: 'rect', x: x + indent * 0.4 - fs * 0.13, y: baseline - fs * 0.43, w: fs * 0.26, h: fs * 0.26, fill: color });
+              // The drawn dot is a shape; an invisible "•" makes the list readable to ATS and text extraction.
+              const bw = M.width('•', st.font, false, false, st.size);
+              out.push({ k: 'text', x: x + indent * 0.4 - bw / 2, y: baseline, w: bw, text: '•', font: st.font, bold: false, italic: false, size: st.size, color, invisible: true });
+            } else {
               const t = markerText(m);
               const mw = M.width(t, st.font, !!st.bold, false, st.size);
               out.push({ k: 'text', x: x + indent - mw - fs * 0.35, y: baseline, w: mw, text: t, font: st.font, bold: !!st.bold, italic: false, size: st.size, color });
@@ -792,6 +848,7 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
     pages,
     issues,
     meta: flow.meta,
+    ...(flow.data ? { data: flow.data } : {}),
     stats: {
       pages: total,
       images: stats.images,

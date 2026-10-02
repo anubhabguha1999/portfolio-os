@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
-import { AlertTriangle, Download, FileJson, X } from 'lucide-react';
+import { AlertTriangle, Download, FileJson, FileText, Upload, X } from 'lucide-react';
 import { Truncate } from 'dead-lock-react-lib';
 import { Button, IconButton } from '@/components/ui/Button';
-import { importCounts, mergeLibrary, mergeProfile, parseResumeJson, personaToJsonResume, ResumeJsonError, type ResumeJsonImport } from '@/studio/import/resume-json';
+import { importCounts, mergeLibrary, mergeProfile, personaToJsonResume, ResumeJsonError, type ResumeJsonImport } from '@/studio/import/resume-json';
+import { readResumeFile, RESUME_FILE_ACCEPT, resumeFileKind } from '@/knowledge/import/resume-file';
 import { getPersona } from '@/studio/model/sample';
 import type { Library, Profile } from '@/studio/model/types';
 import { cn } from '@/utils/cn';
@@ -31,8 +32,9 @@ export function downloadSampleJson(personaId = 'engineer-lead'): void {
 }
 
 /**
- * Drop zone / picker for a resume .json file, then a summary of what it contains and
- * a merge-or-replace choice. Shared by the New Resume dialog and Profile Studio.
+ * Drop zone / picker for an existing resume (PDF, Word, text, Markdown or .json), then a summary
+ * of what was found and a merge-or-replace choice. Files are read in this browser.
+ * Shared by the New Resume dialog and Profile Studio.
  */
 export function JsonImportBox({
   value,
@@ -40,7 +42,7 @@ export function JsonImportBox({
   canReplace,
   defaultMode,
   samplePersona,
-  title = 'Pre-fill from a .json file',
+  title = 'Pre-fill from your existing resume',
   className,
 }: {
   value: ImportChoice | null;
@@ -54,19 +56,23 @@ export function JsonImportBox({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
   const read = async (file: File | undefined) => {
-    if (!file) return;
+    if (!file || reading) return;
     setError(null);
-    if (!/\.json$/i.test(file.name) && file.type !== 'application/json') {
-      setError(`“${file.name}” is not a .json file.`);
+    if (!resumeFileKind(file)) {
+      setError(`“${file.name}” is not a supported file. Use PDF, Word (.docx), text, Markdown or JSON.`);
       return;
     }
+    setReading(file.name);
     try {
-      onChange({ fileName: file.name, data: parseResumeJson(await file.text()), mode: defaultMode });
+      onChange({ fileName: file.name, data: await readResumeFile(file), mode: defaultMode });
     } catch (err) {
       setError(err instanceof ResumeJsonError ? err.message : 'The file could not be read.');
+    } finally {
+      setReading(null);
     }
   };
 
@@ -85,18 +91,23 @@ export function JsonImportBox({
       }}
       className={cn('rounded-xl border border-dashed px-3.5 py-3 transition-colors', dragging ? 'border-accent bg-accent-soft/50' : 'border-line-strong bg-panel/60', className)}
     >
-      <input ref={input} type="file" accept=".json,application/json" className="sr-only" aria-label="Import values from a JSON file" onChange={(e) => (void read(e.target.files?.[0]), (e.target.value = ''))} />
-      {value ? (
+      <input ref={input} type="file" accept={RESUME_FILE_ACCEPT} className="sr-only" aria-label="Import an existing resume" onChange={(e) => (void read(e.target.files?.[0]), (e.target.value = ''))} />
+      {reading ? (
+        <p role="status" className="flex items-center gap-2 text-[12.5px] text-fg-muted">
+          <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-accent border-t-transparent" aria-hidden="true" />
+          Reading <strong className="font-medium text-fg">{reading}</strong> on this device…
+        </p>
+      ) : value ? (
         <ImportSummary choice={value} canReplace={canReplace} onMode={(mode) => onChange({ ...value, mode })} onClear={() => onChange(null)} />
       ) : (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <FileJson className="size-4 shrink-0 text-accent" aria-hidden="true" />
+          <Upload className="size-4 shrink-0 text-accent" aria-hidden="true" />
           <p className="min-w-0 flex-1 basis-48 text-[12.5px] text-fg-muted">
-            <span className="font-medium text-fg">{title}</span>: drop it here or browse. Supports JSON Resume and Portfolio OS exports.
+            <span className="font-medium text-fg">{title}</span>: drop a PDF, Word (.docx), text or JSON resume here, or browse. It is read on this device and never uploaded.
           </p>
           <div className="flex gap-1.5">
-            <Button size="sm" icon={<FileJson className="size-3.5" />} onClick={() => input.current?.click()}>
-              Import JSON
+            <Button size="sm" icon={<Upload className="size-3.5" />} onClick={() => input.current?.click()}>
+              Upload resume
             </Button>
             <Button size="sm" variant="ghost" icon={<Download className="size-3.5" />} onClick={() => downloadSampleJson(samplePersona)}>
               Sample file
@@ -130,13 +141,13 @@ function ImportSummary({ choice, canReplace, onMode, onClear }: { choice: Import
   return (
     <div className="space-y-2.5">
       <div className="flex items-start gap-3">
-        <FileJson className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+        {choice.data.source === 'document' ? <FileText className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" /> : <FileJson className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />}
         <div className="min-w-0 flex-1">
           <Truncate className="font-mono text-[12.5px] font-semibold" style={{ display: 'block', maxWidth: '100%' }}>
             {choice.fileName}
           </Truncate>
           <p className="mt-0.5 text-[12px] text-fg-muted">
-            {choice.data.source === 'json-resume' ? 'JSON Resume' : 'Portfolio OS export'}
+            {choice.data.source === 'json-resume' ? 'JSON Resume' : choice.data.source === 'document' ? 'Read from your resume' : 'Portfolio OS export'}
             {p.name && (
               <>
                 {' '}· <strong className="text-fg">{p.name}</strong>

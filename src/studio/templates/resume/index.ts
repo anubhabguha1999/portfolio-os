@@ -812,8 +812,7 @@ const slateBanner: ResumeTemplateDef = {
       : { t: 'box', nodes: text };
     const blocks: FlowNode[] = [{ t: 'box', fill: band, keep: 'together', padding: [8 * st.head, m.margin.right, 7 * st.head, m.margin.left], nodes: [head] }];
     if (r.contact.length) {
-      const glyph = r.style.iconStyle === 'glyph';
-      const runs = contactRuns(r.contact, look, { sep: '      ', icon: r.style.iconStyle === 'label' ? 'label' : 'none', color: look.text }).flatMap((run, i) => (glyph && (i === 0 || run.text === '      ') ? (i === 0 ? [{ text: '• ', color: accent, bold: true }, run] : [run, { text: '• ', color: accent, bold: true }]) : [run]));
+      const runs = contactRuns(r.contact, look, { sep: '      ', icon: r.style.iconStyle, color: look.text, iconColor: accent });
       blocks.push({ t: 'box', fill: mix(band, '#ffffff', 0.84), keep: 'together', padding: [3.4, m.margin.right, 3.4, m.margin.left], nodes: [{ t: 'text', runs, style: ts(look, { size: look.size - 0.4, lineHeight: 1.7 }), align: 'center' }] });
     }
 
@@ -938,7 +937,7 @@ const navySidebar: ResumeTemplateDef = {
 
     const sideNodes: FlowNode[] = [];
     if (r.style.photo !== 'none') sideNodes.push({ ...ringedPortrait(r.photo, r.name, 30 * st.head, sideW, { ring: mix(navy, '#ffffff', 0.35), ringWidth: 1.1, disc: mix(navy, '#ffffff', 0.18), discText: '#ffffff' }), after: 7 * look.sp });
-    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle === 'label' ? 'label' : 'none', color: sideText, labelColor: gold }) });
+    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, color: sideText, labelColor: gold }) });
     side.forEach((sec, i) => {
       const before = i === 0 && !r.contact.length ? 0 : 5.5 * look.sp;
       let nodes: FlowNode[] | null = null;

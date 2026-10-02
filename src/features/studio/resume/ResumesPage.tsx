@@ -75,7 +75,7 @@ export default function ResumesPage() {
     let base = newResumeFor(t, opts.name, entries, opts.kind);
     if (opts.imported) base = ensureSectionsFor(base, lib, entries, (kind, title) => createResumeSection(kind, title ? { title } : {}));
     const saved = await saveResume(base);
-    if (opts.imported) toast({ tone: 'success', title: 'Resume created from JSON', description: `${opts.imported.fileName} · ${opts.imported.mode === 'replace' ? 'profile replaced' : 'merged into your profile'}` });
+    if (opts.imported) toast({ tone: 'success', title: 'Resume created from your file', description: `${opts.imported.fileName} · ${opts.imported.mode === 'replace' ? 'profile replaced' : 'merged into your profile'}` });
     navigate(`/resume/${saved.id}`);
   };
 

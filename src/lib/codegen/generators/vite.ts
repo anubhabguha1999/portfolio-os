@@ -257,7 +257,7 @@ export class ReactViteGenerator implements ProjectGenerator {
   readonly framework = 'react-vite' as const;
 
   async generateProject(portfolio: Portfolio, options: ExportOptions, build?: SiteBuild): Promise<GeneratedProject> {
-    const b = build ?? (await buildSiteData(portfolio, { structure: options.structure, siteUrl: options.siteUrl }));
+    const b = build ?? (await buildSiteData(portfolio, { structure: options.structure, siteUrl: options.siteUrl, animations: options.animations }));
     const ctx = createContext(portfolio, { ...options, framework: 'react-vite', images: 'img', rendering: 'static' }, b);
     const files: GeneratedFile[] = [...libraryFiles(ctx)];
     const tailwind = ctx.styling === 'tailwind';

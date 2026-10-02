@@ -13,7 +13,7 @@
   --app-line-strong: #34343f;
   --app-fg: #ededf2;
   --app-fg-muted: #a0a0ad;
-  --app-fg-subtle: #6c6c7a;
+  --app-fg-subtle: #858593;
   --app-accent: #8b7cff;
   --app-accent-strong: #a397ff;
   --app-accent-fg: #0b0716;
@@ -36,7 +36,7 @@
   --app-line-strong: #d3d3dc;
   --app-fg: #16161d;
   --app-fg-muted: #5c5c6b;
-  --app-fg-subtle: #8a8a98;
+  --app-fg-subtle: #6a6a78;
   --app-accent: #6a58f5;
   --app-accent-strong: #5543e6;
   --app-accent-fg: #ffffff;
@@ -231,8 +231,8 @@ dialog.app-dialog[open] > .app-dialog-panel {
 }
 /* Landing page motion. Entrance is a one-shot keyframe; everything scroll-linked uses
    CSS scroll-driven animations, which run off the main thread (no JS per frame).
-   Only transform/opacity animate. Unsupported browsers and reduced motion get the
-   static page. */
+   Only transform/opacity animate; scroll-linked reveals move but never fade, so text below
+   the fold keeps full contrast. Unsupported browsers and reduced motion get the static page. */
 /* Without scroll timelines the progress bar has nothing to track. */
 .scene-progress {
   display: none;
@@ -339,19 +339,16 @@ dialog.app-dialog[open] > .app-dialog-panel {
 }
 @keyframes landing-zoom {
   from {
-    opacity: 0.35;
     transform: translateY(50px) scale(0.92);
   }
 }
 @keyframes landing-reveal {
   from {
-    opacity: 0;
     transform: translateY(28px);
   }
 }
 @keyframes landing-glide {
   from {
-    opacity: 0;
     transform: translateX(110px);
   }
 }

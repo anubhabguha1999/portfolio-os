@@ -43,7 +43,7 @@ const loader = async (_pid: string, id: string) => ({ id, blob: new Blob([PNG], 
 
 async function files(o: Partial<ExportOptions>, p = samplePortfolio()): Promise<GeneratedFile[]> {
   const options = { ...DEFAULT_EXPORT_OPTIONS, ...o };
-  const build = await buildSiteData(p, { structure: options.structure, siteUrl: '', loader, fetcher: async () => null });
+  const build = await buildSiteData(p, { structure: options.structure, siteUrl: '', loader, fetcher: async () => null, animations: options.animations });
   return libraryFiles(createContext(p, options, build));
 }
 
@@ -64,7 +64,7 @@ describe('component library', () => {
     // Client boundaries: never on sections.
     for (const f of fs.filter((x) => x.path.startsWith('src/sections/'))) expect(String(f.content)).not.toContain("'use client'");
     const clients = fs.filter((f) => String(f.content).startsWith("'use client'")).map((f) => f.path.split('/').pop());
-    if (o.framework === 'nextjs') expect(clients.sort()).toEqual(['Carousel.tsx', 'ContactForm.tsx', 'Navbar.tsx', ...(o.animations ? ['Reveal.tsx'] : []), 'ThemeToggle.tsx', 'TypingText.tsx'].sort());
+    if (o.framework === 'nextjs') expect(clients.sort()).toEqual([...(samplePortfolio().settings.backToTop ? ['BackToTop.tsx'] : []), 'Carousel.tsx', 'ContactForm.tsx', 'Navbar.tsx', ...(o.animations ? ['Reveal.tsx'] : []), 'ThemeToggle.tsx', 'TypingText.tsx'].sort());
     else expect(clients).toEqual([]);
     // Animations
     const allText = fs.filter((f) => f.type === 'text').map((f) => String(f.content)).join('\n');
