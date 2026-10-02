@@ -6,6 +6,10 @@ import { Spinner } from '@/components/ui/Button';
 import { PwaPrompt } from '@/features/settings/PwaPrompt';
 import { ScrollToTop } from './ScrollToTop';
 import { VercelAnalytics } from './VercelAnalytics';
+import { ROUTER_BASENAME } from '@/utils/base';
+
+/** Vercel Web Analytics / Speed Insights only exist on Vercel (off for the GitHub Pages build). */
+const VERCEL_INSIGHTS = import.meta.env.VITE_VERCEL_INSIGHTS !== 'off';
 import { RouteSeo } from './RouteSeo';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -43,11 +47,11 @@ function PageFallback() {
  */
 export function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={ROUTER_BASENAME}>
       <ScrollToTop />
       <RouteSeo />
-      <VercelAnalytics />
-      <SpeedInsights />
+      {VERCEL_INSIGHTS && <VercelAnalytics />}
+      {VERCEL_INSIGHTS && <SpeedInsights />}
       <ErrorBoundary area="Application">
         <Suspense fallback={<PageFallback />}>
           <Routes>

@@ -1,0 +1,65 @@
+# GitHub Pages: builds the app under /<repo-name>/ and deploys it to
+# https://<owner>.github.io/<repo-name>/ on every push to main (or manually).
+# One-time setup: Settings › Pages › Build and deployment › Source: "GitHub Actions".
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck & test
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Build for the Pages sub-path
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          # Vercel Analytics / Speed Insights only exist on Vercel.
+          VITE_VERCEL_INSIGHTS: 'off'
+        run: npm run build
+
+      - name: SPA fallback & disable Jekyll
+        run: |
+          # Pages serves 404.html for unknown paths, so deep links like /builder/:id boot the app.
+          cp dist/app.html dist/404.html
+          touch dist/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

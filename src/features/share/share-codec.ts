@@ -1,4 +1,5 @@
 import type { ImageRef, Portfolio, PortfolioSection } from '@/types/portfolio';
+import { withBase } from '@/utils/base';
 import { encodePayload, decodePayload } from '@/lib/compression';
 import { parsePortfolio } from '@/schemas/portfolio';
 import { defaultSectionStyle, getDefinition } from '@/sections/registry';
@@ -90,7 +91,7 @@ export async function downscaleToDataUrl(blob: Blob, maxEdge = SHARE_IMAGE_MAX_E
 export function shareBaseUrl(): string {
   if (typeof location === 'undefined') return '';
   const origin = location.origin && location.origin !== 'null' ? location.origin : `${location.protocol}//${location.host}`;
-  return `${origin}/view`;
+  return `${origin}${withBase('/view')}`;
 }
 
 export function containsContactInfo(p: Portfolio): boolean {

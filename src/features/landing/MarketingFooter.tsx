@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { withBase } from '@/utils/base';
 import { Logo } from '@/components/Logo';
 import { BRAND, SCHEMA_VERSION } from '@/config/brand';
 
@@ -62,7 +63,7 @@ export function MarketingFooter() {
           <ul className="mt-4 grid gap-2.5">
             {resources.map((l) => (
               <li key={l.href}>
-                <a href={l.href} className="text-[13px] text-fg-muted transition-colors hover:text-fg">
+                <a href={withBase(l.href)} className="text-[13px] text-fg-muted transition-colors hover:text-fg">
                   {l.label}
                 </a>
               </li>

@@ -12,7 +12,7 @@
  *   dist/robots.txt   — crawl rules + sitemap location
  *   dist/llms.txt     — plain-text site summary for AI crawlers
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildContentPages } from './content-pages.mjs';
@@ -206,4 +206,20 @@ ${contentPages.map((r) => `- [${r.title}](${urlOf(r.path)}): ${r.description}`).
 `;
 writeFileSync(join(dist, 'llms.txt'), llms);
 
-console.log(`prerender: ${indexable.length} app pages, ${contentPages.length} content pages, app.html, sitemap.xml (${sitemapRoutes.length} urls), robots.txt, llms.txt → ${SITE}`);
+/* ------------------------- sub-path builds (GitHub Pages) ------------------------- */
+// Vite already prefixes its own assets; the hand-written pages (SEO shells, content pages,
+// app.html) use root links such as href="/resumes". Under BASE_PATH they get the prefix too.
+const BASE = `/${(process.env.BASE_PATH ?? '/').replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/');
+const noInsights = process.env.VITE_VERCEL_INSIGHTS === 'off';
+if (BASE !== '/' || noInsights) {
+  const prefix = BASE.replace(/\/$/, '');
+  const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []));
+  for (const file of walk(dist)) {
+    let html = readFileSync(file, 'utf8');
+    if (noInsights) html = html.replace(/\s*<script[^>]*src="\/_vercel\/insights\/script\.js"[^>]*><\/script>/g, '');
+    if (BASE !== '/') html = html.replace(/\b(href|src|action)="\/(?!\/)/g, (m, attr, offset) => (html.startsWith(prefix + '/', offset + attr.length + 2) ? m : `${attr}="${prefix}/`));
+    writeFileSync(file, html);
+  }
+}
+
+console.log(`prerender${BASE !== '/' ? ` (base ${BASE})` : ''}: ${indexable.length} app pages, ${contentPages.length} content pages, app.html, sitemap.xml (${sitemapRoutes.length} urls), robots.txt, llms.txt → ${SITE}`);

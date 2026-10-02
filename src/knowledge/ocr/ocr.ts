@@ -3,6 +3,7 @@
  * origin (see scripts/vite-local-assets.ts); every path is set explicitly because Tesseract.js
  * otherwise falls back to a CDN. Recognition runs in Tesseract's own Web Worker.
  */
+import { withBase } from '@/utils/base';
 import type { RawPage, RawTextItem } from '../types';
 
 type TesseractWorker = import('tesseract.js').Worker;
@@ -32,9 +33,9 @@ export class OcrSession {
     const { createWorker, OEM } = await import('tesseract.js');
     const origin = window.location.origin;
     this.worker = await createWorker('eng', OEM.LSTM_ONLY, {
-      workerPath: `${origin}/ocr/worker.min.js`,
-      corePath: `${origin}/ocr/core`,
-      langPath: `${origin}/ocr/lang`,
+      workerPath: `${origin}${withBase('/ocr/worker.min.js')}`,
+      corePath: `${origin}${withBase('/ocr/core')}`,
+      langPath: `${origin}${withBase('/ocr/lang')}`,
       gzip: true,
       workerBlobURL: false,
       logger: (m) => this.onProgress({ status: m.status, progress: typeof m.progress === 'number' ? m.progress : 0 }),

@@ -3,6 +3,7 @@
  * time, converts coordinates to top-left PDF points and releases each page when done.
  * The bytes never leave the browser. Passwords are passed straight to PDF.js and not kept.
  */
+import { withBase } from '@/utils/base';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import type { PdfMetadata, RawImage, RawLink, RawPage, RawTextItem } from '../types';
 
@@ -47,10 +48,10 @@ export async function openPdf(data: ArrayBuffer, password?: string): Promise<PDF
     // PDF.js may transfer the buffer to its worker; keep the caller's copy intact.
     data: new Uint8Array(data.slice(0)),
     ...(password ? { password } : {}),
-    cMapUrl: '/pdfjs/cmaps/',
+    cMapUrl: withBase('/pdfjs/cmaps/'),
     cMapPacked: true,
-    standardFontDataUrl: '/pdfjs/standard_fonts/',
-    wasmUrl: '/pdfjs/wasm/',
+    standardFontDataUrl: withBase('/pdfjs/standard_fonts/'),
+    wasmUrl: withBase('/pdfjs/wasm/'),
     enableXfa: false,
     // Never fetch anything referenced by the file itself.
     disableAutoFetch: true,
