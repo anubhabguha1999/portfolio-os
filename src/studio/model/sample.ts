@@ -289,6 +289,120 @@ function contentStrategist(): { profile: Profile; library: Library } {
   return { profile, library: lib };
 }
 
+function primaryTeacher(): { profile: Profile; library: Library } {
+  const profile: Profile = {
+    ...emptyProfile(),
+    name: 'Ananya Rao',
+    headline: 'Primary School Teacher',
+    bio: 'Primary teacher with four years of classroom and tutoring experience across Grades 1 to 5. Comfortable with smart-board lessons, Google Classroom and activity-based learning, and looking for a role where careful lesson planning and close work with parents help every child read, reason and enjoy school.',
+    email: 'ananya.rao@example.com',
+    phone: '+91 98450 12345',
+    location: 'Pune, India',
+    socialLinks: [{ id: 'sl_ar_li', platform: 'linkedin', label: 'linkedin.com/in/ananya-rao', url: 'https://linkedin.com/in/ananya-rao' }],
+  };
+  const lib = emptyLibrary();
+  lib.experience = [
+    createLibExperience({
+      id: 'exp_ar_1',
+      company: 'Greenfield Public School',
+      role: 'Primary Teacher (Grades 3–5)',
+      location: 'Pune, India',
+      start: '2022-06',
+      current: true,
+      achievements: [
+        'Plan and teach English, EVS and maths for three sections of 32 students, aligned with the CBSE curriculum.',
+        'Introduced weekly reading circles and a book-buddy programme that lifted reading-assessment scores by 18%.',
+        'Run fortnightly parent updates and parent–teacher meetings, and prepare individual support plans with the special educator.',
+        'Use smart boards, Google Classroom and simple quizzes to keep lessons interactive and track progress.',
+      ],
+    }),
+    createLibExperience({
+      id: 'exp_ar_2',
+      company: 'BrightPath Tutoring',
+      role: 'Tutor',
+      location: 'Pune, India',
+      start: '2019-07',
+      end: '2022-05',
+      achievements: [
+        'Tutored 40+ students aged 6–11 one-on-one and in small groups in English and mathematics.',
+        'Designed age-appropriate worksheets and activities for different learning levels.',
+        'Shared monthly progress notes with parents and adjusted plans to each child’s pace.',
+      ],
+    }),
+  ];
+  lib.education = [
+    createLibEducation({ id: 'edu_ar_1', degree: 'B.Ed. in Elementary Education', institution: 'Savitribai Phule Pune University', location: 'Pune', start: '2020-07', end: '2022-05', grade: 'First class with distinction' }),
+    createLibEducation({ id: 'edu_ar_2', degree: 'B.A. in English', institution: 'Fergusson College', location: 'Pune', start: '2017-07', end: '2020-05' }),
+  ];
+  const skill = (cat: string, names: Array<[string, number]>, k: string) => names.map(([name, level], i) => createLibSkill({ id: `skl_ar_${k}${i}`, name, category: cat, level }));
+  lib.skills = [
+    ...skill('Teaching', [['Lesson Planning', 5], ['Classroom Management', 5], ['Differentiated Instruction', 4], ['Assessment & Evaluation', 4]], 'a'),
+    ...skill('Classroom Technology', [['Smart Boards', 4], ['Google Classroom', 5], ['MS Office', 4]], 'b'),
+    ...skill('Communication', [['Parent Communication', 5], ['Team Collaboration', 4]], 'c'),
+  ];
+  lib.certifications = [
+    createLibCertification({ id: 'crt_ar_1', name: 'Central Teacher Eligibility Test (CTET)', issuer: 'CBSE', date: '2022-01' }),
+    createLibCertification({ id: 'crt_ar_2', name: 'Teaching Young Learners Online', issuer: 'Coursera', date: '2024-03' }),
+  ];
+  return { profile, library: lib };
+}
+
+function procurementAnalyst(): { profile: Profile; library: Library } {
+  const profile: Profile = {
+    ...emptyProfile(),
+    name: 'Daniel Okafor',
+    headline: 'Procurement Analyst',
+    bio: 'Procurement analyst with 5+ years of experience analysing spend, negotiating with suppliers and improving purchasing processes. Strong in Excel and SAP Ariba, budgeting and vendor performance management.',
+    email: 'daniel.okafor@example.com',
+    phone: '+1 (614) 555 0148',
+    location: 'Columbus, Ohio',
+    socialLinks: [{ id: 'sl_do_li', platform: 'linkedin', label: 'linkedin.com/in/daniel-okafor', url: 'https://linkedin.com/in/daniel-okafor' }],
+  };
+  const lib = emptyLibrary();
+  lib.experience = [
+    createLibExperience({
+      id: 'exp_do_1',
+      company: 'Northline Retail Group',
+      role: 'Procurement Analyst',
+      location: 'Columbus, Ohio',
+      start: '2023-03',
+      current: true,
+      achievements: [
+        'Redesigned the purchase-requisition workflow, cutting approval time from 6 days to 2 and saving $1.2M a year.',
+        'Manage relationships with 60+ suppliers and track cost, delivery and quality against agreed service levels.',
+        'Ran cost-benefit analyses to choose suppliers for new categories, reducing unit costs by 9% on average.',
+      ],
+    }),
+    createLibExperience({
+      id: 'exp_do_2',
+      company: 'Northline Retail Group',
+      role: 'Junior Procurement Analyst',
+      location: 'Columbus, Ohio',
+      start: '2021-05',
+      end: '2023-02',
+      achievements: [
+        'Resolved invoice and contract discrepancies worth $340K with finance and supplier teams.',
+        'Built Excel and Power BI trackers for spend, savings and contract renewals.',
+        'Analysed market and commodity trends to support quarterly cost-saving plans.',
+      ],
+    }),
+  ];
+  lib.education = [createLibEducation({ id: 'edu_do_1', degree: 'Bachelor of Business Administration', field: 'Supply Chain Management', institution: 'Ohio Valley University', start: '2017-08', end: '2021-05' })];
+  lib.skills = (
+    [
+      ['Supplier Negotiation', 5],
+      ['Contract Management', 5],
+      ['Procurement Strategy', 4],
+      ['Cost Analysis', 5],
+      ['Risk Assessment', 4],
+      ['SAP Ariba', 4],
+      ['Excel & Power BI', 5],
+    ] as Array<[string, number]>
+  ).map(([name, level], i) => createLibSkill({ id: `skl_do_${i}`, name, category: '', level }));
+  lib.certifications = [createLibCertification({ id: 'crt_do_1', name: 'Certified Professional in Supply Management (CPSM)', issuer: 'ISM', date: '2024-02' })];
+  return { profile, library: lib };
+}
+
 const ENGINEER_LANGS = [
   { title: 'English', subtitle: 'Full Professional Proficiency' },
   { title: 'Hindi', subtitle: 'Native or Bilingual Proficiency' },
@@ -318,6 +432,33 @@ export const SAMPLE_PERSONAS: SamplePersona[] = [
         { title: 'Hindi', subtitle: 'Conversational' },
       ],
     },
+  },
+  {
+    id: 'teacher',
+    label: 'Teacher',
+    description: 'Ananya Rao, a primary teacher with grouped skills, certifications and qualification highlights',
+    profile: () => primaryTeacher().profile,
+    library: () => primaryTeacher().library,
+    entries: {
+      'Summary of Qualifications': [
+        'Familiar with the CBSE curriculum and the National Education Policy framework.',
+        'Practised in activity-based and project-based learning and differentiated instruction.',
+        'Works closely with parents, co-teachers and special educators to support every student.',
+      ].map((title) => ({ title })),
+      languages: [
+        { title: 'English', subtitle: 'Fluent' },
+        { title: 'Hindi', subtitle: 'Fluent' },
+        { title: 'Marathi', subtitle: 'Native' },
+      ],
+    },
+  },
+  {
+    id: 'procurement',
+    label: 'Business & operations',
+    description: 'Daniel Okafor, a procurement analyst with rated skills',
+    profile: () => procurementAnalyst().profile,
+    library: () => procurementAnalyst().library,
+    entries: {},
   },
   {
     id: 'classic',

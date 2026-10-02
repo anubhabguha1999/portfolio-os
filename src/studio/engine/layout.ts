@@ -91,6 +91,7 @@ interface Word {
   gap: number;
   /** Icon word: drawn as a vector icon, never left alone at a line end. */
   icon?: string;
+  iconBg?: string;
 }
 
 interface Line {
@@ -148,14 +149,20 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
     };
     const tracking = st.tracking ?? 0;
     for (const r of runs) {
+      if (r.lineBreak) {
+        if (cur.length) flush();
+        pendingSpace = false;
+        continue;
+      }
       if (r.icon) {
         // An icon is one em-ish box, glued to the next word with a small fixed gap.
         const size = r.size ?? st.size;
-        const box = size * PT * 0.9;
+        // A badge (icon on a disc) is a little larger than a bare glyph.
+        const box = size * PT * (r.iconBg ? 1.35 : 0.9);
         const g = pendingSpace && cur.length ? M.width(' ', r.font ?? st.font, false, false, size, tracking) : 0;
         if (cur.length && x + g + box > maxW + 0.001) flush();
         const gx = cur.length ? g : 0;
-        cur.push({ text: '', icon: r.icon, font: r.font ?? st.font, bold: false, italic: false, size, color: r.color ?? st.color, underline: false, tracking: 0, link: linksOn ? safeLink(r.link) : undefined, x: x + gx, w: box, gap: gx });
+        cur.push({ text: '', icon: r.icon, ...(r.iconBg ? { iconBg: r.iconBg } : {}), font: r.font ?? st.font, bold: false, italic: false, size, color: r.color ?? st.color, underline: false, tracking: 0, link: linksOn ? safeLink(r.link) : undefined, x: x + gx, w: box, gap: gx });
         x += gx + box;
         maxSize = Math.max(maxSize, size);
         pendingSpace = false;
@@ -261,7 +268,7 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
         // Centred on the x-height of the line's text.
         emit();
         const mid = baseline - fsLine * 0.3;
-        out.push({ k: 'icon', name: wd.icon, x: wx, y: mid - wd.w / 2, size: wd.w, color: wd.color });
+        out.push({ k: 'icon', name: wd.icon, x: wx, y: mid - wd.w / 2, size: wd.w, color: wd.color, ...(wd.iconBg ? { bg: wd.iconBg } : {}) });
         stats.shapes++;
         if (wd.link) {
           stats.links++;
@@ -813,6 +820,7 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
     stats.shapes++;
     if (d.k === 'rect') return { k: 'rect', x: d.x, y: d.y, w: d.w, h: d.h, ...(d.fill ? { fill: d.fill } : {}), ...(d.stroke ? { stroke: d.stroke, lw: d.lw ?? 0.3 } : {}), ...(d.r ? { r: d.r } : {}) };
     if (d.k === 'line') return { k: 'line', x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2, color: d.color, lw: d.lw };
+    if (d.k === 'poly') return { k: 'poly', points: d.points, fill: d.fill };
     return { k: 'circle', cx: d.cx, cy: d.cy, r: d.r, fill: d.fill };
   };
   const furniture = (f: NonNullable<FlowDoc['footer']>, i: number, yTop: number): Prim[] => {

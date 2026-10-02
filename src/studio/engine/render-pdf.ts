@@ -100,12 +100,30 @@ export function renderLaidPdf(laid: LaidDocument, images: RasterMap, o: PdfOutpu
       case 'link':
         if (o.links !== false) doc.link(p.x, p.y, p.w, p.h, { url: p.url });
         break;
+      case 'poly': {
+        if (p.points.length < 3) break;
+        doc.setFillColor(p.fill);
+        const [first, ...rest] = p.points;
+        doc.moveTo(first![0], first![1]);
+        for (const [x, y] of rest) doc.lineTo(x, y);
+        doc.close();
+        doc.fill();
+        break;
+      }
       case 'icon': {
         // Real vector paths, scaled from the icon's 24-unit grid.
         const icon = vectorIcon(p.name);
-        const k = p.size / 24;
-        const X = (v: number) => p.x + v * k;
-        const Y = (v: number) => p.y + v * k;
+        // A badge: the disc fills the box and the glyph is inset to 58% of it.
+        if (p.bg) {
+          doc.setFillColor(p.bg);
+          doc.circle(p.x + p.size / 2, p.y + p.size / 2, p.size / 2, 'F');
+        }
+        const inner = p.bg ? p.size * 0.58 : p.size;
+        const ox = p.x + (p.size - inner) / 2;
+        const oy = p.y + (p.size - inner) / 2;
+        const k = inner / 24;
+        const X = (v: number) => ox + v * k;
+        const Y = (v: number) => oy + v * k;
         if (icon.filled) doc.setFillColor(p.color);
         else {
           doc.setDrawColor(p.color);

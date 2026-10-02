@@ -36,6 +36,10 @@ export interface Run {
   text: string;
   /** Inline vector icon (see engine/icons.ts) drawn instead of text, glued to the following word. */
   icon?: string;
+  /** Icon badge: the icon sits on a filled disc of this colour (the run colour is the glyph). */
+  iconBg?: string;
+  /** Visual line break in the PDF/preview; text exports (TXT, DOCX) read it as the run's text (usually a space). */
+  lineBreak?: boolean;
   bold?: boolean;
   italic?: boolean;
   link?: string;
@@ -173,7 +177,9 @@ export type PageSelector = 'all' | 'first' | 'rest';
 export type Decoration =
   | { k: 'rect'; x: number; y: number; w: number; h: number; fill?: string; stroke?: string; lw?: number; r?: number; pages: PageSelector }
   | { k: 'line'; x1: number; y1: number; x2: number; y2: number; color: string; lw: number; pages: PageSelector }
-  | { k: 'circle'; cx: number; cy: number; r: number; fill: string; pages: PageSelector };
+  | { k: 'circle'; cx: number; cy: number; r: number; fill: string; pages: PageSelector }
+  /** Filled polygon (diagonal corners, chevrons); points in mm. */
+  | { k: 'poly'; points: Array<[number, number]>; fill: string; pages: PageSelector };
 
 export interface FlowColumn {
   id: string;
@@ -234,8 +240,9 @@ export type Prim =
   | { k: 'circle'; cx: number; cy: number; r: number; fill?: string; stroke?: string; lw?: number }
   | { k: 'image'; src: string; x: number; y: number; w: number; h: number; alt?: string }
   | { k: 'link'; x: number; y: number; w: number; h: number; url: string }
-  /** Vector icon in a size×size box (mm) at x, y (top-left). */
-  | { k: 'icon'; name: string; x: number; y: number; size: number; color: string };
+  /** Vector icon in a size×size box (mm) at x, y (top-left); `bg` draws a filled disc behind it. */
+  | { k: 'icon'; name: string; x: number; y: number; size: number; color: string; bg?: string }
+  | { k: 'poly'; points: Array<[number, number]>; fill: string };
 
 export interface RefBox {
   ref: string;

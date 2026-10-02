@@ -471,10 +471,10 @@ export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: stri
 }
 
 /** Stacked contact list (sidebars). */
-export function contactList(items: ContactItem[], look: Look, opts: { icon?: ResumeStyle['iconStyle']; color?: string; labelColor?: string } = {}): FlowNode[] {
+export function contactList(items: ContactItem[], look: Look, opts: { icon?: ResumeStyle['iconStyle']; color?: string; labelColor?: string; /** Round badge behind each icon (icon drawn in `iconColor`). */ iconBg?: string; iconColor?: string } = {}): FlowNode[] {
   return items.map((c, i) => {
     const label = opts.icon === 'label' ? [{ text: `${LABELS[c.kind] || c.platform || 'Link'}`, bold: true, color: opts.labelColor ?? look.muted, size: look.size - 1.5 }] : [];
-    const icon: Run[] = opts.icon === 'glyph' ? [{ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: opts.labelColor ?? look.accent, ...(c.url ? { link: c.url } : {}) }] : [];
+    const icon: Run[] = opts.icon === 'glyph' ? [{ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: opts.iconColor ?? opts.labelColor ?? look.accent, ...(opts.iconBg ? { iconBg: opts.iconBg } : {}), ...(c.url ? { link: c.url } : {}) }] : [];
     const node: TextNode = {
       t: 'text',
       runs: [...icon, { text: c.label, ...(c.url ? { link: c.url } : {}), ...(opts.color ? { color: opts.color } : {}) }],

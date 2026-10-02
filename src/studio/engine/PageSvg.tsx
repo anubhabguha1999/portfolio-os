@@ -56,18 +56,29 @@ function PrimEl({ p, imageUrl, links = true }: { p: Prim; imageUrl: (src: string
       if (!url) return <rect x={p.x} y={p.y} width={p.w} height={p.h} fill="#e5e7eb" />;
       return <image href={url} x={p.x} y={p.y} width={p.w} height={p.h} preserveAspectRatio="none" />;
     }
+    case 'poly':
+      return <polygon points={p.points.map(([x, y]) => `${x},${y}`).join(' ')} fill={p.fill} />;
     case 'icon': {
       const filled = vectorIcon(p.name).filled;
-      return (
+      const inner = p.bg ? p.size * 0.58 : p.size;
+      const glyph = (
         <path
           d={iconPathData(p.name)}
-          transform={`translate(${p.x} ${p.y}) scale(${p.size / 24})`}
+          transform={`translate(${p.x + (p.size - inner) / 2} ${p.y + (p.size - inner) / 2}) scale(${inner / 24})`}
           fill={filled ? p.color : 'none'}
           stroke={filled ? undefined : p.color}
           strokeWidth={filled ? undefined : ICON_STROKE}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+      );
+      return p.bg ? (
+        <g>
+          <circle cx={p.x + p.size / 2} cy={p.y + p.size / 2} r={p.size / 2} fill={p.bg} />
+          {glyph}
+        </g>
+      ) : (
+        glyph
       );
     }
     default:
