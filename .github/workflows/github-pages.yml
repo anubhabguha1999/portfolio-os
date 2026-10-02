@@ -1,6 +1,6 @@
 # GitHub Pages: builds the app under /<repo-name>/ and deploys it to
 # https://<owner>.github.io/<repo-name>/ on every push to main (or manually).
-# One-time setup: Settings › Pages › Build and deployment › Source: "GitHub Actions". 
+# One-time setup: Settings › Pages › Build and deployment › Source: "GitHub Actions".
 name: GitHub Pages
 
 on:
