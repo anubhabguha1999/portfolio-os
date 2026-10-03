@@ -21,6 +21,7 @@ export const ROUTES: AppRoute[] = [
   { path: '/builder/:projectId', page: lazy(() => import('@/features/builder/BuilderPage')) },
   { path: '/preview/:projectId', page: lazy(() => import('@/features/preview/PreviewPage')) },
   { path: '/export/:projectId', page: lazy(() => import('@/features/export/ExportStudioPage')) },
+  { path: '/deploy/:projectId', page: lazy(() => import('@/features/deploy/DeployPage')) },
   { path: '/view', page: lazy(() => import('@/features/share/ViewPage')) },
 
   // Studios

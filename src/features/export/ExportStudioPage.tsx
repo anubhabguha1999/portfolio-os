@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Atom, Braces, Check, Download, Eye, FileCode2, FileJson, FileText, FileType, Package, Printer, RefreshCw, Sparkles, Triangle, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Atom, Braces, Check, Download, Eye, FileCode2, FileJson, FileText, FileType, Package, Printer, RefreshCw, Rocket, Sparkles, Triangle, TriangleAlert } from 'lucide-react';
 import type { Portfolio } from '@/types/portfolio';
 import { LogoMark } from '@/components/Logo';
 import { Button, Spinner } from '@/components/ui/Button';
@@ -801,6 +801,9 @@ function Studio({ projectId, portfolio, projectName, assetsReady, assetsError }:
         <div className="ml-auto flex items-center gap-1">
           <Button size="sm" variant="ghost" icon={<Printer className="size-4" />} loading={printing} onClick={() => void print()} title="Print-optimized version" aria-label="Print version">
             <span className="hidden md:inline">Print version</span>
+          </Button>
+          <Button size="sm" variant="ghost" icon={<Rocket className="size-4" />} onClick={() => navigate(`/deploy/${projectId}`)} title="Publish to Netlify, Vercel or GitHub Pages" aria-label="Deploy">
+            <span className="hidden md:inline">Deploy</span>
           </Button>
           <Button size="sm" variant="ghost" icon={<Eye className="size-4" />} onClick={() => navigate(`/preview/${projectId}`)} aria-label="Preview">
             <span className="hidden sm:inline">Preview</span>

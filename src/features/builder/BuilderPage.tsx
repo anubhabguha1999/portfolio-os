@@ -211,6 +211,7 @@ function Builder({ projectId }: { projectId: string }) {
         <TopBar
           onPreview={() => navigate(`/preview/${projectId}`)}
           onExport={() => navigate(`/export/${projectId}`)}
+          onDeploy={() => navigate(`/deploy/${projectId}`)}
           onPresent={() => void present()}
           onPrint={() => frame.current?.print()}
           onExportJson={() => void exportJson()}

@@ -164,6 +164,14 @@
       "dynamic": true
     },
     {
+      "path": "/deploy/",
+      "prefix": true,
+      "title": "Deploy — Portfolio OS",
+      "description": "Publish your portfolio to Netlify, Vercel or GitHub Pages.",
+      "index": false,
+      "dynamic": true
+    },
+    {
       "path": "/resume/",
       "prefix": true,
       "title": "Resume Studio — Portfolio OS",

@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Presentation,
   Printer,
+  Rocket,
   Redo2,
   Ruler,
   Share2,
@@ -42,6 +43,7 @@ import { ProfileLinkButton } from '@/features/studio/sync/ProfileLink';
 export interface TopBarActions {
   onPreview: () => void;
   onExport: () => void;
+  onDeploy: () => void;
   onPresent: () => void;
   onPrint: () => void;
   onExportJson: () => void;
@@ -224,6 +226,7 @@ export function TopBar(a: TopBarActions) {
             { label: 'Insights', icon: <Activity />, onSelect: () => ui.setInsightsOpen(true) },
             { label: 'Version history', icon: <History />, onSelect: () => ui.setHistoryOpen(true) },
             { label: 'Share link', icon: <Share2 />, onSelect: () => ui.setShareOpen(true) },
+            { label: 'Deploy website', icon: <Rocket />, onSelect: a.onDeploy },
             'separator',
             { label: 'Focus mode', icon: <Maximize />, hint: `${modKey}.`, onSelect: () => ui.setFocusMode(true) },
             { label: 'Presentation mode', icon: <Presentation />, onSelect: a.onPresent },

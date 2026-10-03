@@ -21,7 +21,7 @@ describe('SEO route table', () => {
   });
 
   it('never indexes private or per-user pages', () => {
-    for (const p of ['/view', '/builder/abc', '/resume/res_1', '/document/doc_1', '/settings', '/profile', '/studio', '/projects', '/export/x', '/preview/x']) {
+    for (const p of ['/view', '/builder/abc', '/resume/res_1', '/document/doc_1', '/settings', '/profile', '/studio', '/projects', '/export/x', '/deploy/x', '/preview/x']) {
       expect(seoFor(p).index, p).toBe(false);
     }
     expect(seoFor('/resumes').index).toBe(true);
