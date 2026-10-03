@@ -5,6 +5,7 @@ import { parsePortfolio } from '@/schemas/portfolio';
 import { collectImages } from '@/lib/engine/collect';
 import { THEMES } from '@/lib/theme/themes';
 import type { Portfolio } from '@/types/portfolio';
+import { PORTFOLIO_TEMPLATE_COUNT, THEME_COUNT } from '@/templates/count';
 
 const built = TEMPLATES.map((t) => ({ t, p: t.create() }));
 const signature = (p: Portfolio) => `${p.theme.id}|${[...p.sections].sort((a, b) => a.order - b.order).map((s) => s.type).join(',')}`;
@@ -12,6 +13,9 @@ const signature = (p: Portfolio) => `${p.theme.id}|${[...p.sections].sort((a, b)
 describe('templates', () => {
   it('ships at least eight templates with unique ids', () => {
     expect(TEMPLATES.length).toBeGreaterThanOrEqual(8);
+    // Landing copy uses these constants so it doesn't load the registry.
+    expect(TEMPLATES.length).toBe(PORTFOLIO_TEMPLATE_COUNT);
+    expect(THEMES.length).toBe(THEME_COUNT);
     expect(new Set(TEMPLATES.map((t) => t.id)).size).toBe(TEMPLATES.length);
     for (const t of TEMPLATES) expect(getTemplate(t.id)).toBe(t);
   });

@@ -241,8 +241,23 @@ dialog.app-dialog[open] > .app-dialog-panel {
   .hero-rise {
     animation: landing-rise 0.9s var(--ease-out-expo) var(--d, 0s) both;
   }
+  /* Headline and subtitle: movement only, no fade. Text that first paints at opacity 0 is not
+     an LCP candidate, so fading the hero headline made a later, smaller element the LCP. */
+  .hero-rise-solid {
+    animation: landing-rise-solid 0.9s var(--ease-out-expo) var(--d, 0s) both;
+  }
   .landing-pulse {
     animation: landing-pulse 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  /* Career toolkit illustrations: a card drifting into "Offer", a typing caret, a sync pulse. */
+  .tk-float {
+    animation: tk-float 4.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  .tk-caret {
+    animation: tk-caret 1s steps(1) infinite;
+  }
+  .tk-travel {
+    animation: tk-travel 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   }
 
   @supports (animation-timeline: view()) {
@@ -302,6 +317,38 @@ dialog.app-dialog[open] > .app-dialog-panel {
         animation-range: entry 10% cover 30%;
       }
     }
+  }
+}
+@keyframes tk-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(1deg);
+  }
+}
+@keyframes tk-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes tk-travel {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(600%);
+  }
+}
+/* Off-screen until scrolled to: the browser skips its layout and paint on first load. */
+.tk-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1400px;
+}
+@keyframes landing-rise-solid {
+  from {
+    transform: translateY(16px);
   }
 }
 @keyframes landing-rise {

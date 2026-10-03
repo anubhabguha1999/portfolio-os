@@ -77,7 +77,7 @@ function SaveIndicator() {
   const m = map[state];
   const Icon = m.icon;
   return (
-    <span className={cn('hidden items-center gap-1.5 text-[11.5px] md:inline-flex', m.cls)} title={error ?? 'Saved in this browser (IndexedDB)'} role="status" aria-live="polite">
+    <span className={cn('hidden shrink-0 items-center gap-1.5 whitespace-nowrap text-[11.5px] md:inline-flex', m.cls)} title={error ?? 'Saved in this browser (IndexedDB)'} role="status" aria-live="polite">
       <Icon className="size-3.5" /> {m.text}
     </span>
   );
@@ -140,7 +140,8 @@ export function TopBar(a: TopBarActions) {
         <Redo2 className="size-4" />
       </IconButton>
 
-      <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 xl:flex">
+      {/* In the flow (not absolutely centred) so a long name or the save/link badges can never slide under it. */}
+      <div className="relative mx-auto hidden shrink-0 items-center gap-2 xl:flex">
         <div role="radiogroup" aria-label="Viewport" className="flex rounded-[10px] border border-line bg-bg p-0.5">
           {VIEWPORT_OPTIONS.map((v) => (
             <button
@@ -199,7 +200,7 @@ export function TopBar(a: TopBarActions) {
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-1 xl:ml-0">
         <div className="hidden items-center gap-1 sm:flex">
           <IconButton label={`Command palette (${modKey}+K)`} onClick={() => ui.setCommandPalette(true)}>
             <CommandIcon className="size-4" />

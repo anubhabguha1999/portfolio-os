@@ -1,11 +1,14 @@
-import type { ReactNode } from 'react';
+import { lazy, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, FileText, Globe, Mail, ScanText, UserRound } from 'lucide-react';
-import { TEMPLATES } from '@/templates';
-import { TemplateThumb } from '@/features/templates/TemplateThumb';
+import { PORTFOLIO_TEMPLATE_COUNT } from '@/templates/count';
 import { RESUME_TEMPLATE_COUNT } from '@/studio/templates/count';
 import { cn } from '@/utils/cn';
 import { Reveal, Stagger, StaggerItem } from './motion';
+import { WhenNear } from './WhenNear';
+
+// The real template miniatures need the portfolio renderer; it loads when the card is near.
+const TemplateThumbAt = lazy(() => import('./TemplateArt').then((m) => ({ default: m.TemplateThumbAt })));
 
 /**
  * Right after the hero: the two things people come here to make — a portfolio website and a
@@ -30,7 +33,7 @@ export function WhatYouMake({ onCreatePortfolio }: { onCreatePortfolio: () => vo
           eyebrow="Portfolio website"
           title="A personal site that is actually yours"
           body="Pick a template, edit every section visually and publish it on your own domain."
-          tags={[`${TEMPLATES.length} templates`, 'Live preview', 'HTML · ZIP · Next.js']}
+          tags={[`${PORTFOLIO_TEMPLATE_COUNT} templates`, 'Live preview', 'HTML · ZIP · Next.js']}
           visual={<PortfolioVisual />}
           primary={
             <button type="button" onClick={onCreatePortfolio} className={primaryBtn}>
@@ -125,22 +128,24 @@ function ProductCard({ icon, eyebrow, title, body, tags, visual, primary, second
 
 /** Two real template miniatures in browser frames, fanned out. */
 function PortfolioVisual() {
-  const [a, b] = [TEMPLATES[0], TEMPLATES[1] ?? TEMPLATES[0]];
-  const frame = (cls: string, t: typeof a) =>
-    t && (
-      <div className={cn('absolute w-[68%] overflow-hidden rounded-xl border border-line-strong bg-bg shadow-float transition-transform duration-700 ease-out', cls)}>
-        <div className="flex items-center gap-1 border-b border-line px-2.5 py-1.5">
-          <span className="size-1.5 rounded-full bg-line-strong" />
-          <span className="size-1.5 rounded-full bg-line-strong" />
-          <span className="size-1.5 rounded-full bg-line-strong" />
-        </div>
-        <TemplateThumb template={t} />
+  // Same 16:10 box as the thumbnail, so swapping it in never shifts the layout.
+  const placeholder = <div className="aspect-[16/10] w-full bg-canvas" />;
+  const frame = (cls: string, index: number) => (
+    <div className={cn('absolute w-[68%] overflow-hidden rounded-xl border border-line-strong bg-bg shadow-float transition-transform duration-700 ease-out', cls)}>
+      <div className="flex items-center gap-1 border-b border-line px-2.5 py-1.5">
+        <span className="size-1.5 rounded-full bg-line-strong" />
+        <span className="size-1.5 rounded-full bg-line-strong" />
+        <span className="size-1.5 rounded-full bg-line-strong" />
       </div>
-    );
+      <WhenNear fallback={placeholder} margin="400px">
+        <TemplateThumbAt index={index} />
+      </WhenNear>
+    </div>
+  );
   return (
     <>
-      {frame('left-[6%] top-[16%] -rotate-3 group-hover/card:-translate-y-1 group-hover/card:-rotate-[4deg]', b)}
-      {frame('right-[6%] top-[9%] rotate-2 group-hover/card:-translate-y-2 group-hover/card:rotate-[3deg]', a)}
+      {frame('left-[6%] top-[16%] -rotate-3 group-hover/card:-translate-y-1 group-hover/card:-rotate-[4deg]', 1)}
+      {frame('right-[6%] top-[9%] rotate-2 group-hover/card:-translate-y-2 group-hover/card:rotate-[3deg]', 0)}
     </>
   );
 }

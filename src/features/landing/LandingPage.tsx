@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Accessibility,
@@ -23,9 +23,7 @@ import {
 import { SiteHeader } from '@/components/SiteHeader';
 import { Shortcut } from '@/components/ui/misc';
 import { BRAND } from '@/config/brand';
-import { THEMES } from '@/lib/theme/themes';
-import { TEMPLATES } from '@/templates';
-import { TemplateThumb } from '@/features/templates/TemplateThumb';
+import { PORTFOLIO_TEMPLATE_COUNT, THEME_COUNT } from '@/templates/count';
 import { createEntryRoute } from '@/features/projects/entry-route';
 import { ExportDemo } from './ExportDemo';
 import { WhatYouMake } from './WhatYouMake';
@@ -33,29 +31,16 @@ import { MarketingFooter } from './MarketingFooter';
 import { Skeleton } from 'dead-lock-skeleton';
 import { RESUME_TEMPLATE_COUNT } from '@/studio/templates/count';
 import { cn } from '@/utils/cn';
+import { CareerToolkit } from './CareerToolkit';
+import { WhenNear } from './WhenNear';
 import { Reveal, ScrollProgress, Stagger, StaggerItem } from './motion';
 
 /** "Create Portfolio" goes to the dashboard when projects exist, onboarding otherwise. */
 // The showcase lays out real resumes with the PDF engine, so it loads after the page.
 const ResumeShowcase = lazy(() => import('./ResumeShowcase'));
-
-/**
- * Renders `children` (a lazy component) only once the spot is near the viewport. The resume
- * showcase pulls in the layout engine and jsPDF's font metrics (~400 KB), which the first
- * screen doesn't need.
- */
-function WhenNear({ children, fallback }: { children: ReactNode; fallback: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [near, setNear] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return void setNear(true);
-    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && (setNear(true), io.disconnect()), { rootMargin: '800px 0px' });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return <div ref={ref}>{near ? <Suspense fallback={fallback}>{children}</Suspense> : fallback}</div>;
-}
+// Template thumbnails and theme swatches need the portfolio renderer (~200 KB): never on the first screen.
+const TemplateCards = lazy(() => import('./TemplateArt').then((m) => ({ default: m.TemplateCards })));
+const ThemeSwatches = lazy(() => import('./TemplateArt').then((m) => ({ default: m.ThemeSwatches })));
 
 function useCreatePortfolio(): () => void {
   const navigate = useNavigate();
@@ -102,13 +87,13 @@ export default function LandingPage() {
             <span className="size-1.5 shrink-0 rounded-full bg-ok shadow-[0_0_10px_var(--app-ok)]" aria-hidden="true" />
             Runs 100% in your browser · No account · Works offline
           </p>
-          <h1 id="hero-title" style={rise(0.06)} className="hero-rise mx-auto mt-7 max-w-4xl text-center text-[clamp(2.6rem,8.4vw,6.2rem)] font-semibold leading-[0.95] tracking-[-0.045em]">
+          <h1 id="hero-title" style={rise(0.06)} className="hero-rise-solid mx-auto mt-7 max-w-4xl text-center text-[clamp(2.6rem,8.4vw,6.2rem)] font-semibold leading-[0.95] tracking-[-0.045em]">
             Build once.
             <br />
             <span className="text-fg-muted">Export </span>
             <span className="bg-[linear-gradient(100deg,var(--app-fg)_10%,var(--app-accent)_55%,#e9a6ff_92%)] bg-clip-text pr-[0.06em] font-display font-normal italic tracking-[-0.02em] text-transparent">everywhere.</span>
           </h1>
-          <p style={rise(0.14)} className="hero-rise mx-auto mt-6 max-w-2xl text-center text-[clamp(1rem,2.2vw,1.2rem)] leading-relaxed text-fg-muted">
+          <p style={rise(0.14)} className="hero-rise-solid mx-auto mt-6 max-w-2xl text-center text-[clamp(1rem,2.2vw,1.2rem)] leading-relaxed text-fg-muted">
             Create a portfolio website and an ATS-friendly resume entirely in your browser, then export HTML, PDF, Word or a deploy-ready site.
           </p>
           <div style={rise(0.22)} className="hero-rise mt-7 flex flex-wrap items-center justify-center gap-2 sm:mt-9 sm:gap-3">
@@ -160,7 +145,7 @@ export default function LandingPage() {
           <StepsTrack />
           <Stagger as="ol" className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
             {[
-              { n: '01', t: 'Start from a template', d: `Pick one of ${TEMPLATES.length} designed starting points — or a blank page. Every template is editable sample content, not a locked layout.` },
+              { n: '01', t: 'Start from a template', d: `Pick one of ${PORTFOLIO_TEMPLATE_COUNT} designed starting points — or a blank page. Every template is editable sample content, not a locked layout.` },
               { n: '02', t: 'Shape it visually', d: 'Edit content in forms, reorder sections by dragging, switch themes, and watch the live preview update on desktop, tablet and phone.' },
               { n: '03', t: 'Export anything', d: 'Download a single HTML file, a print-quality PDF, an editable Word document, or a ZIP you can drop onto any static host.' },
             ].map((s) => (
@@ -248,21 +233,12 @@ export default function LandingPage() {
           }
         >
           <Stagger as="div" className="grid gap-4 md:grid-cols-6">
-            <Feature className="md:col-span-4" icon={Palette} title={`${THEMES.length} themes, fully tunable`} body="Palettes for light and dark, type pairings, spacing, radius, motion and effects — tune every token or start from a preset.">
-              <div className="mt-6 flex flex-wrap gap-2" aria-hidden="true">
-                {THEMES.map((t) => {
-                  const p = t.palettes[t.defaultScheme];
-                  return (
-                    <span key={t.id} className="flex h-8 overflow-hidden rounded-lg border border-line" title={t.name}>
-                      <span className="w-4 sm:w-5" style={{ background: p.background }} />
-                      <span className="w-4 sm:w-5" style={{ background: p.primary }} />
-                      <span className="w-4 sm:w-5" style={{ background: p.accent }} />
-                    </span>
-                  );
-                })}
-              </div>
+            <Feature className="md:col-span-4" icon={Palette} title={`${THEME_COUNT} themes, fully tunable`} body="Palettes for light and dark, type pairings, spacing, radius, motion and effects — tune every token or start from a preset.">
+              <WhenNear fallback={<div className="mt-6 h-8" aria-hidden="true" />}>
+                <ThemeSwatches />
+              </WhenNear>
             </Feature>
-            <Feature className="md:col-span-2" icon={LayoutTemplate} title={`${TEMPLATES.length} templates`} body="Each with its own layout, section order, motion and a realistic sample persona to rewrite." />
+            <Feature className="md:col-span-2" icon={LayoutTemplate} title={`${PORTFOLIO_TEMPLATE_COUNT} templates`} body="Each with its own layout, section order, motion and a realistic sample persona to rewrite." />
             <Feature className="md:col-span-2" icon={GripVertical} title="Drag & drop sections" body="Seventeen section types. Reorder, duplicate, rename or hide them per device." />
             <Feature className="md:col-span-2" icon={History} title="Version history" body="Automatic snapshots plus named versions. Restore any point without losing the current one." />
             <Feature className="md:col-span-2" icon={Accessibility} title="Accessibility audit" body="Checks alt text, contrast, heading order and link labels before you publish." />
@@ -293,21 +269,11 @@ export default function LandingPage() {
               <ArrowUpRight className="size-4" aria-hidden="true" />
             </Link>
           </Reveal>
-          <TemplateReel>
-            {TEMPLATES.map((t) => (
-              <StaggerItem key={t.id} className="w-[min(78vw,340px)] shrink-0 snap-start">
-                <Link to={`/templates?t=${t.id}`} className="group block rounded-2xl border border-line bg-panel p-2 transition-[border-color,translate] duration-500 ease-out hover:-translate-y-1.5 hover:border-line-strong">
-                  <div className="overflow-hidden rounded-xl">
-                    <TemplateThumb template={t} className="transition-transform duration-700 group-hover:scale-[1.03]" />
-                  </div>
-                  <div className="flex items-center justify-between gap-3 px-2 pb-1 pt-3">
-                    <span className="text-[14px] font-medium">{t.name}</span>
-                    <span className="truncate text-[12px] text-fg-subtle">{t.audience}</span>
-                  </div>
-                </Link>
-              </StaggerItem>
-            ))}
-          </TemplateReel>
+          <WhenNear fallback={<TemplateReel>{Array.from({ length: 4 }, (_, i) => <TemplateCardPlaceholder key={i} />)}</TemplateReel>}>
+            <TemplateReel>
+              <TemplateCards />
+            </TemplateReel>
+          </WhenNear>
         </section>
 
         {/* --------------------------- Resume highlights -------------------------- */}
@@ -360,6 +326,9 @@ export default function LandingPage() {
             </WhenNear>
           </div>
         </section>
+
+        {/* ---------------------------- Career toolkit -------------------------- */}
+        <CareerToolkit />
 
         {/* -------------------------------- CTA --------------------------------- */}
         <ZoomScene labelledBy="cta-title" className="mx-auto max-w-6xl px-4 pb-24 sm:px-6" innerClassName="relative overflow-hidden rounded-[28px] border border-line bg-panel px-6 py-16 text-center sm:px-12">
@@ -485,6 +454,16 @@ function StepsTrack() {
     <div aria-hidden="true" className="mb-4 h-px overflow-hidden rounded-full bg-line">
       <div className="scene-draw h-full origin-left bg-[linear-gradient(90deg,var(--app-accent),#e9a6ff)]" />
     </div>
+  );
+}
+
+/** Same box as a template card, shown until the reel's code arrives. */
+function TemplateCardPlaceholder() {
+  return (
+    <li className="w-[min(78vw,340px)] shrink-0 rounded-2xl border border-line bg-panel p-2" aria-hidden="true">
+      <div className="aspect-[16/10] rounded-xl bg-canvas" />
+      <div className="px-2 pb-1 pt-3 text-[14px]">&nbsp;</div>
+    </li>
   );
 }
 

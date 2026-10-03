@@ -134,7 +134,7 @@ export function ProfileLinkButton({ projectId }: { projectId: string }) {
         type="button"
         onClick={() => setOpen(true)}
         title={linked ? 'Linked to your shared profile' : 'Not linked to your shared profile'}
-        className={cn('hidden h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-medium md:inline-flex', linked ? 'border-ok/30 bg-ok/10 text-ok' : 'border-line text-fg-subtle hover:text-fg')}
+        className={cn('hidden h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[11.5px] font-medium md:inline-flex', linked ? 'border-ok/30 bg-ok/10 text-ok' : 'border-line text-fg-subtle hover:text-fg')}
       >
         {linked ? <Link2 className="size-3.5" /> : <Link2Off className="size-3.5" />}
         {linked ? 'Profile linked' : 'Link profile'}

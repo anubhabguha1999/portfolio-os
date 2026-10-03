@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, Play, Search, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { ProfileAvatar, ProfileMenu, useProfileSummary } from './profile/ProfileMenu';
+import { BRAND } from '@/config/brand';
 import { cn } from '@/utils/cn';
 import { modKey } from '@/utils/download';
 import { useGlobalSearch } from '@/features/search/GlobalSearch';
@@ -51,7 +52,7 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
   return (
     <header className={cn('sticky top-0 z-40 border-b transition-[background,border-color] duration-300', solid ? 'border-line/70 bg-bg/80 backdrop-blur-xl' : 'border-transparent bg-transparent')}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link to="/" className="shrink-0 rounded-md whitespace-nowrap" aria-label="Home">
+        <Link to="/" className="shrink-0 rounded-md whitespace-nowrap" aria-label={`${BRAND.name} home`}>
           <Logo />
         </Link>
         <nav aria-label="Main" className="hidden min-w-0 items-center gap-0.5 lg:flex">
