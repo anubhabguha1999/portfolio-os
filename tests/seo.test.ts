@@ -36,7 +36,7 @@ describe('SEO route table', () => {
     expect(document.querySelector('link[rel="canonical"]')).toBeNull();
     applySeo('/templates');
     expect(document.title).toBe(seoFor('/templates').title);
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://portfolioos.online/templates');
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://www.portfolioos.online/templates');
     expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(seoFor('/templates').title);
   });
 });

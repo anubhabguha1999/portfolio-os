@@ -72,7 +72,7 @@ export function GlobalSearch() {
   const { pathname } = useLocation();
   const [items, setItems] = useState<Item[]>([]);
   // The builder has its own ⌘K command palette; on the runner ⌘K clears the output.
-  const enabled = !pathname.startsWith('/builder/') && pathname !== '/runner';
+  const enabled = !pathname.startsWith('/builder/') && !(import.meta.env.DEV && pathname === '/runner');
 
   useHotkeys([
     { combo: 'mod+k', enabled, handler: (e) => (e.preventDefault(), setOpen(!useGlobalSearch.getState().open)) },

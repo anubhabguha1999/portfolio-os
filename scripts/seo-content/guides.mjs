@@ -134,7 +134,7 @@ export default [
         p: [
           "Follow the employer's instructions first. If they ask for a .docx file, send one. Otherwise, a text-based PDF exported from a word processor or resume builder parses well in nearly all modern ATS platforms and preserves your layout exactly. A .docx file is the safest choice for older systems and recruitment agencies that edit resumes.",
           "Never upload a scanned image or a PDF made by printing a picture of your resume: if you cannot select and copy the text in the PDF, the ATS cannot read it either. A quick test is to open the PDF, select all, copy and paste into a plain text editor. If the text comes out in the right order with your sections intact, it will usually parse well.",
-          "Portfolio OS exports resumes as text-based PDF, editable Word (DOCX) and plain text, and its 12 templates include an ATS Minimal design plus ATS and content checks for headings, dates, length and keywords."
+          "Portfolio OS exports resumes as text-based PDF, editable Word (DOCX) and plain text, and its 18 templates include an ATS Minimal design plus ATS and content checks for headings, dates, length and keywords."
         ]
       },
       {
@@ -453,7 +453,7 @@ export default [
       {
         heading: "Importing and exporting with Portfolio OS",
         p: [
-          "Portfolio OS imports JSON Resume files directly into Resume Studio, mapping basics, work, education, skills, projects and other sections onto its own fields. From there you can apply any of its 12 resume templates, run ATS checks, and export to PDF, Word (DOCX), plain text or back to JSON. It runs free in the browser with no sign-up, and the file is processed on your device rather than uploaded.",
+          "Portfolio OS imports JSON Resume files directly into Resume Studio, mapping basics, work, education, skills, projects and other sections onto its own fields. From there you can apply any of its 18 resume templates, run ATS checks, and export to PDF, Word (DOCX), plain text or back to JSON. It runs free in the browser with no sign-up, and the file is processed on your device rather than uploaded.",
           "Whatever tool you use, keep resume.json as your master copy. When you finish a tailored version for an application, export it back to JSON as well so the structured data stays in sync with the PDF you sent."
         ]
       },

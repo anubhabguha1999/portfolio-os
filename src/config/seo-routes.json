@@ -1,5 +1,5 @@
 {
-  "siteUrl": "https://portfolioos.online",
+  "siteUrl": "https://www.portfolioos.online",
   "siteName": "Portfolio OS",
   "defaultImage": "/og-image.png",
   "twitterCard": "summary_large_image",
@@ -13,7 +13,7 @@
       "intro": "Portfolio OS lets you design a professional portfolio website, write an ATS-friendly resume and cover letter, and export everything as HTML, PDF, Word (DOCX) or a deploy-ready static site. There is no sign-up, nothing is uploaded, and it works offline.",
       "points": [
         "Portfolio website builder with designed templates, themes and drag-and-drop sections",
-        "Resume builder with 12 print-grade templates, ATS checks and real pagination",
+        "Resume builder with 18 print-grade templates, ATS checks and real pagination",
         "Cover letters and documents that share one profile with your portfolio",
         "Export to standalone HTML, PDF, DOCX, a ZIP website, or Next.js and Vite source code",
         "Private by design: your data stays in your browser"
@@ -25,11 +25,11 @@
     {
       "path": "/resumes",
       "title": "Free ATS-Friendly Resume Builder — Portfolio OS",
-      "description": "Make a professional resume free with 12 ATS-friendly templates, example content, JSON Resume import and PDF, Word and TXT export. No sign-up.",
+      "description": "Make a professional resume free: 18 templates including ATS-friendly designs, example content, JSON Resume import, and PDF, Word and TXT export. No sign-up.",
       "h1": "Free resume builder with ATS-friendly templates",
       "intro": "Pick a resume template, start from realistic example content or import a JSON Resume file, then tailor a version for every job. Resume Studio checks ATS compatibility, keeps entries together across pages and exports PDF, Word, plain text and JSON.",
       "points": [
-        "12 resume templates: Slate Banner, Navy Sidebar, ATS Minimal, Modern Professional, Executive, Developer and more",
+        "18 resume templates: Corner Portrait, Geometric Banner, Teal Stripe, Slate Banner, Navy Sidebar, ATS Minimal and more",
         "ATS and content checks for headings, dates, length and keywords",
         "Fit to one page, page limits and repeated section headings",
         "Import JSON Resume files and export PDF, DOCX, TXT and JSON",

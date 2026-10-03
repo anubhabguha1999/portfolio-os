@@ -2,7 +2,7 @@
 
 **Build once. Export everywhere.** A portfolio website, resume, cover-letter and document builder that runs entirely in the browser. There is no backend, no account and no server: everything is stored locally in IndexedDB, PDF parsing and OCR run on the device, and the app works offline once loaded (PWA).
 
-- **Live:** https://portfolioos.online
+- **Live:** https://www.portfolioos.online
 - **GitHub Pages mirror:** https://anubhabguha1999.github.io/portfolio-os/
 - **Made by** [Anubhab Guha](https://anubhab-guha.vercel.app/)
 
@@ -69,7 +69,7 @@ Requires **Node ≥ 20.19** (CI uses Node 22).
 - Linked portfolios sync both ways by id. Portfolio-only content (images, case studies, layout) is never touched, and deleting in a portfolio never deletes from the profile.
 
 ### Resume Studio
-- **15 templates**, from ATS-minimal to sidebar, banner, timeline and photo designs, with vector contact icons (GitHub, LinkedIn, web and others).
+- **18 templates**, from ATS-minimal to sidebar, banner, timeline and photo designs, with vector contact icons (GitHub, LinkedIn, web and others).
 - Multiple resume versions. Sections can be reordered, duplicated and hidden, and any field can be detached per resume (*Shared ⇄ This resume*).
 - Real pagination, fit-to-N-pages, ATS and content checks.
 - **Start from any existing resume:** upload a PDF, DOCX, TXT/MD or JSON (JSON Resume, our own exports or an *Extract Your Data* export) and keep editing.
@@ -98,12 +98,13 @@ Requires **Node ≥ 20.19** (CI uses Node 22).
 | `/export/:projectId` | Export Studio |
 | `/studio` | Studio dashboard |
 | `/profile` | Profile Studio |
-| `/resumes`, `/resume/:resumeId` | Resume list / editor |
+| `/resumes`, `/resumes/new`, `/resume/:resumeId` | Resume list / new resume (template picker) / editor |
 | `/documents`, `/document/:id` | Documents and cover letters |
 | `/knowledge`, `/knowledge/:id` | Extract Your Data library / document review |
 | `/view#p=…` | Shared portfolio (read-only) |
 | `/settings`, `/about` | Settings, about |
 | `/resume-examples/*`, `/portfolio-examples/*`, `/guides/*` | Static content pages generated at build time |
+| `/runner` | Local build & test runner (`npm run dev` only; not in production builds) |
 
 Old `/#/route` links are redirected on load (`src/app/legacy-hash.ts`).
 
@@ -271,7 +272,8 @@ A pre-export health check runs before every export.
   - `dist/app.html`, a noindex shell for private routes (editors, share links, settings);
   - `sitemap.xml`, `robots.txt` and `llms.txt`.
 - **Content pages:** `scripts/content-pages.mjs` generates the resume examples, portfolio examples and guides from `scripts/seo-content/`. In dev, `vite-content-pages.ts` serves them.
-- **Canonical URL:** set by `VITE_SITE_URL`, default `https://portfolioos.online`.
+- **Canonical URL:** set by `VITE_SITE_URL`, default `https://www.portfolioos.online`. It must be the host Vercel serves: the bare domain redirects to `www`, so canonicals and sitemap entries on the bare domain would point at a redirect and keep pages out of the index.
+- **Counts in SEO copy:** `llms.txt` and the JSON-LD feature list read the resume template count from `src/studio/templates/count.ts`. `tests/seo-copy.test.ts` fails if the text in `seo-routes.json` or the guides goes stale.
 
 ---
 
@@ -301,7 +303,7 @@ A pre-export health check runs before every export.
 | Setting | Where | Default |
 |---|---|---|
 | Product name | `src/config/brand.ts` | Portfolio OS |
-| Canonical domain | `VITE_SITE_URL` env | `https://portfolioos.online` |
+| Canonical domain | `VITE_SITE_URL` env | `https://www.portfolioos.online` |
 | Base path (sub-path hosting) | `BASE_PATH` env at build time | `/` |
 | Vercel Analytics / Speed Insights | `VITE_VERCEL_INSIGHTS=off` disables them | on |
 | Route SEO | `src/config/seo-routes.json` | — |
@@ -312,7 +314,7 @@ Example sub-path build: `BASE_PATH=/portfolio-os/ VITE_VERCEL_INSIGHTS=off npm r
 
 ## Deployment
 
-### Vercel (production — portfolioos.online)
+### Vercel (production — www.portfolioos.online)
 
 - **Config:** `vercel.json` rewrites public routes to their prerendered pages and sends every other route to `app.html`. It also sets the security and cache headers.
 - **Workflow:** `.github/workflows/vercel.yml` runs on every PR and on pushes to `main`:

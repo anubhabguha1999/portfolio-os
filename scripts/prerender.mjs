@@ -25,6 +25,9 @@ const SITE = (process.env.VITE_SITE_URL || cfg.siteUrl).replace(/\/$/, '');
 const template = readFileSync(join(dist, 'index.html'), 'utf8').replaceAll(cfg.siteUrl, SITE);
 const today = new Date().toISOString().slice(0, 10);
 const indexable = cfg.routes.filter((r) => r.index);
+// Single source for the resume template count (kept in sync with the registry by tests).
+const RESUME_TEMPLATES = Number(/RESUME_TEMPLATE_COUNT\s*=\s*(\d+)/.exec(readFileSync(join(root, 'src/studio/templates/count.ts'), 'utf8'))?.[1] ?? 0);
+if (!RESUME_TEMPLATES) throw new Error('Could not read RESUME_TEMPLATE_COUNT from src/studio/templates/count.ts');
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const urlOf = (path) => `${SITE}${path === '/' ? '/' : path}`;
@@ -50,7 +53,7 @@ const app = {
   screenshot: `${SITE}${cfg.defaultImage}`,
   featureList: [
     'Portfolio website builder with templates and themes',
-    'Resume and CV builder with 12 templates and ATS checks',
+    `Resume and CV builder with ${RESUME_TEMPLATES} templates and ATS checks`,
     'Cover letter and document templates',
     'Import JSON Resume files',
     'Export to HTML, PDF, DOCX, ZIP, Next.js and Vite',
@@ -201,7 +204,7 @@ ${contentPages.map((r) => `- [${r.title}](${urlOf(r.path)}): ${r.description}`).
 - Price: free
 - Platforms: any modern web browser (installable as a PWA)
 - Exports: standalone HTML, PDF, Word (DOCX), ZIP website, Next.js and Vite source code
-- Resume Studio: 12 templates, ATS checks, JSON Resume import, PDF/DOCX/TXT/JSON export
+- Resume Studio: ${RESUME_TEMPLATES} templates, ATS checks, JSON Resume import, PDF/DOCX/TXT/JSON export
 - Privacy: data is stored in the browser (IndexedDB) and never sent to a server
 `;
 writeFileSync(join(dist, 'llms.txt'), llms);
