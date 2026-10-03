@@ -1,9 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/Toaster';
 import { Spinner } from '@/components/ui/Button';
-import { PwaPrompt } from '@/features/settings/PwaPrompt';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
 import { ScrollToTop } from './ScrollToTop';
 import { VercelAnalytics } from './VercelAnalytics';
@@ -35,6 +34,23 @@ const KnowledgePage = lazy(() => import('@/features/knowledge/KnowledgePage'));
 const KnowledgeDocPage = lazy(() => import('@/features/knowledge/KnowledgeDocPage'));
 /** Local build & test runner: only exists under `npm run dev` (its endpoint is a dev-server plugin). */
 const RunnerPage = import.meta.env.DEV ? lazy(() => import('@/features/runner/RunnerPage')) : null;
+
+// Update / offline notices: nothing to show at startup, so they (and their animation library) load once the browser is idle.
+const PwaPrompt = lazy(() => import('@/features/settings/PwaPrompt').then((m) => ({ default: m.PwaPrompt })));
+
+function WhenIdle({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const ric = window.requestIdleCallback as ((cb: () => void, o?: { timeout: number }) => number) | undefined;
+    if (ric) {
+      const id = ric(() => setReady(true), { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(() => setReady(true), 1500);
+    return () => window.clearTimeout(id);
+  }, []);
+  return ready ? <Suspense fallback={null}>{children}</Suspense> : null;
+}
 
 function PageFallback() {
   return (
@@ -85,7 +101,9 @@ export function App() {
       </ErrorBoundary>
       <GlobalSearch />
       <Toaster />
-      <PwaPrompt />
+      <WhenIdle>
+        <PwaPrompt />
+      </WhenIdle>
     </BrowserRouter>
   );
 }

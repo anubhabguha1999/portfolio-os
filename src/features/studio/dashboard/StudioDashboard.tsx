@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, FileStack, FileText, Globe, HardDrive, LayoutTemplate, Lock, Package, Plus, ScanText, ShieldCheck, UploadCloud, UserRound } from 'lucide-react';
 import { Truncate } from 'dead-lock-react-lib';
@@ -14,8 +14,10 @@ import { ensureWorkspace, useWorkspace } from '@/studio/store/workspace';
 import { useImageUrls } from '@/studio/images/service';
 import { timeAgo } from '@/utils/format';
 import type { Profile } from '@/studio/model/types';
-import { ApplicationPackDialog } from '../pack/ApplicationPackDialog';
 import { cn } from '@/utils/cn';
+
+/** The export pipeline behind the pack is large; load it when the dialog opens. */
+const ApplicationPackDialog = lazy(() => import('../pack/ApplicationPackDialog').then((m) => ({ default: m.ApplicationPackDialog })));
 
 export function profileCompleteness(p: Profile): { score: number; missing: string[] } {
   const checks: Array<[boolean, string]> = [
@@ -282,7 +284,11 @@ export default function StudioDashboard() {
           </Link>
         </section>
       </main>
-      <ApplicationPackDialog open={pack} onClose={() => setPack(false)} />
+      {pack && (
+        <Suspense fallback={null}>
+          <ApplicationPackDialog open onClose={() => setPack(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

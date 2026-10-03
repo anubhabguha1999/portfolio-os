@@ -7,6 +7,9 @@ import type { DocumentPageSettings } from '@/studio/model/types';
 import type { DocTemplateDef, DocumentInput } from '../types';
 import { fontFor, metrics, mix, readableOnWhite, safeHex, type Metrics } from '../kit';
 import { blocksToNodes, type DocLook, type HeadingLook } from './blocks';
+import { kindLabel } from './labels';
+
+export { kindLabel };
 
 export interface DocInputX extends DocumentInput {
   /** Editor-only hints for empty blocks. */
@@ -365,19 +368,3 @@ export function getDocTemplate(id: string): DocTemplateDef {
   return DOC_TEMPLATES.find((t) => t.id === id) ?? professional;
 }
 
-export function kindLabel(kind: string): string {
-  return (
-    {
-      resume: 'Resume',
-      cv: 'Curriculum Vitae',
-      'cover-letter': 'Cover Letter',
-      portfolio: 'Portfolio',
-      'case-study': 'Case Study',
-      proposal: 'Proposal',
-      profile: 'Personal Profile',
-      report: 'Project Report',
-      presentation: 'Presentation',
-      custom: 'Document',
-    } as Record<string, string>
-  )[kind] ?? 'Document';
-}

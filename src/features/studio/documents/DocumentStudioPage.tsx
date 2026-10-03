@@ -21,7 +21,7 @@ import { BlockEditor } from './BlockEditor';
 import { DocSettingsPanel } from './DocSettingsPanel';
 import { LETTER_PARTS, LetterForm } from './LetterForm';
 import { useDocumentLayout } from './useDocumentLayout';
-import { templateName } from './DocumentsPage';
+import { templateName } from './templateName';
 import { cn } from '@/utils/cn';
 
 type MobilePane = 'blocks' | 'canvas' | 'props';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, Copy, FilePlus2, FileSearch, FileSignature, FolderKanban, Mail, MoreHorizontal, Pencil, Plus, Presentation, Trash2, UserSquare, FileText } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -14,12 +14,26 @@ import type { DocumentKind, StudioDocument } from '@/studio/model/types';
 import { deleteDocument, duplicateDocument, getDocument, listDocuments, saveDocument } from '@/studio/storage/repo';
 import { ensureWorkspace, useWorkspace } from '@/studio/store/workspace';
 import { newStudioDocument } from '@/studio/templates/document/starters';
-import { getDocTemplate, kindLabel } from '@/studio/templates/document';
-import { getLetterTemplate } from '@/studio/templates/letter';
+import { kindLabel } from '@/studio/templates/document/labels';
 import { toast } from '@/stores/ui';
 import { timeAgo } from '@/utils/format';
 import { cn } from '@/utils/cn';
-import { DocThumb } from './DocThumb';
+
+// Thumbnails and template names need the layout engine (and jsPDF): load them only when there are documents to show.
+const DocThumb = lazy(() => import('./DocThumb').then((m) => ({ default: m.DocThumb })));
+
+function useTemplateNames(needed: boolean): ((doc: Pick<StudioDocument, 'kind' | 'templateId'>) => string) | null {
+  const [fn, setFn] = useState<((doc: Pick<StudioDocument, 'kind' | 'templateId'>) => string) | null>(null);
+  useEffect(() => {
+    if (!needed) return;
+    let alive = true;
+    void import('./templateName').then((m) => alive && setFn(() => m.templateName));
+    return () => {
+      alive = false;
+    };
+  }, [needed]);
+  return fn;
+}
 
 export const KIND_ICONS: Record<DocumentKind, ReactNode> = {
   'cover-letter': <Mail className="size-4" />,
@@ -36,13 +50,11 @@ export const KIND_ICONS: Record<DocumentKind, ReactNode> = {
 
 type Filter = 'all' | 'letters' | 'documents';
 
-export function templateName(doc: Pick<StudioDocument, 'kind' | 'templateId'>): string {
-  return doc.kind === 'cover-letter' ? getLetterTemplate(doc.templateId).name : getDocTemplate(doc.templateId).name;
-}
 
 export default function DocumentsPage() {
   const navigate = useNavigate();
   const [docs, setDocs] = useState<StudioDocument[] | null>(null);
+  const templateName = useTemplateNames(!!docs?.length);
   const [filter, setFilter] = useState<Filter>('all');
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<StudioDocument | null>(null);
@@ -143,7 +155,9 @@ export default function DocumentsPage() {
               <li key={d.id} className="group relative">
                 <Link to={`/document/${d.id}`} className="block overflow-hidden rounded-xl border border-line bg-canvas p-3 transition-colors hover:border-line-strong">
                   <div className="overflow-hidden rounded-[2px] bg-white shadow-[0_8px_24px_-12px_rgba(0,0,0,.5)] ring-1 ring-black/5">
-                    <DocThumb doc={d} />
+                    <Suspense fallback={<div className="aspect-[210/297] w-full animate-pulse bg-hover" aria-hidden="true" />}>
+                      <DocThumb doc={d} />
+                    </Suspense>
                   </div>
                 </Link>
                 <div className="mt-2.5 flex items-start gap-2 px-0.5">
@@ -153,7 +167,8 @@ export default function DocumentsPage() {
                       {d.name}
                     </Truncate>
                     <p className="truncate text-[11.5px] text-fg-subtle">
-                      {kindLabel(d.kind)} · {templateName(d)} · {timeAgo(d.updatedAt)}
+                      {kindLabel(d.kind)} · {templateName ? `${templateName(d)} · ` : ''}
+                      {timeAgo(d.updatedAt)}
                     </p>
                   </div>
                   <Menu

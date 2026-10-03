@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Copy, FileText, MoreHorizontal, Package, Pencil, Plus, Sparkles, Trash2, Mail, Link2 } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -14,16 +14,33 @@ import { timeAgo } from '@/utils/format';
 import type { ResumeDoc } from '@/studio/model/types';
 import { deleteResume, duplicateResume, getResume, listResumes, saveResume } from '@/studio/storage/repo';
 import { ensureWorkspace, useWorkspace } from '@/studio/store/workspace';
-import { getResumeTemplate } from '@/studio/templates/resume';
-import { ResumeThumb } from './ResumeThumb';
-import { useCreateResume, useProfileIsEmpty } from './useCreateResume';
-import { ApplicationPackDialog } from '../pack/ApplicationPackDialog';
+import { useProfileIsEmpty } from './useProfileIsEmpty';
+import type { CreateOptions } from './useCreateResume';
+
+// Heavy code (layout engine + jsPDF for thumbnails, the export pipeline for the pack) loads only when used.
+const ResumeThumb = lazy(() => import('./ResumeThumb').then((m) => ({ default: m.ResumeThumb })));
+const ApplicationPackDialog = lazy(() => import('../pack/ApplicationPackDialog').then((m) => ({ default: m.ApplicationPackDialog })));
+
+/** Template id → name, loaded with the template registry once there are resumes to label. */
+function useTemplateNames(needed: boolean): Record<string, string> {
+  const [names, setNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!needed) return;
+    let alive = true;
+    void import('@/studio/templates/resume').then((m) => alive && setNames(Object.fromEntries(m.RESUME_TEMPLATES.map((t) => [t.id, t.name]))));
+    return () => {
+      alive = false;
+    };
+  }, [needed]);
+  return names;
+}
 
 export default function ResumesPage() {
   const navigate = useNavigate();
   const profile = useWorkspace((s) => s.profile);
   const library = useWorkspace((s) => s.library);
   const [resumes, setResumes] = useState<ResumeDoc[] | null>(null);
+  const templateNames = useTemplateNames(!!resumes?.length);
   const [dup, setDup] = useState<ResumeDoc | null>(null);
   const [dupName, setDupName] = useState('');
   const [renaming, setRenaming] = useState<ResumeDoc | null>(null);
@@ -41,7 +58,10 @@ export default function ResumesPage() {
   }, [refresh]);
 
   const empty = useProfileIsEmpty();
-  const create = useCreateResume();
+  const create = async (opts: CreateOptions) => {
+    const { createResumeFrom } = await import('./useCreateResume');
+    navigate(`/resume/${await createResumeFrom(opts, empty)}`);
+  };
 
   return (
     <div className="flex min-h-full flex-col bg-bg text-fg">
@@ -103,7 +123,9 @@ export default function ResumesPage() {
             {resumes.map((r) => (
               <li key={r.id} className="group rounded-2xl border border-line bg-panel p-3 transition hover:border-line-strong">
                 <Link to={`/resume/${r.id}`} className="grid place-items-center rounded-xl bg-canvas p-4" aria-label={`Open ${r.name}`}>
-                  <ResumeThumb resume={r} library={library} profile={profile} width={180} className="transition group-hover:-translate-y-0.5" />
+                  <Suspense fallback={<div className="aspect-[210/297] w-[180px] rounded bg-white/90" aria-hidden="true" />}>
+                    <ResumeThumb resume={r} library={library} profile={profile} width={180} className="transition group-hover:-translate-y-0.5" />
+                  </Suspense>
                 </Link>
                 <div className="mt-3 flex items-start gap-2">
                   <div className="min-w-0 flex-1">
@@ -113,7 +135,8 @@ export default function ResumesPage() {
                       </Truncate>
                     </Link>
                     <p className="mt-0.5 truncate text-[11.5px] text-fg-subtle">
-                      {getResumeTemplate(r.templateId).name} · {timeAgo(r.updatedAt)}
+                      {templateNames[r.templateId] ? `${templateNames[r.templateId]} · ` : ''}
+                      {timeAgo(r.updatedAt)}
                     </p>
                   </div>
                   {r.kind === 'cv' && <Badge>CV</Badge>}
@@ -210,7 +233,11 @@ export default function ResumesPage() {
         description="Only this resume version is removed. Your shared profile, library, portfolio and other resumes are not affected."
         confirmLabel="Delete resume"
       />
-      <ApplicationPackDialog open={pack} onClose={() => setPack(false)} />
+      {pack && (
+        <Suspense fallback={null}>
+          <ApplicationPackDialog open onClose={() => setPack(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }
