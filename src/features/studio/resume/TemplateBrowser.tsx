@@ -81,6 +81,7 @@ export function TemplateBrowser({ open, onClose, resume, onUse }: { open: boolea
                       <Check className="size-3" /> Current
                     </span>
                   )}
+                  {t.isNew && <span className="absolute left-2 top-2 rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold text-white">New</span>}
                 </div>
                 <div className="mt-3 flex items-start justify-between gap-2">
                   <div className="min-w-0">

@@ -12,8 +12,6 @@ import { listDocuments, listResumes, type StudioSummary } from '@/studio/storage
 import { listDocs } from '@/knowledge/storage/repo';
 import { ensureWorkspace, useWorkspace } from '@/studio/store/workspace';
 import { useImageUrls } from '@/studio/images/service';
-import { createResume } from '@/studio/model/defaults';
-import { saveResume } from '@/studio/storage/repo';
 import { timeAgo } from '@/utils/format';
 import type { Profile } from '@/studio/model/types';
 import { ApplicationPackDialog } from '../pack/ApplicationPackDialog';
@@ -101,11 +99,6 @@ export default function StudioDashboard() {
     [projects, resumes, docs],
   );
 
-  const newResume = async () => {
-    const r = await saveResume(createResume('My Resume'));
-    navigate(`/resume/${r.id}`);
-  };
-
   return (
     <div className="flex min-h-full flex-col bg-bg text-fg">
       <SiteHeader />
@@ -162,7 +155,7 @@ export default function StudioDashboard() {
                 <Button size="sm" variant="primary" iconRight={<ArrowRight className="size-3.5" />} onClick={() => navigate('/resumes')}>
                   Open
                 </Button>
-                <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => void newResume()}>
+                <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => navigate('/resumes/new')}>
                   New resume
                 </Button>
               </>

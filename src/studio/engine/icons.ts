@@ -15,7 +15,11 @@ export interface VectorIcon {
 }
 
 /** Icons a document can use; anything else falls back to "link". */
-export const DOC_ICONS = ['mail', 'phone', 'map-pin', 'globe', 'link', 'github', 'linkedin', 'x', 'dribbble', 'youtube', 'instagram', 'rss', 'palette'] as const;
+export const DOC_ICONS = [
+  'mail', 'phone', 'map-pin', 'globe', 'link', 'github', 'linkedin', 'x', 'dribbble', 'youtube', 'instagram', 'rss', 'palette',
+  // Section-heading badges.
+  'briefcase', 'graduation', 'star', 'award', 'book', 'code', 'cpu', 'heart', 'users', 'quote', 'layers', 'sparkles', 'trending', 'pen',
+] as const;
 export type DocIcon = (typeof DOC_ICONS)[number];
 
 export const ICON_STROKE = 1.8;

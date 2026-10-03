@@ -27,6 +27,7 @@ const ViewPage = lazy(() => import('@/features/share/ViewPage'));
 const StudioDashboard = lazy(() => import('@/features/studio/dashboard/StudioDashboard'));
 const ProfileStudioPage = lazy(() => import('@/features/studio/profile/ProfileStudioPage'));
 const ResumesPage = lazy(() => import('@/features/studio/resume/ResumesPage'));
+const NewResumePage = lazy(() => import('@/features/studio/resume/NewResumePage'));
 const ResumeStudioPage = lazy(() => import('@/features/studio/resume/ResumeStudioPage'));
 const DocumentsPage = lazy(() => import('@/features/studio/documents/DocumentsPage'));
 const DocumentStudioPage = lazy(() => import('@/features/studio/documents/DocumentStudioPage'));
@@ -69,6 +70,7 @@ export function App() {
             <Route path="/studio" element={<StudioDashboard />} />
             <Route path="/profile" element={<ProfileStudioPage />} />
             <Route path="/resumes" element={<ResumesPage />} />
+            <Route path="/resumes/new" element={<NewResumePage />} />
             <Route path="/resume/:resumeId" element={<ResumeStudioPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/document/:id" element={<DocumentStudioPage />} />

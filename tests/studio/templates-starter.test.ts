@@ -30,7 +30,7 @@ describe('template starters', () => {
     }
   });
 
-  for (const id of ['slate-banner', 'navy-sidebar']) {
+  for (const id of ['slate-banner', 'navy-sidebar', 'corner-portrait', 'geometric-banner', 'teal-stripe']) {
     it(`${id} starter fits one clean page and exports`, async () => {
       const { t, persona, laid, flow } = build(id);
       expect(t.starter?.persona).toBe(persona.id);

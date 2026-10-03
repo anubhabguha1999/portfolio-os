@@ -520,14 +520,21 @@ const PHOTO_FRAME: Record<Exclude<ResumeStyle['photo'], 'none'>, { aspect: numbe
  * `d` is the photo height; portraits are narrower so they are never squashed.
  * Returns a row so the frame hugs the image instead of spanning the column.
  */
-export function ringedPortrait(src: string | null, name: string, d: number, colW: number, opts: { ring: string; ringWidth?: number; disc: string; discText: string; align?: 'left' | 'center'; mode?: ResumeStyle['photo'] }): RowNode {
+export function ringedPortrait(
+  src: string | null,
+  name: string,
+  d: number,
+  colW: number,
+  opts: { ring: string; ringWidth?: number; /** A second, thin ring outside the first. */ outerRing?: { color: string; width: number }; disc: string; discText: string; align?: 'left' | 'center'; mode?: ResumeStyle['photo'] },
+): RowNode {
   const frame = PHOTO_FRAME[opts.mode && opts.mode !== 'none' ? opts.mode : 'circle'];
   const rw = opts.ringWidth ?? 0.9;
+  const ow = opts.outerRing?.width ?? 0;
   // Fit the outer frame into the column, keeping the aspect.
-  const scale = Math.min(1, colW / (d * frame.aspect + rw * 2));
+  const scale = Math.min(1, colW / (d * frame.aspect + (rw + ow) * 2));
   const innerH = d * scale;
   const innerW = innerH * frame.aspect;
-  const outerW = innerW + rw * 2;
+  const outerW = innerW + (rw + ow) * 2;
   const innerR = Math.min(innerW, innerH) * frame.radius;
   const outerR = frame.radius ? innerR + (frame.radius >= 0.5 ? rw : rw * 0.6) : 0;
   const textSize = (Math.min(innerW, innerH) * 0.36) / PT;
@@ -543,7 +550,10 @@ export function ringedPortrait(src: string | null, name: string, d: number, colW
         nodes: [{ t: 'text', runs: [{ text: initials(name) }], style: { font: 'helvetica', size: textSize, bold: true, color: opts.discText, lineHeight: 1.05, tracking: 0.4 }, align: 'center' }],
       };
   // An initials badge is ornament; a real photo still goes into the DOCX.
-  const ring: BoxNode = { t: 'box', fill: opts.ring, radius: outerR, padding: [rw, rw, rw, rw], keep: 'together', nodes: [face], ...(src ? {} : { decorative: true }) };
+  const inner: BoxNode = { t: 'box', fill: opts.ring, radius: outerR, padding: [rw, rw, rw, rw], keep: 'together', nodes: [face], ...(src ? {} : { decorative: true }) };
+  const ring: BoxNode = opts.outerRing
+    ? { t: 'box', fill: opts.outerRing.color, radius: outerR ? outerR + (frame.radius >= 0.5 ? ow : ow * 0.6) : 0, padding: [ow, ow, ow, ow], keep: 'together', nodes: [inner], ...(src ? {} : { decorative: true }) }
+    : inner;
   const frac = Math.min(1, outerW / colW);
   if (opts.align === 'left') return { t: 'row', gap: 0, cols: [{ width: frac, nodes: [ring] }, { nodes: [] }] };
   const side = (1 - frac) / 2;

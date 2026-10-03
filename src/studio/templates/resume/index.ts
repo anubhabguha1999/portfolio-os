@@ -2,10 +2,10 @@
  * Resume templates. Every template consumes the same ResolvedResume; switching
  * templates only changes presentation.
  */
-import type { BoxNode, FlowColumn, FlowDoc, FlowNode, FontFamily, GroupNode, PageFurniture, Run, TextNode } from '@/studio/engine/flow';
+import type { BoxNode, Decoration, FlowColumn, FlowDoc, FlowNode, FontFamily, GroupNode, PageFurniture, PageSelector, RowNode, Run, TextNode } from '@/studio/engine/flow';
 import { getMeasurer, PT } from '@/studio/engine/measure';
-import { contactIcon } from '@/studio/engine/icons';
-import type { ResolvedItem, ResolvedResume, ResolvedSection } from '@/studio/model/resolve';
+import { contactIcon, type DocIcon } from '@/studio/engine/icons';
+import type { ContactItem, ResolvedItem, ResolvedResume, ResolvedSection } from '@/studio/model/resolve';
 import type { ResumeSectionKind, ResumeStyle } from '@/studio/model/types';
 import type { ResumeTemplateDef, StyleControl } from '../types';
 import {
@@ -15,12 +15,14 @@ import {
   contactRuns,
   effectiveStyle,
   fontFor,
+  inlineRuns,
   metrics,
   mix,
   paragraphs,
   photoNode,
   readableOnWhite,
   ringedPortrait,
+  sectionBody,
   sectionNode,
   skillsNodes,
   sectionTitle,
@@ -758,6 +760,7 @@ const slateBanner: ResumeTemplateDef = {
   columns: 2,
   ats: 'medium',
   supportsPhoto: true,
+  isNew: true,
   defaults: { colorPreset: 'custom', accent: '#2c7a7b', sidebarWidth: 0.47, photo: 'circle', baseSize: 9.6, lineHeight: 1.36, iconStyle: 'glyph', margins: 'normal' },
   controls: [...COMMON, 'sidebarWidth', 'photo', 'iconStyle'],
   starter: {
@@ -884,6 +887,7 @@ const navySidebar: ResumeTemplateDef = {
   columns: 2,
   ats: 'medium',
   supportsPhoto: true,
+  isNew: true,
   defaults: { colorPreset: 'custom', accent: '#1f3864', sidebarWidth: 0.32, photo: 'circle', baseSize: 9.8, lineHeight: 1.36, margins: 'normal' },
   controls: [...COMMON, 'sidebarWidth', 'photo', 'iconStyle'],
   starter: {
@@ -1459,7 +1463,539 @@ const chevronHeader: ResumeTemplateDef = {
   },
 };
 
-export const RESUME_TEMPLATES: ResumeTemplateDef[] = [slateBanner, navySidebar, blushSidebar, angledSidebar, chevronHeader, atsMinimal, modern, executive, developer, creative, compact, academic, minimalMono, editorial, timeline];
+/* ------------------------------------------------------------------ */
+/* Shared by the templates below: heading badges and ornaments         */
+/* ------------------------------------------------------------------ */
+
+const SECTION_ICON: Partial<Record<ResumeSectionKind, DocIcon>> = {
+  summary: 'users',
+  experience: 'briefcase',
+  volunteer: 'heart',
+  projects: 'layers',
+  'open-source': 'code',
+  education: 'graduation',
+  skills: 'star',
+  'technical-skills': 'cpu',
+  languages: 'globe',
+  certifications: 'award',
+  awards: 'award',
+  achievements: 'trending',
+  interests: 'heart',
+  publications: 'book',
+  references: 'quote',
+};
+const iconFor = (kind: ResumeSectionKind): DocIcon => SECTION_ICON[kind] ?? 'sparkles';
+
+/** Parallel 45° strokes filling a circle (the hatched discs in the page corners). */
+function hatchedCircle(cx: number, cy: number, r: number, color: string, pages: PageSelector, gap = 1.5, lw = 0.22): Decoration[] {
+  const out: Decoration[] = [];
+  const s = Math.SQRT1_2;
+  for (let d = -r + gap / 2; d < r; d += gap) {
+    const half = Math.sqrt(r * r - d * d);
+    const px = cx + d * s;
+    const py = cy + d * s;
+    out.push({ k: 'line', x1: px - half * s, y1: py + half * s, x2: px + half * s, y2: py - half * s, color, lw, pages });
+  }
+  return out;
+}
+
+/** Width of a heading run with a leading icon badge, so pills can hug their text. */
+function badgedWidth(title: string, look: Look, size: number, tracking: number, bold: boolean): number {
+  const box = size * PT * 1.35;
+  return box + getMeasurer().width(` ${title.toUpperCase()}`, look.font, bold, false, size, tracking);
+}
+
+/** Section body for templates that only restyle headings. */
+function withTitle(sec: ResolvedSection, look: Look, title: FlowNode[], nodes: FlowNode[], before: number, continued?: FlowNode[]): FlowNode {
+  const intro = sec.text && sec.kind !== 'summary' ? paragraphs(sec.text, look) : [];
+  return { t: 'section', id: sec.id, ref: sec.id, title, ...(continued ? { continued } : {}), nodes: [...intro, ...nodes.map((n, i) => (i === 0 && intro.length && n.t !== 'space' && n.t !== 'break' ? { ...n, before: 1.2 * look.sp } : n))], before };
+}
+
+/** Skill name, a level bar and its percentage; two per row when the column is wide. */
+function percentBars(sec: ResolvedSection, look: Look, width: number, fill: string, track: string): FlowNode[] {
+  const all = sec.skills.flatMap((g) => g.names.map((n, i) => ({ n, level: g.levels[i] ?? 0 })));
+  const perRow = width > 90 && all.length > 4 ? 2 : 1;
+  const gap = 2;
+  const cellW = perRow === 2 ? (width - 7) / 2 : width;
+  const inner = cellW - gap * 2;
+  const pctW = getMeasurer().width('100 %', look.font, false, false, look.size) + 0.6;
+  const barW = Math.min(30, cellW * 0.32);
+  const cell = (s: { n: string; level: number } | undefined): FlowNode[] => {
+    if (!s) return [];
+    const pct = Math.round((s.level || 5) * 20);
+    const bar = (c: string): FlowNode => ({ t: 'box', nodes: [{ t: 'space', h: 1 }], fill: c, radius: 0.5, keep: 'together' });
+    return [
+      {
+        t: 'row',
+        gap,
+        cols: [
+          { width: (inner - barW - pctW) / inner, nodes: [{ t: 'text', runs: [{ text: s.n }], style: ts(look, { size: look.size - 0.4, lineHeight: 1.25 }) }] },
+          { width: barW / inner, vAlign: 'middle', nodes: [{ t: 'row', gap: 0, cols: [{ width: pct / 100, nodes: [bar(fill)] }, ...(pct < 100 ? [{ nodes: [bar(track)] }] : [])] }] },
+          { align: 'right', nodes: [{ t: 'text', runs: [{ text: `${pct} %` }], style: ts(look, { size: look.size, color: fill, lineHeight: 1.25 }), align: 'right' }] },
+        ],
+      },
+    ];
+  };
+  const out: FlowNode[] = [];
+  for (let i = 0; i < all.length; i += perRow) {
+    const row = all.slice(i, i + perRow);
+    out.push(perRow === 1 ? { ...(cell(row[0])[0] as RowNode), ...(i ? { before: 1.1 * look.sp } : {}) } : { t: 'row', gap: 7, ...(i ? { before: 1.1 * look.sp } : {}), cols: [{ width: 0.5, nodes: cell(row[0]) }, { width: 0.5, nodes: cell(row[1]) }] });
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* 16. Corner Portrait                                                 */
+/* ------------------------------------------------------------------ */
+
+const CORNER_SIDE = new Set<ResumeSectionKind>(['summary', 'skills', 'languages', 'interests', 'certifications', 'awards']);
+
+/** Company, then role and place, then dates — all in bold, as in the reference design. */
+function cornerEntry(item: ResolvedItem, look: Look, kind: ResumeSectionKind, navy: string): GroupNode {
+  const companyFirst = kind === 'experience' || kind === 'volunteer' || kind === 'education';
+  const top = companyFirst ? item.subtitle || item.title : item.title;
+  const second = companyFirst ? (item.subtitle ? item.title : '') : item.subtitle;
+  const head: FlowNode[] = [{ t: 'text', runs: [{ text: top || 'Untitled', ...(item.url ? { link: item.url } : {}) }], style: ts(look, { bold: true, size: look.size + 0.4, color: navy, lineHeight: 1.25 }), role: 'h3' }];
+  const l2 = [second, kind === 'education' ? '' : item.location].filter(Boolean).join(' - ');
+  if (l2) head.push({ t: 'text', runs: [{ text: l2 }], style: ts(look, { bold: kind !== 'education', lineHeight: 1.25 }), before: 0.3 * look.sp });
+  if (item.date) head.push({ t: 'text', runs: [{ text: item.date }], style: ts(look, { bold: kind !== 'education', size: look.size - 0.2, lineHeight: 1.25 }), before: 0.3 * look.sp });
+  const body: FlowNode[] = [];
+  if (item.description.trim()) body.push(...paragraphs(item.description, look, {}, 1).map((n, i) => (i === 0 ? { ...n, before: 0.9 * look.sp } : n)));
+  const bl = bulletNodes(item.bullets, look, {}, 0.6);
+  if (bl[0]) bl[0].before = 0.9 * look.sp;
+  body.push(...bl);
+  return { t: 'group', keep: body.length <= 6 ? 'together' : 'head', head: head.length, minBody: 2, nodes: [...head, ...body], ref: item.id };
+}
+
+const cornerPortrait: ResumeTemplateDef = {
+  id: 'corner-portrait',
+  name: 'Corner Portrait',
+  description: 'A big ringed photo set into a navy corner, a bold two-line name, navy heading bars, skill percentages and hatched corner discs.',
+  tags: ['Two column', 'Photo', 'Premium'],
+  columns: 2,
+  ats: 'medium',
+  supportsPhoto: true,
+  isNew: true,
+  defaults: { colorPreset: 'custom', accent: '#25344d', sidebarWidth: 0.37, photo: 'circle', iconStyle: 'glyph', baseSize: 9.4, lineHeight: 1.38, margins: 'normal' },
+  controls: [...COMMON, 'sidebarWidth', 'photo', 'iconStyle'],
+  starter: {
+    sections: [
+      { kind: 'profile' },
+      { kind: 'summary', title: 'About Me' },
+      { kind: 'experience' },
+      { kind: 'education' },
+      { kind: 'technical-skills', title: 'Skills Summary', placement: 'main' },
+      { kind: 'languages', title: 'Language' },
+      { kind: 'certifications', placement: 'side' },
+    ],
+    persona: 'classic',
+  },
+  compose(r) {
+    if (r.style.atsSafe) return atsMinimal.compose(r);
+    const st = setup(r, 'helvetica');
+    const m = st.m;
+    const navy = mix(st.accent, '#000000', 0.04);
+    const b = baseLook(st);
+    const look = baseLook(st, { text: '#1d2230', muted: '#555a66', entry: { ...b.entry, titleColor: navy }, bulletColor: '#1d2230' });
+    const sideLook: Look = { ...look, size: look.size - 0.1 };
+    const bar = (title: string, l: Look): FlowNode[] => [
+      { t: 'box', fill: navy, keep: 'together', keepWithNext: true, padding: [1.3, 2, 1.3, 2], after: 2.6 * look.sp, nodes: [{ t: 'text', runs: [{ text: title }], style: ts(l, { size: l.size + 0.5, color: '#ffffff', uppercase: true, tracking: 0.35, lineHeight: 1.2 }), align: 'center', role: 'h1' }] },
+    ];
+
+    const sx = 12;
+    const sideW = Math.round(m.pageW * Math.min(0.42, Math.max(0.3, r.style.sidebarWidth))) - sx;
+    const mainX = sx + sideW + 9;
+    const mainW = m.pageW - m.margin.right - mainX;
+    const { main, side } = placeBy(r, CORNER_SIDE);
+    const summary = side.find((s) => s.kind === 'summary');
+
+    /* sidebar: about me, contact, then barred sections */
+    const sideNodes: FlowNode[] = [];
+    if (summary) {
+      sideNodes.push({
+        t: 'section',
+        id: summary.id,
+        ref: summary.id,
+        title: [{ t: 'text', runs: [{ text: summary.title }], style: ts(look, { size: look.size + 3.6, lineHeight: 1.2, color: '#111111' }), align: 'center', role: 'h1', keepWithNext: true, after: 1.6 * look.sp }],
+        nodes: paragraphs(summary.text, sideLook, { size: sideLook.size - 0.2, lineHeight: 1.35 }).map((n) => ({ ...n, align: 'center' as const })),
+      });
+    }
+    if (r.contact.length) sideNodes.push({ t: 'group', keep: 'none', ref: r.profileSectionId ?? 'profile', before: summary ? 5 * look.sp : 0, nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, iconBg: navy, iconColor: '#ffffff', color: look.text }).map((n, i) => (i ? { ...n, before: 2.6 * look.sp } : n)) });
+    side
+      .filter((s) => s !== summary)
+      .forEach((sec, i) => {
+        const before = i === 0 && !sideNodes.length ? 0 : 6 * look.sp;
+        let nodes: FlowNode[] | null = null;
+        if (sec.kind === 'skills' || sec.kind === 'technical-skills') nodes = bulletNodes(sec.skills.flatMap((g) => g.names), sideLook, {}, 1);
+        else if (sec.kind === 'languages' && sec.display === 'auto') nodes = bulletNodes(sec.items.map((it) => (it.subtitle ? `${it.title} (${it.subtitle.toLowerCase()})` : it.title)), sideLook, {}, 1);
+        else if (sec.kind === 'interests' && sec.display !== 'entries') nodes = bulletNodes(sec.items.map((it) => it.title), sideLook, {}, 1);
+        sideNodes.push(nodes ? withTitle(sec, sideLook, bar(sec.title, sideLook), nodes, before) : sectionNode(sec, sideLook, sideW, { side: true, before, titleOverride: bar(sec.title, sideLook) }));
+      });
+
+    /* main column */
+    const mainNodes: FlowNode[] = main.map((sec, i) => {
+      const before = i === 0 ? 0 : 5.5 * look.sp;
+      if (sec.kind === 'summary') return withTitle(sec, look, bar(sec.title, look), paragraphs(sec.text, look), before);
+      if ((sec.kind === 'skills' || sec.kind === 'technical-skills') && sec.display !== 'tags' && sec.display !== 'list') return withTitle(sec, look, bar(sec.title, look), percentBars(sec, look, mainW, navy, mix(navy, '#ffffff', 0.82)), before);
+      if (['experience', 'education', 'volunteer', 'projects', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
+        return withTitle(sec, look, bar(sec.title, look), sec.items.map((it, j) => ({ ...cornerEntry(it, look, sec.kind, navy), ...(j ? { before: 3.4 * look.sp } : {}) })), before, bar(`${sec.title} (continued)`, look));
+      return sectionNode(sec, look, mainW, { before, titleOverride: bar(sec.title, look) });
+    });
+
+    /* masthead: portrait in the corner, two-line name beside it */
+    const photoD = 44 * st.head;
+    const words = r.name.trim().split(/\s+/).filter(Boolean);
+    const nameRuns: Run[] = words.length > 1 ? [{ text: words.slice(0, -1).join(' ') }, { text: ' ', lineBreak: true }, { text: words[words.length - 1]! }] : [{ text: r.name }];
+    const nameCol: FlowNode[] = [{ t: 'text', runs: nameRuns, style: ts(look, { size: 30 * st.head, bold: true, uppercase: true, tracking: 0.3, color: navy, lineHeight: 1.04 }), role: 'title', ref: r.profileSectionId ?? 'profile' }];
+    const hl = headlineNode(r, look, { color: '#1d2230', size: look.size + 3.4 });
+    if (hl) nameCol.push(hl);
+    const showPhoto = r.style.photo !== 'none';
+    const top = 10;
+    const mast: FlowNode = showPhoto
+      ? { t: 'row', gap: 9, cols: [{ width: sideW / (m.pageW - m.margin.right - sx - 9), nodes: [ringedPortrait(r.photo, r.name, photoD, sideW, { ring: '#ffffff', ringWidth: 2, outerRing: { color: navy, width: 0.9 }, disc: mix(navy, '#ffffff', 0.16), discText: '#ffffff', mode: r.style.photo })] }, { vAlign: 'middle', nodes: nameCol }] }
+      : { t: 'box', padding: [8, 0, 4, mainX - sx], nodes: nameCol };
+    const cx = sx + sideW / 2;
+    const cy = top + photoD / 2 + 2.9;
+    const hatch = '#b9bdc7';
+    return doc(r, st, look, {
+      page: { width: m.pageW, height: m.pageH, margin: { ...m.margin, top } },
+      masthead: [mast],
+      mastheadX: sx,
+      mastheadWidth: m.pageW - m.margin.right - sx,
+      mastheadGap: 7 * look.sp,
+      columns: [
+        { id: 'side', x: sx, width: sideW, nodes: sideNodes, order: 1, top: 14 },
+        { id: 'main', x: mainX, width: mainW, nodes: mainNodes, order: 0 },
+      ],
+      decorations: [
+        ...(showPhoto ? [{ k: 'rect' as const, x: 0, y: 0, w: cx, h: cy, fill: navy, pages: 'first' as const }] : [{ k: 'rect' as const, x: 0, y: 0, w: 30, h: 14, fill: navy, pages: 'first' as const }]),
+        ...hatchedCircle(m.pageW - 2, 6, 17, hatch, 'first'),
+        ...hatchedCircle(-1, m.pageH - 26, 14, hatch, 'first'),
+        ...hatchedCircle(m.pageW - 5, m.pageH + 1, 16, hatch, 'first'),
+      ],
+    });
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* 17. Geometric Banner                                                */
+/* ------------------------------------------------------------------ */
+
+const GEO_SIDE = new Set<ResumeSectionKind>(['summary', 'skills', 'technical-skills', 'languages', 'interests', 'certifications', 'awards']);
+
+const geometricBanner: ResumeTemplateDef = {
+  id: 'geometric-banner',
+  name: 'Geometric Banner',
+  description: 'Navy banner with teal geometric shapes behind a round photo, a mint sidebar and pill headings with icon badges.',
+  tags: ['Two column', 'Sidebar', 'Photo', 'Premium'],
+  columns: 2,
+  ats: 'medium',
+  supportsPhoto: true,
+  isNew: true,
+  defaults: { colorPreset: 'custom', accent: '#1f3d6b', sidebarWidth: 0.35, photo: 'circle', iconStyle: 'glyph', baseSize: 9.4, lineHeight: 1.4, margins: 'normal' },
+  controls: [...COMMON, 'sidebarWidth', 'photo', 'iconStyle'],
+  starter: {
+    sections: [
+      { kind: 'profile' },
+      { kind: 'summary', title: 'Profile' },
+      { kind: 'experience', title: 'Work Experience' },
+      { kind: 'skills', display: 'list' },
+      { kind: 'education', placement: 'main' },
+      { kind: 'certifications' },
+      { kind: 'languages' },
+      { kind: 'references', placement: 'main' },
+    ],
+    persona: 'procurement',
+  },
+  compose(r) {
+    if (r.style.atsSafe) return atsMinimal.compose(r);
+    const st = setup(r, 'helvetica');
+    const m = st.m;
+    const navy = mix(st.accent, '#000000', 0.02);
+    const teal = '#5e9c98';
+    const mint = '#e2f1ef';
+    const b = baseLook(st);
+    const look = baseLook(st, { text: '#2b2f38', muted: '#5b606b', entry: { ...b.entry, titleColor: '#1d2230' }, bulletColor: '#2b2f38' });
+    const sideLook: Look = { ...look, size: look.size - 0.1 };
+
+    const hSize = look.size + 1.6;
+    const pill = (title: string, kind: ResumeSectionKind, width: number): FlowNode[] => {
+      const box = hSize * PT * 1.35;
+      const w = Math.min(width, badgedWidth(title, look, hSize, 0.35, false) + 1.2 + 5);
+      return [
+        {
+          t: 'row',
+          gap: 0,
+          keepWithNext: true,
+          after: 2.8 * look.sp,
+          cols: [
+            { width: w / width, nodes: [{ t: 'box', fill: navy, radius: (box + 1.2) / 2, padding: [0.6, 4, 0.6, 0.6], keep: 'together', nodes: [{ t: 'text', runs: [{ text: '', icon: iconFor(kind), iconBg: '#ffffff', color: navy }, { text: title }], style: ts(look, { size: hSize, color: '#ffffff', uppercase: true, tracking: 0.35, lineHeight: 1.2 }), role: 'h1' }] }] },
+            { nodes: [] },
+          ],
+        },
+      ];
+    };
+
+    const bandW = Math.round(m.pageW * Math.min(0.42, Math.max(0.28, r.style.sidebarWidth)));
+    const headH = 62 * st.head;
+    const sx = 10;
+    const sideW = bandW - sx - 7;
+    const mainX = bandW + 8;
+    const mainW = m.pageW - m.margin.right - mainX;
+    const railX = mainX + (hSize * PT * 1.35) / 2 + 0.6;
+    const inset = (nodes: FlowNode[]): FlowNode => ({ t: 'box', padding: [0, 0, 0, 8], keep: 'split', nodes });
+    const { main, side } = placeBy(r, GEO_SIDE);
+
+    const sideNodes: FlowNode[] = side.map((sec, i) => {
+      const before = i === 0 ? 0 : 6 * look.sp;
+      let nodes: FlowNode[] | null = null;
+      if (sec.kind === 'summary') nodes = paragraphs(sec.text, sideLook, { lineHeight: 1.45 });
+      else if ((sec.kind === 'skills' || sec.kind === 'technical-skills') && sec.display !== 'tags') nodes = sec.skills.flatMap((g) => g.names).map((n, j) => ({ t: 'text' as const, runs: [{ text: n }], style: ts(sideLook, { lineHeight: 1.3 }), before: j ? 0.5 * look.sp : 0 }));
+      else if (sec.kind === 'languages' && sec.display === 'auto') nodes = [{ t: 'text', runs: [{ text: sec.items.map((it) => it.title).join('  |  ') }], style: ts(sideLook) }];
+      const title = pill(sec.title, sec.kind, sideW);
+      const body = { t: 'box' as const, padding: [0, 0, 0, 4] as [number, number, number, number], keep: 'split' as const, nodes: nodes ?? sectionBody(sec, sideLook, sideW - 4, { side: true }) };
+      return withTitle(nodes ? sec : { ...sec, text: '' }, sideLook, title, [body], before);
+    });
+
+    const mainEntry = (it: ResolvedItem): GroupNode => {
+      const head: FlowNode[] = [];
+      if (it.date) head.push({ t: 'text', runs: [{ text: it.date }], style: ts(look, { italic: true, color: teal, size: look.size - 0.3, lineHeight: 1.25 }) });
+      const orgLine = [it.subtitle, it.location].filter(Boolean).join(', ');
+      if (orgLine) head.push({ t: 'text', runs: [{ text: orgLine }], style: ts(look, { lineHeight: 1.3 }), before: it.date ? 0.4 * look.sp : 0 });
+      head.push({ t: 'text', runs: [{ text: it.title || 'Untitled', ...(it.url ? { link: it.url } : {}) }], style: ts(look, { bold: true, color: '#1d2230', lineHeight: 1.3 }), role: 'h3', before: head.length ? 0.2 * look.sp : 0 });
+      const body: FlowNode[] = [];
+      if (it.description.trim()) body.push(...paragraphs(it.description, look, {}, 1).map((n, k) => (k === 0 ? { ...n, before: 0.6 * look.sp } : n)));
+      const bl = bulletNodes(it.bullets, look, {}, 0.5);
+      if (bl[0]) bl[0].before = 0.6 * look.sp;
+      body.push(...bl);
+      return { t: 'group', keep: body.length <= 6 ? 'together' : 'head', head: head.length, minBody: 2, nodes: [...head, ...body], ref: it.id };
+    };
+    const mainNodes: FlowNode[] = main.map((sec, i) => {
+      const before = i === 0 ? 0 : 6 * look.sp;
+      const title = pill(sec.title, sec.kind, mainW);
+      if (sec.kind === 'summary') return withTitle(sec, look, title, [inset(paragraphs(sec.text, look))], before);
+      if (['experience', 'education', 'volunteer', 'projects', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
+        return withTitle(sec, look, title, sec.items.map((it, j) => ({ ...inset([mainEntry(it)]), ...(j ? { before: 4 * look.sp } : {}) })), before, pill(`${sec.title} (continued)`, sec.kind, mainW));
+      if (sec.kind === 'references' && sec.items.length && sec.display === 'auto') {
+        const ref = (it: ResolvedItem | undefined): FlowNode[] =>
+          it
+            ? [
+                { t: 'text', runs: [{ text: it.title }], style: ts(look, { bold: true, lineHeight: 1.3 }), ref: it.id },
+                ...[it.subtitle, it.description].filter(Boolean).map((x) => ({ t: 'text' as const, runs: inlineRuns(x), style: ts(look, { lineHeight: 1.3 }), before: 0.3 * look.sp })),
+              ]
+            : [];
+        const rows: FlowNode[] = [];
+        for (let k = 0; k < sec.items.length; k += 2) rows.push({ t: 'row', gap: 6, ...(k ? { before: 3 * look.sp } : {}), cols: [{ width: 0.5, nodes: ref(sec.items[k]) }, { width: 0.5, nodes: ref(sec.items[k + 1]) }] });
+        return withTitle(sec, look, title, [inset(rows)], before);
+      }
+      return withTitle({ ...sec, text: '' }, look, title, [inset(sectionBody(sec, look, mainW - 8))], before);
+    });
+
+    /* masthead */
+    const photoD = 46 * st.head;
+    const topLine: Run[] = [];
+    if (r.headline) topLine.push({ text: r.headline, bold: true });
+    r.contact.forEach((c) => {
+      if (topLine.length) topLine.push({ text: '   •   ' });
+      if (c.kind === 'social' && r.style.iconStyle === 'glyph') topLine.push({ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: '#ffffff', ...(c.url ? { link: c.url } : {}) });
+      topLine.push({ text: c.label, ...(c.url ? { link: c.url } : {}) });
+    });
+    const words = r.name.trim().split(/\s+/).filter(Boolean);
+    const nameRuns: Run[] = words.length > 1 ? [{ text: words.slice(0, -1).join(' ') }, { text: ' ', lineBreak: true }, { text: words[words.length - 1]! }] : [{ text: r.name }];
+    const text: FlowNode[] = [];
+    if (topLine.length) text.push({ t: 'text', runs: topLine, style: ts(look, { size: look.size - 1, color: '#ffffff', lineHeight: 1.5 }), ref: r.profileSectionId ?? 'profile', after: 4 * look.sp });
+    text.push({ t: 'text', runs: nameRuns, style: ts(look, { size: 33 * st.head, color: '#ffffff', uppercase: true, tracking: 0.5, lineHeight: 1.08 }), role: 'title', ref: r.profileSectionId ?? 'profile' });
+    const showPhoto = r.style.photo !== 'none';
+    const headRow: FlowNode = showPhoto
+      ? { t: 'row', gap: 0, cols: [{ width: bandW / (m.pageW - m.margin.right), nodes: [ringedPortrait(r.photo, r.name, photoD, bandW, { ring: '#ffffff', ringWidth: 0.8, disc: mix(navy, '#ffffff', 0.2), discText: '#ffffff', mode: r.style.photo })] }, { vAlign: 'middle', nodes: [{ t: 'box', padding: [0, 0, 0, 8], nodes: text }] }] }
+      : { t: 'box', padding: [0, 0, 0, mainX], nodes: text };
+
+    const stripes: Decoration[] = [];
+    const stripeTop = headH * 0.58;
+    for (let x = 0.8; x < 30; x += 1.5) stripes.push({ k: 'line', x1: x, y1: stripeTop, x2: x, y2: headH, color: mix(teal, '#ffffff', 0.55), lw: 0.5, pages: 'first' });
+    return doc(r, st, look, {
+      page: { width: m.pageW, height: m.pageH, margin: { ...m.margin, top: Math.max(6, (headH - photoD) / 2 + 3) } },
+      masthead: [headRow],
+      mastheadX: 0,
+      mastheadWidth: m.pageW - m.margin.right,
+      columns: [
+        { id: 'side', x: sx, width: sideW, nodes: sideNodes, order: 1, fill: mint, top: 12, firstTop: headH + 9 },
+        { id: 'main', x: mainX, width: mainW, nodes: mainNodes, order: 0, firstTop: headH + 9 },
+      ],
+      decorations: [
+        { k: 'rect', x: 0, y: 0, w: bandW, h: m.pageH, fill: mint, pages: 'all' },
+        { k: 'rect', x: 0, y: 0, w: m.pageW, h: headH, fill: navy, pages: 'first' },
+        { k: 'rect', x: 0, y: stripeTop, w: 30, h: headH - stripeTop, fill: teal, pages: 'first' },
+        ...stripes,
+        { k: 'circle', cx: 16, cy: 4, r: 26, fill: teal, pages: 'first' },
+        { k: 'circle', cx: 2, cy: headH * 0.52, r: 13, fill: mix(navy, '#ffffff', 0.12), pages: 'first' },
+        { k: 'line', x1: railX, y1: headH + 9, x2: railX, y2: m.pageH, color: mix(navy, '#ffffff', 0.55), lw: 0.3, pages: 'first' },
+        { k: 'line', x1: railX, y1: 0, x2: railX, y2: m.pageH, color: mix(navy, '#ffffff', 0.55), lw: 0.3, pages: 'rest' },
+      ],
+    });
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* 18. Teal Stripe                                                     */
+/* ------------------------------------------------------------------ */
+
+const STRIPE_SIDE = new Set<ResumeSectionKind>(['skills', 'technical-skills', 'education', 'languages', 'interests', 'awards']);
+
+const tealStripe: ResumeTemplateDef = {
+  id: 'teal-stripe',
+  name: 'Teal Stripe',
+  description: 'Slate sidebar edged with a teal stripe, icon-badged headings, a dark contact card and a dotted experience timeline.',
+  tags: ['Two column', 'Sidebar', 'Photo', 'Chips', 'Premium'],
+  columns: 2,
+  ats: 'medium',
+  supportsPhoto: true,
+  isNew: true,
+  defaults: { colorPreset: 'custom', accent: '#353c50', sidebarWidth: 0.31, photo: 'circle', iconStyle: 'glyph', baseSize: 9.4, lineHeight: 1.4, margins: 'normal' },
+  controls: [...COMMON, 'sidebarWidth', 'photo', 'iconStyle'],
+  starter: {
+    sections: [
+      { kind: 'profile' },
+      { kind: 'summary' },
+      { kind: 'experience', title: 'Work Experience', maxBullets: 3 },
+      { kind: 'skills' },
+      { kind: 'education' },
+      { kind: 'languages' },
+      { kind: 'certifications', title: 'Conferences & Courses', placement: 'main' },
+    ],
+    persona: 'engineer-lead',
+  },
+  compose(r) {
+    if (r.style.atsSafe) return atsMinimal.compose(r);
+    const st = setup(r, 'helvetica');
+    const m = st.m;
+    const slate = mix(st.accent, '#000000', 0.02);
+    const teal = '#4b9a9c';
+    const b = baseLook(st);
+    const look = baseLook(st, { text: '#23262e', muted: '#8a8f99', justify: false, entry: { ...b.entry, titleColor: slate }, bulletColor: teal });
+    const sideText = '#ffffff';
+    const sideLook: Look = { ...look, size: look.size - 0.1, text: sideText, muted: '#c3c8d2', accent: '#ffffff', bulletColor: '#ffffff', chipFill: '#c9cdd4', chipText: '#20242d', entry: { ...look.entry, titleColor: '#ffffff', subtitleColor: sideText, dateColor: '#c3c8d2' } };
+    const heading = (title: string, kind: ResumeSectionKind, l: Look, badge: string, glyph: string, color: string): FlowNode[] => [
+      { t: 'text', runs: [{ text: '', icon: iconFor(kind), iconBg: badge, color: glyph }, { text: title }], style: ts(l, { size: look.size + 3.6, bold: true, uppercase: true, tracking: 0.08, color, lineHeight: 1.2 }), role: 'h1', keepWithNext: true, after: 3 * look.sp },
+    ];
+
+    const bandW = Math.round(m.pageW * Math.min(0.4, Math.max(0.26, r.style.sidebarWidth)));
+    const stripe = 2.6;
+    const sx = 8;
+    const sideW = bandW - 15;
+    const mainX = bandW + stripe + 1.2 + 9;
+    const mainW = m.pageW - m.margin.right - mainX;
+    const { main, side } = placeBy(r, STRIPE_SIDE);
+
+    /* sidebar */
+    const sideNodes: FlowNode[] = [];
+    if (r.style.photo !== 'none') sideNodes.push({ ...ringedPortrait(r.photo, r.name, 44 * st.head, sideW, { ring: teal, ringWidth: 1.4, disc: mix(slate, '#ffffff', 0.18), discText: '#ffffff', mode: r.style.photo }), after: 9 * look.sp });
+    side.forEach((sec, i) => {
+      const before = i === 0 ? 0 : 7 * look.sp;
+      const title = heading(sec.title, sec.kind, sideLook, '#ffffff', slate, '#ffffff');
+      let nodes: FlowNode[] | null = null;
+      if (sec.kind === 'skills' || sec.kind === 'technical-skills') nodes = skillsNodes(flatSkills(sec), sideLook, sideW, sec.display === 'list' ? 'lines' : 'chips');
+      else if (sec.kind === 'education' && sec.display === 'auto')
+        nodes = sec.items.map((it, j) => ({
+          t: 'group' as const,
+          keep: 'together' as const,
+          ref: it.id,
+          before: j ? 3 * look.sp : 0,
+          nodes: [
+            { t: 'text' as const, runs: [{ text: it.title || 'Untitled' }], style: ts(sideLook, { bold: true, size: sideLook.size + 1.6, lineHeight: 1.2 }), role: 'h3' as const },
+            ...(it.subtitle ? [{ t: 'text' as const, runs: [{ text: it.subtitle }], style: ts(sideLook, { size: sideLook.size + 1.6, lineHeight: 1.2 }), before: 0.2 * look.sp }] : []),
+            ...(it.date ? [{ t: 'text' as const, runs: [{ text: it.date }], style: ts(sideLook, { italic: true, color: sideLook.muted }), before: 0.6 * look.sp }] : []),
+          ],
+        }));
+      else if (sec.kind === 'languages' && sec.display === 'auto')
+        nodes = sec.items.map((it, j) => ({
+          t: 'group' as const,
+          keep: 'together' as const,
+          ref: it.id,
+          before: j ? 2.4 * look.sp : 0,
+          nodes: [{ t: 'text' as const, runs: [{ text: it.title }], style: ts(sideLook, { size: sideLook.size + 1, lineHeight: 1.25 }) }, ...(it.subtitle ? [{ t: 'text' as const, runs: [{ text: it.subtitle }], style: ts(sideLook, { italic: true, color: sideLook.muted, lineHeight: 1.25 }), before: 0.2 * look.sp }] : [])],
+        }));
+      sideNodes.push(nodes ? withTitle(sec, sideLook, title, nodes, before) : sectionNode(sec, sideLook, sideW, { side: true, before, titleOverride: title }));
+    });
+
+    /* main column: summary, contact card, then sections */
+    const mainNodes: FlowNode[] = [];
+    const summary = main.find((s) => s.kind === 'summary');
+    if (summary) mainNodes.push({ t: 'section', id: summary.id, ref: summary.id, title: [], nodes: paragraphs(summary.text, { ...look, justify: true }, { size: look.size + 0.6, lineHeight: 1.42 }) });
+    if (r.contact.length) {
+      const cell = (c: ContactItem | undefined): FlowNode[] =>
+        c ? [{ t: 'text', runs: [...(r.style.iconStyle === 'glyph' ? [{ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: '#ffffff', ...(c.url ? { link: c.url } : {}) }] : []), { text: c.label, ...(c.url ? { link: c.url } : {}) }], style: ts(look, { color: '#ffffff', size: look.size + 0.2, lineHeight: 1.3 }) }] : [];
+      const rows: FlowNode[] = [];
+      for (let k = 0; k < r.contact.length; k += 2) rows.push({ t: 'row', gap: 4, ...(k ? { before: 2.2 * look.sp } : {}), cols: [{ width: 0.52, nodes: cell(r.contact[k]) }, { width: 0.48, nodes: cell(r.contact[k + 1]) }] });
+      mainNodes.push({ t: 'box', fill: slate, radius: 1.8, padding: [3.4, 4.5, 3.4, 4.5], keep: 'together', ref: r.profileSectionId ?? 'profile', before: summary ? 5 * look.sp : 0, nodes: rows });
+    }
+    main
+      .filter((s) => s !== summary)
+      .forEach((sec, i) => {
+        const before = i === 0 && !mainNodes.length ? 0 : 7 * look.sp;
+        const title = heading(sec.title, sec.kind, look, slate, '#ffffff', slate);
+        if (['experience', 'volunteer', 'projects', 'open-source', 'education'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries')) {
+          const companyFirst = sec.kind === 'experience' || sec.kind === 'volunteer';
+          const entries: FlowNode[] = sec.items.map((it, j) => {
+            const head: FlowNode[] = [{ t: 'text', runs: [{ text: it.title || 'Untitled', ...(it.url ? { link: it.url } : {}) }], style: ts(look, { bold: true, size: look.size + 2.4, color: '#111318', lineHeight: 1.2 }), role: 'h3' }];
+            if (it.subtitle) head.push({ t: 'text', runs: [{ text: it.subtitle }], style: ts(look, { size: look.size + 2, color: '#111318', lineHeight: 1.2 }), before: 0.4 * look.sp });
+            const meta = { italic: true, color: teal, size: look.size - 0.1, lineHeight: 1.3 };
+            if (it.date || it.location)
+              head.push({ t: 'row', gap: 3, before: 0.8 * look.sp, cols: [{ width: 0.62, nodes: [{ t: 'text', runs: [{ text: it.date || ' ' }], style: ts(look, meta) }] }, { align: 'right', nodes: [{ t: 'text', runs: [{ text: it.location || ' ' }], style: ts(look, meta), align: 'right' }] }] });
+            const body: FlowNode[] = [];
+            if (it.description.trim()) body.push(...paragraphs(it.description, look, {}, 1).map((n, k) => (k === 0 ? { ...n, before: 1 * look.sp } : n)));
+            if (it.bullets.length && companyFirst) body.push({ t: 'text', runs: [{ text: 'Achievements' }], style: ts(look, meta), before: 0.8 * look.sp, keepWithNext: true });
+            const bl = bulletNodes(it.bullets, look, { size: look.size + 0.4 }, 0.8);
+            if (bl[0]) bl[0].before = 0.6 * look.sp;
+            body.push(...bl);
+            return { t: 'box', keep: body.length <= 6 ? 'together' : 'split', ref: it.id, padding: [0, 0, 1.2, 8.5], rail: { x: 1.8, color: slate, width: 0.4, dot: 1.3, dotColor: teal }, before: j ? 2.6 * look.sp : 0, nodes: [...head, ...body] } as BoxNode;
+          });
+          mainNodes.push(withTitle(sec, look, title, entries, before, heading(`${sec.title} (continued)`, sec.kind, look, slate, '#ffffff', slate)));
+        } else if (['certifications', 'awards', 'achievements', 'publications'].includes(sec.kind) && sec.display === 'auto') {
+          mainNodes.push(
+            withTitle(
+              sec,
+              look,
+              title,
+              sec.items.map((it, j) => ({
+                t: 'group' as const,
+                keep: 'together' as const,
+                ref: it.id,
+                before: j ? 2.6 * look.sp : 0,
+                nodes: [
+                  { t: 'text' as const, runs: [{ text: it.title || 'Untitled', ...(it.url ? { link: it.url } : {}) }], style: ts(look, { size: look.size + 1.6, lineHeight: 1.25 }), role: 'h3' as const },
+                  ...([it.subtitle, it.date].filter(Boolean).length ? [{ t: 'text' as const, runs: [{ text: [it.subtitle, it.date].filter(Boolean).join(' - ') }], style: ts(look, { italic: true, color: look.muted, lineHeight: 1.25 }), before: 0.2 * look.sp }] : []),
+                ],
+              })),
+              before,
+            ),
+          );
+        } else mainNodes.push(sectionNode(sec, look, mainW, { before, titleOverride: title }));
+      });
+
+    const mast: FlowNode[] = [nameNode(r, look, 30 * st.head, { bold: false, color: slate, lineHeight: 1.1 })];
+    const hl = headlineNode(r, look, { color: teal, size: look.size + 5, lineHeight: 1.2 }, { before: 0.8 * look.sp });
+    if (hl) mast.push(hl);
+    return doc(r, st, look, {
+      page: { width: m.pageW, height: m.pageH, margin: { ...m.margin, top: Math.max(14, m.margin.top) } },
+      masthead: mast,
+      mastheadX: mainX,
+      mastheadWidth: mainW,
+      mastheadGap: 4.5 * look.sp,
+      columns: [
+        { id: 'side', x: sx, width: sideW, nodes: sideNodes, order: 1, fill: slate, top: 12, firstTop: 14 },
+        { id: 'main', x: mainX, width: mainW, nodes: mainNodes, order: 0 },
+      ],
+      decorations: [
+        { k: 'rect', x: 0, y: 0, w: bandW, h: m.pageH, fill: slate, pages: 'all' },
+        { k: 'rect', x: bandW, y: 0, w: stripe, h: m.pageH, fill: teal, pages: 'all' },
+        { k: 'rect', x: bandW + stripe, y: 0, w: 1.2, h: m.pageH, fill: mix(teal, '#ffffff', 0.55), pages: 'all' },
+      ],
+    });
+  },
+};
+
+export const RESUME_TEMPLATES: ResumeTemplateDef[] = [cornerPortrait, geometricBanner, tealStripe, slateBanner, navySidebar, blushSidebar, angledSidebar, chevronHeader, atsMinimal, modern, executive, developer, creative, compact, academic, minimalMono, editorial, timeline];
 
 export function getResumeTemplate(id: string): ResumeTemplateDef {
   return RESUME_TEMPLATES.find((t) => t.id === id) ?? atsMinimal;

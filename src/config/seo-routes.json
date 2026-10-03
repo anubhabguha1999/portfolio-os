@@ -109,6 +109,12 @@
       "index": false
     },
     {
+      "path": "/resumes/new",
+      "title": "New Resume — Portfolio OS",
+      "description": "Pick a resume template and start from your profile, a file or example content.",
+      "index": false
+    },
+    {
       "path": "/studio",
       "title": "Dashboard — Portfolio OS",
       "description": "Your portfolios, resumes and documents in one place.",

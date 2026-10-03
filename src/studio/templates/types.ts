@@ -25,6 +25,8 @@ export interface ResumeTemplateDef {
   /** How friendly the layout is to applicant-tracking parsers. */
   ats: 'high' | 'medium' | 'low';
   supportsPhoto: boolean;
+  /** Recently added: shown with a "New" badge in the template pickers. */
+  isNew?: boolean;
   defaults: Partial<ResumeStyle>;
   controls: StyleControl[];
   /** Section layout (and example persona) a new resume made from this template starts with. */
