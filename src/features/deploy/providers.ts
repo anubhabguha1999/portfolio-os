@@ -1,4 +1,5 @@
-import { Cloud, GitBranch, Package, Triangle } from 'lucide-react';
+import { FileArchive } from 'lucide-react';
+import { GitHubIcon, NetlifyIcon, VercelIcon, type IconComponent } from './brandIcons';
 import type { DeployProvider } from '@/lib/deploy';
 
 export type DeployTab = DeployProvider | 'manual';
@@ -12,7 +13,7 @@ export function isDeployTab(v: string | null): v is DeployTab {
 export interface ProviderInfo {
   label: string;
   description: string;
-  icon: typeof Cloud;
+  icon: IconComponent;
   /** Where the user creates a token. */
   tokenUrl: string;
   tokenSteps: string[];
@@ -24,7 +25,7 @@ export const PROVIDER_INFO: Record<DeployProvider, ProviderInfo> = {
   netlify: {
     label: 'Netlify',
     description: 'Free · yourname.netlify.app',
-    icon: Cloud,
+    icon: NetlifyIcon,
     tokenUrl: 'https://app.netlify.com/user/applications#personal-access-tokens',
     tokenSteps: ['Open Netlify → User settings → Applications.', 'Under "Personal access tokens", choose "New access token".', 'Give it a description, pick an expiry and copy the token.'],
     nameLabel: 'Site name',
@@ -33,7 +34,7 @@ export const PROVIDER_INFO: Record<DeployProvider, ProviderInfo> = {
   vercel: {
     label: 'Vercel',
     description: 'Free · yourname.vercel.app',
-    icon: Triangle,
+    icon: VercelIcon,
     tokenUrl: 'https://vercel.com/account/settings/tokens',
     tokenSteps: ['Open Vercel → Account settings → Tokens.', 'Create a token scoped to your personal account (or the team you deploy to).', 'Copy the token. Vercel only shows it once.'],
     nameLabel: 'Project name',
@@ -42,7 +43,7 @@ export const PROVIDER_INFO: Record<DeployProvider, ProviderInfo> = {
   github: {
     label: 'GitHub Pages',
     description: 'Free · username.github.io',
-    icon: GitBranch,
+    icon: GitHubIcon,
     tokenUrl: 'https://github.com/settings/tokens/new?scopes=repo&description=Portfolio%20OS%20deploy',
     tokenSteps: [
       'The link opens a classic token with the "repo" scope already ticked. Set an expiry and generate it.',
@@ -54,7 +55,7 @@ export const PROVIDER_INFO: Record<DeployProvider, ProviderInfo> = {
   },
 };
 
-export const MANUAL_INFO = { label: 'Manual upload', description: 'Download the ZIP · drag & drop', icon: Package };
+export const MANUAL_INFO = { label: 'Manual upload', description: 'Download the ZIP · drag & drop', icon: FileArchive };
 
 /** The address the site will most likely get, shown before deploying. */
 export function expectedUrl(provider: DeployProvider, name: string, account: string | undefined): string {

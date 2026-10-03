@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Check, Copy, Download, ExternalLink, KeyRound, Rocket, ShieldCheck, TriangleAlert, Unplug } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Download, ExternalLink, KeyRound, Rocket, Server, ShieldCheck, TriangleAlert, Unplug } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
 import { Button, Spinner } from '@/components/ui/Button';
 import { Badge, EmptyState, ProgressBar, SectionLabel } from '@/components/ui/misc';
@@ -30,6 +30,7 @@ import {
 import { copyText, downloadBlob } from '@/utils/download';
 import { formatBytes, timeAgo } from '@/utils/format';
 import { cn } from '@/utils/cn';
+import { CloudflareIcon, NetlifyIcon } from './brandIcons';
 import { expectedUrl, isDeployTab, MANUAL_INFO, PROVIDER_INFO, TABS, type DeployTab } from './providers';
 
 export default function DeployPage() {
@@ -466,9 +467,9 @@ function JobStatus({ job, siteUrl, onUseSiteUrl }: { job: Job | null; siteUrl: s
 
 function ManualPanel({ zipping, onDownload }: { zipping: boolean; onDownload: () => void }) {
   const hosts = [
-    { name: 'Netlify Drop', url: 'https://app.netlify.com/drop', steps: ['Unzip the download.', 'Drag the "portfolio" folder onto the Netlify Drop page.', 'Sign in to keep the site. Otherwise it expires after an hour.'] },
-    { name: 'Cloudflare Pages', url: 'https://dash.cloudflare.com/?to=/:account/pages/new/upload', steps: ['Unzip the download.', 'Workers & Pages → Create → Pages → "Upload assets".', 'Upload the "portfolio" folder. No build command is needed.'] },
-    { name: 'Any static host', url: '', steps: ['Upload everything inside the "portfolio" folder to your web root.', 'index.html is the entry point and 404.html the not-found page.', 'Works on S3, Firebase Hosting, Render, Surge, nginx and Apache.'] },
+    { name: 'Netlify Drop', icon: NetlifyIcon, url: 'https://app.netlify.com/drop', steps: ['Unzip the download.', 'Drag the "portfolio" folder onto the Netlify Drop page.', 'Sign in to keep the site. Otherwise it expires after an hour.'] },
+    { name: 'Cloudflare Pages', icon: CloudflareIcon, url: 'https://dash.cloudflare.com/?to=/:account/pages/new/upload', steps: ['Unzip the download.', 'Workers & Pages → Create → Pages → "Upload assets".', 'Upload the "portfolio" folder. No build command is needed.'] },
+    { name: 'Any static host', icon: Server, url: '', steps: ['Upload everything inside the "portfolio" folder to your web root.', 'index.html is the entry point and 404.html the not-found page.', 'Works on S3, Firebase Hosting, Render, Surge, nginx and Apache.'] },
   ];
   return (
     <section className="mt-6 space-y-5 rounded-[var(--radius-panel)] border border-line bg-panel p-5" aria-label="Manual upload">
@@ -481,7 +482,10 @@ function ManualPanel({ zipping, onDownload }: { zipping: boolean; onDownload: ()
       <div className="grid gap-3 md:grid-cols-3">
         {hosts.map((h) => (
           <div key={h.name} className="rounded-xl border border-line bg-bg/50 p-4">
-            <p className="text-[13px] font-semibold">{h.name}</p>
+            <p className="flex items-center gap-2 text-[13px] font-semibold">
+              <h.icon className="size-4 shrink-0 text-fg-muted" aria-hidden="true" />
+              {h.name}
+            </p>
             <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-fg-muted">
               {h.steps.map((s) => (
                 <li key={s}>{s}</li>
