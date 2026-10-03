@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/Toaster';
 import { Spinner } from '@/components/ui/Button';
 import { PwaPrompt } from '@/features/settings/PwaPrompt';
+import { GlobalSearch } from '@/features/search/GlobalSearch';
 import { ScrollToTop } from './ScrollToTop';
 import { VercelAnalytics } from './VercelAnalytics';
 import { ROUTER_BASENAME } from '@/utils/base';
@@ -77,6 +78,7 @@ export function App() {
           </Routes>
         </Suspense>
       </ErrorBoundary>
+      <GlobalSearch />
       <Toaster />
       <PwaPrompt />
     </BrowserRouter>

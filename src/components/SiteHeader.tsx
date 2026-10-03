@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowRight, Menu, Search, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { ProfileAvatar, ProfileMenu, useProfileSummary } from './profile/ProfileMenu';
 import { cn } from '@/utils/cn';
+import { modKey } from '@/utils/download';
+import { useGlobalSearch } from '@/features/search/GlobalSearch';
 
 const links = [
   { to: '/studio', label: 'Dashboard' },
@@ -49,17 +51,17 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
   return (
     <header className={cn('sticky top-0 z-40 border-b transition-[background,border-color] duration-300', solid ? 'border-line/70 bg-bg/80 backdrop-blur-xl' : 'border-transparent bg-transparent')}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link to="/" className="rounded-md" aria-label="Home">
+        <Link to="/" className="shrink-0 rounded-md whitespace-nowrap" aria-label="Home">
           <Logo />
         </Link>
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="hidden min-w-0 items-center gap-0.5 lg:flex">
           {navLinks.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
                 cn(
-                  'relative rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors',
+                  'relative rounded-lg px-2.5 py-1.5 text-[13px] whitespace-nowrap transition-colors xl:px-3',
                   isActive ? 'text-fg after:absolute after:inset-x-3 after:-bottom-[11px] after:h-px after:bg-accent' : 'text-fg-muted hover:bg-hover hover:text-fg',
                 )
               }
@@ -68,15 +70,24 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => useGlobalSearch.getState().setOpen(true)}
+            aria-label={`Search (${modKey}+K)`}
+            title={`Search (${modKey}K)`}
+            className="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-hover hover:text-fg"
+          >
+            <Search className="size-4" />
+          </button>
           <ProfileMenu />
-          <Link to="/studio" className="hidden h-8 items-center gap-1.5 rounded-lg bg-fg px-3 text-[13px] font-medium text-bg transition-opacity hover:opacity-90 sm:inline-flex">
+          <Link to="/studio" className="hidden h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-fg px-3 text-[13px] font-medium text-bg transition-opacity hover:opacity-90 sm:inline-flex lg:hidden xl:inline-flex">
             Open app
             <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
           <button
             type="button"
-            className="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-hover hover:text-fg md:hidden"
+            className="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-hover hover:text-fg lg:hidden"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="site-mobile-nav"
@@ -87,7 +98,7 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
         </div>
       </div>
       {open && (
-        <nav id="site-mobile-nav" aria-label="Mobile" className="border-t border-line/70 px-4 pb-4 pt-2 md:hidden">
+        <nav id="site-mobile-nav" aria-label="Mobile" className="border-t border-line/70 px-4 pb-4 pt-2 lg:hidden">
           {hasProfile && (
             <Link to="/profile" className="mb-2 flex items-center gap-3 rounded-xl border border-line bg-panel p-3">
               <ProfileAvatar profile={profile} size={40} />

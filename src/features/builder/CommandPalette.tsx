@@ -20,13 +20,25 @@ function score(cmd: Command, q: string): number {
   const needle = q.toLowerCase().trim();
   if (cmd.label.toLowerCase().startsWith(needle)) return 100;
   if (hay.includes(needle)) return 60;
-  // subsequence match
+  // subsequence match on the label only; across keywords it matches nearly everything
   let i = 0;
-  for (const ch of hay) if (ch === needle[i]) i++;
+  for (const ch of cmd.label.toLowerCase()) if (ch === needle[i]) i++;
   return i === needle.length ? 20 : 0;
 }
 
-export function CommandPalette({ open, onClose, commands }: { open: boolean; onClose: () => void; commands: Command[] }) {
+export function CommandPalette({
+  open,
+  onClose,
+  commands,
+  placeholder = 'Type a command or search…',
+  label = 'Command palette',
+}: {
+  open: boolean;
+  onClose: () => void;
+  commands: Command[];
+  placeholder?: string;
+  label?: string;
+}) {
   const [q, setQ] = useState('');
   const [stack, setStack] = useState<Array<{ title: string; commands: Command[] }>>([]);
   const [active, setActive] = useState(0);
@@ -79,7 +91,7 @@ export function CommandPalette({ open, onClose, commands }: { open: boolean; onC
 
   return (
     <div className="fixed inset-0 z-[950] flex items-start justify-center bg-black/45 px-3 pt-[12vh] backdrop-blur-md [animation:app-fade_.12s_ease-out]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label="Command palette" className="w-full max-w-[600px] overflow-hidden rounded-2xl border border-line-strong bg-panel shadow-float [animation:app-pop_.18s_var(--ease-out-expo)]">
+      <div role="dialog" aria-modal="true" aria-label={label} className="w-full max-w-[600px] overflow-hidden rounded-2xl border border-line-strong bg-panel shadow-float [animation:app-pop_.18s_var(--ease-out-expo)]">
         <div className="flex items-center gap-2.5 border-b border-line px-4">
           {page ? (
             <button aria-label="Back" onClick={() => setStack((s) => s.slice(0, -1))} className="grid size-6 place-items-center rounded-md text-fg-subtle hover:bg-hover hover:text-fg">
@@ -93,7 +105,7 @@ export function CommandPalette({ open, onClose, commands }: { open: boolean; onC
             ref={input}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={page ? 'Filter…' : 'Type a command or search…'}
+            placeholder={page ? 'Filter…' : placeholder}
             role="combobox"
             aria-expanded="true"
             aria-controls="cmdk-list"
@@ -123,7 +135,7 @@ export function CommandPalette({ open, onClose, commands }: { open: boolean; onC
           <kbd className="app-kbd">Esc</kbd>
         </div>
         <ul id="cmdk-list" ref={listRef} role="listbox" aria-label="Commands" className="max-h-[min(420px,60vh)] overflow-y-auto p-1.5">
-          {results.length === 0 && <li className="px-3 py-8 text-center text-[13px] text-fg-subtle">No matching commands</li>}
+          {results.length === 0 && <li className="px-3 py-8 text-center text-[13px] text-fg-subtle">No matches</li>}
           {groups.map(([g, cmds]) => (
             <li key={g} role="presentation">
               <p className="px-2.5 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">{g}</p>

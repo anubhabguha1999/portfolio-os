@@ -44,9 +44,9 @@ export function ProfileMenu() {
     <Menu
       label="Profile menu"
       trigger={(p) => (
-        <button {...p} type="button" aria-label={`Profile: ${name}`} className="inline-flex h-9 max-w-[200px] items-center gap-2 rounded-full border border-line bg-panel/60 py-1 pl-1 pr-2.5 text-[13px] transition-colors hover:border-line-strong hover:bg-hover">
+        <button {...p} type="button" aria-label={`Profile: ${name}`} className="inline-flex h-9 max-w-[200px] shrink-0 items-center gap-2 rounded-full border border-line bg-panel/60 py-1 pl-1 pr-2.5 text-[13px] transition-colors hover:border-line-strong hover:bg-hover">
           <ProfileAvatar profile={profile} size={28} />
-          <span className="hidden min-w-0 lg:block">
+          <span className="hidden min-w-0 2xl:block">
             <Truncate disableClickExpand style={{ display: 'block', maxWidth: 120 }} className="font-medium">
               {name}
             </Truncate>

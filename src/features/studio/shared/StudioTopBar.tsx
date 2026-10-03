@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Cloud, CloudOff, Loader2, Redo2, Undo2 } from 'lucide-react';
+import { ChevronLeft, Cloud, CloudOff, Loader2, Redo2, Search, Undo2 } from 'lucide-react';
 import { IconButton } from '@/components/ui/Button';
 import { LogoMark } from '@/components/Logo';
 import { cn } from '@/utils/cn';
+import { modKey } from '@/utils/download';
+import { useGlobalSearch } from '@/features/search/GlobalSearch';
 
 export function SaveBadge({ state }: { state: 'idle' | 'dirty' | 'saving' | 'saved' | 'error' }) {
   return (
@@ -71,7 +73,12 @@ export function StudioTopBar({ studio, back, title, save, undo, center, actions 
         </div>
       )}
       <div className="mx-auto hidden min-w-0 items-center gap-2 lg:flex">{center}</div>
-      <div className="ml-auto flex items-center gap-1.5">{actions}</div>
+      <div className="ml-auto flex items-center gap-1.5">
+        <IconButton label={`Search (${modKey}+K)`} size="sm" onClick={() => useGlobalSearch.getState().setOpen(true)}>
+          <Search className="size-4" />
+        </IconButton>
+        {actions}
+      </div>
     </header>
   );
 }
