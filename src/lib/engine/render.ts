@@ -8,6 +8,7 @@ import { googleFontsHref } from '@/lib/theme/fonts';
 import { esc, jsonForScript } from '@/utils/escape';
 import { safeHref, safeMediaSrc } from '@/utils/url';
 import { BRAND } from '@/config/brand';
+import { isRtl, localizeHeading, normalizeLanguage, t } from '@/i18n';
 import { isAssetRef, assetIdOf, TRANSPARENT_PIXEL } from './assets';
 import { visibleSections, socialLinksOf, heroOf, contactOf } from './collect';
 import baseCss from './portfolio.css?raw';
@@ -50,6 +51,9 @@ export interface RuntimeConfig {
   preview: boolean;
   /** Preview only: custom fonts the iframe loads from posted asset blobs. */
   fonts?: Array<{ family: string; assetId: string; weight: string; style: string }>;
+  /** Preview only: output language and direction, applied to <html> on live updates. */
+  lang?: string;
+  dir?: 'ltr' | 'rtl';
 }
 
 const ANIMATION_EASINGS: Record<string, string> = {
@@ -149,6 +153,7 @@ function renderSection(s: PortfolioSection, ctx: RenderContext, animationsOn: bo
 
 function renderNav(p: Portfolio, sections: PortfolioSection[], ctx: RenderContext): string {
   const nav = p.settings.navigation;
+  const lang = p.metadata.language;
   if (!nav.enabled) return '';
   const links = sections
     .filter((s) => s.style.showInNav && s.type !== 'hero')
@@ -156,20 +161,21 @@ function renderNav(p: Portfolio, sections: PortfolioSection[], ctx: RenderContex
     .join('');
   const brand = nav.brand || heroOf(p)?.name || p.metadata.author || p.metadata.title;
   const toggle = p.settings.showThemeToggle
-    ? `<button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle colour scheme">${iconSvg('moon', 'pi i-moon')}${iconSvg('sun', 'pi i-sun')}</button>`
+    ? `<button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="${esc(t(lang, 'toggleScheme'))}">${iconSvg('moon', 'pi i-moon')}${iconSvg('sun', 'pi i-sun')}</button>`
     : '';
   return `<header class="site-nav nav-${nav.style}${nav.sticky ? ' is-sticky' : ''}">
-  <nav class="container nav-inner" aria-label="Primary">
+  <nav class="container nav-inner" aria-label="${esc(t(lang, 'primaryNav'))}">
     <a class="nav-brand" href="#top">${esc(brand)}</a>
     ${links ? `<ul class="nav-links" id="pos-nav-links">${links}</ul>` : ''}
-    <div class="nav-actions">${toggle}${links ? `<button type="button" class="icon-btn nav-toggle" data-nav-toggle aria-controls="pos-nav-links" aria-expanded="false" aria-label="Menu">${ctx.icon('menu')}</button>` : ''}</div>
+    <div class="nav-actions">${toggle}${links ? `<button type="button" class="icon-btn nav-toggle" data-nav-toggle aria-controls="pos-nav-links" aria-expanded="false" aria-label="${esc(t(lang, 'menu'))}">${ctx.icon('menu')}</button>` : ''}</div>
   </nav>
 </header>`;
 }
 
 function renderFooter(p: Portfolio, ctx: RenderContext): string {
   const f = p.settings.footer;
-  const top = p.settings.backToTop ? `<button type="button" class="icon-btn back-to-top" data-back-to-top aria-label="Back to top">${ctx.icon('arrow-up')}</button>` : '';
+  const lang = p.metadata.language;
+  const top = p.settings.backToTop ? `<button type="button" class="icon-btn back-to-top" data-back-to-top aria-label="${esc(t(lang, 'backToTop'))}">${ctx.icon('arrow-up')}</button>` : '';
   if (!f.enabled) return top;
   const year = new Date().getFullYear();
   const text = (f.text || `© {year} ${heroOf(p)?.name || p.metadata.author}`).replace(/\{year\}/g, String(year));
@@ -177,7 +183,7 @@ function renderFooter(p: Portfolio, ctx: RenderContext): string {
     .filter((s) => safeHref(s.url))
     .map((s) => `<a class="social-icon" href="${esc(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.label || s.platform)}">${ctx.icon(socialIconFor(s.platform, s.url))}</a>`)
     .join('');
-  return `<footer class="site-footer"><div class="container footer-inner"><p>${esc(text)}${f.showCredit ? ` · Built with ${esc(BRAND.name)}` : ''}</p>${socials ? `<div class="footer-social">${socials}</div>` : ''}</div></footer>${top}`;
+  return `<footer class="site-footer"><div class="container footer-inner"><p>${esc(text)}${f.showCredit ? ` · ${esc(t(lang, 'builtWith', { brand: BRAND.name }))}` : ''}</p>${socials ? `<div class="footer-social">${socials}</div>` : ''}</div></footer>${top}`;
 }
 
 export function renderBody(p: Portfolio, ctx: RenderContext): string {
@@ -192,7 +198,7 @@ export function renderBody(p: Portfolio, ctx: RenderContext): string {
       parts.push('<span id="main-after-hero"></span>');
     }
   }
-  return `<a class="skip-link" href="#main">Skip to content</a>${renderNav(p, sections, ctx)}<main id="main" tabindex="-1">${parts.join('\n')}</main>${renderFooter(p, ctx)}`;
+  return `<a class="skip-link" href="#main">${esc(t(p.metadata.language, 'skipToContent'))}</a>${renderNav(p, sections, ctx)}<main id="main" tabindex="-1">${parts.join('\n')}</main>${renderFooter(p, ctx)}`;
 }
 
 export function rootClassOf(p: Portfolio): string {
@@ -322,8 +328,35 @@ function stripUndefined(value: unknown): unknown {
   return JSON.parse(JSON.stringify(value));
 }
 
+/**
+ * Output language: section names and headings that are still the engine's English defaults
+ * ("Experience", "Selected work"…) are shown in the portfolio's language. Headings the user
+ * typed are kept. English (and unsupported languages) render unchanged.
+ */
+export function localizePortfolio(p: Portfolio): Portfolio {
+  const lang = p.metadata.language;
+  if (normalizeLanguage(lang) === 'en') return p;
+  return {
+    ...p,
+    sections: p.sections.map((s) => {
+      const def = getDefinition(s.type);
+      const data = s.data as unknown as Record<string, unknown>;
+      const heading = typeof data.heading === 'string' ? data.heading : null;
+      const defaultHeading = (def.createData() as unknown as Record<string, unknown>).heading;
+      const localHeading = heading && heading === defaultHeading ? localizeHeading(heading, lang) : heading;
+      return {
+        ...s,
+        name: s.name === def.label ? localizeHeading(s.name, lang) : s.name,
+        ...(localHeading !== heading ? { data: { ...data, heading: localHeading } } : {}),
+      } as PortfolioSection;
+    }),
+  };
+}
+
 /** The Portfolio Engine's primary output: a complete, standalone document. */
-export function renderPortfolio(portfolio: Portfolio, opts: RenderOptions): RenderResult {
+export function renderPortfolio(source: Portfolio, opts: RenderOptions): RenderResult {
+  // Embedded data (below) is always the user's original; everything rendered uses the localised copy.
+  const portfolio = localizePortfolio(source);
   const cssBucket = new Map<string, string>();
   const ctx = createContext(portfolio, opts, cssBucket);
   const body = renderBody(portfolio, ctx);
@@ -334,6 +367,7 @@ export function renderPortfolio(portfolio: Portfolio, opts: RenderOptions): Rend
     scheme: portfolio.settings.colorScheme,
     defaultScheme: portfolio.theme.defaultScheme,
     preview: opts.mode === 'preview',
+    ...(opts.mode === 'preview' ? { lang: portfolio.metadata.language || 'en', dir: isRtl(portfolio.metadata.language) ? ('rtl' as const) : ('ltr' as const) } : {}),
     ...(opts.mode === 'preview' && portfolio.metadata.customFonts.length
       ? { fonts: portfolio.metadata.customFonts.map((f) => ({ family: f.family, assetId: f.assetId, weight: f.weight, style: f.style })) }
       : {}),
@@ -345,14 +379,14 @@ export function renderPortfolio(portfolio: Portfolio, opts: RenderOptions): Rend
   const cssTag = opts.external ? `<link rel="stylesheet" href="${esc(opts.external.cssHref)}">` : `<style id="pos-style">${css.replace(/<\/style/gi, '<\\/style')}</style>`;
   const jsTag = opts.external ? `<script src="${esc(opts.external.jsSrc)}" defer></script>` : `<script>${runtimeJs.replace(/<\/script/gi, '<\\/script')}</script>`;
   const jsonLd = `<script type="application/ld+json">${jsonForScript(stripUndefined(structuredData(portfolio)))}</script>`;
-  const data = opts.embedData ? `<script type="application/json" id="pos-data">${jsonForScript(portfolio)}</script>` : '';
+  const data = opts.embedData ? `<script type="application/json" id="pos-data">${jsonForScript(source)}</script>` : '';
   const csp =
     opts.mode === 'preview'
       ? `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob: https:; media-src https: blob:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src data: blob: https://fonts.gstatic.com; script-src 'unsafe-inline'; connect-src 'none'; frame-src 'none'; form-action 'none'">`
       : '';
   const scheme = portfolio.settings.colorScheme === 'system' ? '' : ` data-scheme="${portfolio.settings.colorScheme}"`;
   const html = `<!doctype html>
-<html lang="${esc(portfolio.metadata.language || 'en')}" class="${rootClass}${opts.mode === 'preview' && opts.editing ? ' pos-editing' : ''}"${opts.mode === 'preview' ? '' : scheme}>
+<html lang="${esc(portfolio.metadata.language || 'en')}"${isRtl(portfolio.metadata.language) ? ' dir="rtl"' : ''} class="${rootClass}${opts.mode === 'preview' && opts.editing ? ' pos-editing' : ''}"${opts.mode === 'preview' ? '' : scheme}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

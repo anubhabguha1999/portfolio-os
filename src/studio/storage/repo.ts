@@ -5,6 +5,7 @@
  */
 import { getDb, type StudioImageRecord, type StudioRenderRecord } from '@/lib/storage/db';
 import { uid } from '@/utils/id';
+import { normalizeLanguage } from '@/i18n';
 import type { Library, Profile, ResumeDoc, ResumeSection, StudioDocument } from '@/studio/model/types';
 import { createDocument, createLibProject, createResume, createResumeSection, DEFAULT_PAGE, DEFAULT_RESUME_STYLE, emptyLetter, emptyLibrary, emptyProfile } from '@/studio/model/defaults';
 
@@ -62,6 +63,8 @@ export function normalizeResume(raw: unknown): ResumeDoc | null {
   const base = createResume(String(raw.name ?? 'Resume'));
   const r = { ...base, ...raw } as ResumeDoc;
   r.style = { ...DEFAULT_RESUME_STYLE, ...(isObj(raw.style) ? raw.style : {}) } as ResumeDoc['style'];
+  // Older resumes have no language: English.
+  r.style.language = normalizeLanguage(r.style.language);
   r.sections = Array.isArray(raw.sections) ? (raw.sections.map(normalizeSection).filter(Boolean) as ResumeSection[]) : base.sections;
   r.contact = { ...base.contact, ...(isObj(raw.contact) ? raw.contact : {}) } as ResumeDoc['contact'];
   r.meta = { ...base.meta, ...(isObj(raw.meta) ? raw.meta : {}) } as ResumeDoc['meta'];
@@ -73,6 +76,7 @@ export function normalizeDocument(raw: unknown): StudioDocument | null {
   const base = createDocument((raw.kind as StudioDocument['kind']) ?? 'custom');
   const d = { ...base, ...raw } as StudioDocument;
   d.page = { ...DEFAULT_PAGE, ...(isObj(raw.page) ? raw.page : {}) } as StudioDocument['page'];
+  d.page.language = normalizeLanguage(d.page.language);
   d.blocks = Array.isArray(raw.blocks) ? (raw.blocks.filter(isObj) as unknown as StudioDocument['blocks']) : [];
   d.letter = d.kind === 'cover-letter' ? { ...emptyLetter(), ...(isObj(raw.letter) ? raw.letter : {}) } as StudioDocument['letter'] : null;
   d.meta = { ...base.meta, ...(isObj(raw.meta) ? raw.meta : {}) } as StudioDocument['meta'];

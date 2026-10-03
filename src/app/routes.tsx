@@ -37,6 +37,17 @@ export const ROUTES: AppRoute[] = [
   { path: '/knowledge', page: lazy(() => import('@/features/knowledge/KnowledgePage')) },
   { path: '/knowledge/:id', page: lazy(() => import('@/features/knowledge/KnowledgeDocPage')) },
 
+  // Career tools
+  { path: '/bullets', page: lazy(() => import('@/features/bullets/BulletHelperPage')) },
+  { path: '/match', page: lazy(() => import('@/features/match/JobMatchPage')) },
+  { path: '/linkedin', page: lazy(() => import('@/features/linkedin/LinkedInPage')) },
+  { path: '/compare', page: lazy(() => import('@/features/compare/ComparePage')) },
+  { path: '/interview', page: lazy(() => import('@/features/interview/InterviewPrepPage')) },
+  { path: '/applications/:id', page: lazy(() => import('@/features/applications/ApplicationPage')) },
+  { path: '/applications', page: lazy(() => import('@/features/applications/ApplicationsPage')) },
+  { path: '/backup', page: lazy(() => import('@/features/backup/BackupPage')) },
+  { path: '/assistant', page: lazy(() => import('@/features/assistant/AssistantPage')) },
+
   { path: '/settings', page: lazy(() => import('@/features/settings/SettingsPage')) },
 
   // Local build & test runner: only under `npm run dev` (its endpoint is a dev-server plugin), never in a build.

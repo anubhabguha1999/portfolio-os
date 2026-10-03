@@ -13,6 +13,7 @@ import { analyzeContent } from '@/studio/analysis/content';
 import { renderFlowText } from '@/studio/engine/render-text';
 import type { ResumeLayout } from './useResumeLayout';
 import { cn } from '@/utils/cn';
+import { LanguageField } from '../shared/LanguageField';
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -117,6 +118,7 @@ export function PagePanel({ layout, onFit, fitting }: { layout: ResumeLayout | n
         <Segmented label="Type" value={resume.kind} onChange={(v) => apply('Document type', (r) => ({ ...r, kind: v, style: { ...r.style, pageLimit: v === 'cv' ? 0 : r.style.pageLimit } }))} options={[{ value: 'resume', label: 'Resume' }, { value: 'cv', label: 'CV (multi-page)' }]} />
         <Segmented label="Paper" value={st.paper} onChange={(v) => setStyle({ paper: v })} options={[{ value: 'a4', label: 'A4' }, { value: 'letter', label: 'Letter' }, { value: 'legal', label: 'Legal' }]} />
         <Segmented label="Margins" value={st.margins} onChange={(v) => setStyle({ margins: v })} options={[{ value: 'narrow', label: 'Narrow' }, { value: 'normal', label: 'Normal' }, { value: 'wide', label: 'Wide' }]} />
+        <LanguageField value={st.language} onChange={(v) => setStyle({ language: v })} />
       </Group>
       <Group title="Length">
         <Segmented label="Page limit" value={String(st.pageLimit)} onChange={(v) => setStyle({ pageLimit: Number(v) })} options={[{ value: '1', label: '1 page' }, { value: '2', label: '2 pages' }, { value: '3', label: '3 pages' }, { value: '0', label: 'Unlimited' }]} />

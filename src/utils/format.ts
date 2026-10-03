@@ -1,9 +1,15 @@
+import { formatMonthYear, normalizeLanguage, t } from '@/i18n';
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** Format "YYYY-MM" / "YYYY" / free text to a short human date. */
-export function formatMonth(value: string): string {
+/** Format "YYYY-MM" / "YYYY" / free text to a short human date (`lang`: output language of a portfolio). */
+export function formatMonth(value: string, lang?: string): string {
   const v = value.trim();
   const m = /^(\d{4})-(\d{2})$/.exec(v);
+  if (m && lang && normalizeLanguage(lang) !== 'en') {
+    const mi = Number(m[2]) - 1;
+    return mi >= 0 && mi < 12 ? formatMonthYear(Number(m[1]), mi, 'short', lang) : (m[1] ?? v);
+  }
   if (m) {
     const month = MONTHS[Number(m[2]) - 1];
     return month ? `${month} ${m[1]}` : (m[1] ?? v);
@@ -11,9 +17,9 @@ export function formatMonth(value: string): string {
   return v;
 }
 
-export function formatRange(start: string, end: string, current = false): string {
-  const s = formatMonth(start);
-  const e = current ? 'Present' : formatMonth(end);
+export function formatRange(start: string, end: string, current = false, lang?: string): string {
+  const s = formatMonth(start, lang);
+  const e = current ? t(lang, 'present') : formatMonth(end, lang);
   if (s && e) return `${s} — ${e}`;
   return s || e;
 }

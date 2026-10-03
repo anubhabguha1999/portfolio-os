@@ -8,6 +8,7 @@ import type { BoxNode, FlowNode, RowNode, FontFamily, GroupNode, ImageNode, Run,
 import { getMeasurer, PT } from '@/studio/engine/measure';
 import type { ContactItem, ResolvedItem, ResolvedSection } from '@/studio/model/resolve';
 import type { FontChoice, MarginPreset, PaperSize, ResumeStyle } from '@/studio/model/types';
+import { t, type DictKey } from '@/i18n';
 
 /* ------------------------------ page ------------------------------- */
 
@@ -165,6 +166,13 @@ export interface Look {
   /** Show technologies under experience/projects. */
   showTech: boolean;
   justify: boolean;
+  /** Output language for fixed labels (contact labels…). English when omitted. */
+  lang?: string;
+}
+
+/** Heading drawn when a section continues on a new page ("Experience (continued)"), localised by resolve. */
+export function continuedTitle(sec: Pick<ResolvedSection, 'title' | 'continued'>): string {
+  return sec.continued ?? `${sec.title} (continued)`;
 }
 
 export interface Effective {
@@ -448,13 +456,19 @@ export function sectionBody(sec: ResolvedSection, look: Look, width: number, opt
 
 export function sectionNode(sec: ResolvedSection, look: Look, width: number, opts: { side?: boolean; compact?: boolean; skillMode?: 'auto' | 'chips' | 'lines' | 'comma' | 'bars'; before?: number; titleOverride?: FlowNode[] } = {}): FlowNode {
   const title = opts.titleOverride ?? sectionTitle(sec.title, look, width);
-  const continued = sectionTitle(`${sec.title} (continued)`, { ...look, section: { ...look.section, color: look.muted } }, width);
+  const continued = sectionTitle(continuedTitle(sec), { ...look, section: { ...look.section, color: look.muted } }, width);
   return { t: 'section', id: sec.id, ref: sec.id, title, continued, nodes: sectionBody(sec, look, width, opts), before: opts.before ?? 0 };
 }
 
 /* ------------------------------ header ----------------------------- */
 
-const LABELS: Record<ContactItem['kind'], string> = { email: 'Email', phone: 'Phone', location: 'Location', website: 'Web', social: '' };
+const LABEL_KEYS: Record<ContactItem['kind'], DictKey | null> = { email: 'email', phone: 'phone', location: 'location', website: 'web', social: null };
+
+/** "Email", "Phone"… in the document's language; social links use their platform name. */
+export function contactLabel(c: ContactItem, lang?: string): string {
+  const k = LABEL_KEYS[c.kind];
+  return (k ? t(lang, k) : '') || c.platform || t(lang, 'link');
+}
 
 /** Contact line. `icon: 'glyph'` puts a real vector icon (mail, phone, GitHub, LinkedIn…) before each item. */
 export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: string; icon?: ResumeStyle['iconStyle']; color?: string; linkColor?: string; iconColor?: string } = {}): Run[] {
@@ -462,7 +476,7 @@ export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: stri
   const out: Run[] = [];
   items.forEach((c, i) => {
     if (i > 0) out.push({ text: sep, color: look.muted });
-    if (opts.icon === 'label') out.push({ text: `${LABELS[c.kind] || c.platform || 'Link'}: `, bold: true, ...(opts.color ? { color: opts.color } : {}) });
+    if (opts.icon === 'label') out.push({ text: `${contactLabel(c, look.lang)}: `, bold: true, ...(opts.color ? { color: opts.color } : {}) });
     if (opts.icon === 'glyph') out.push({ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: opts.iconColor ?? look.accent, ...(c.url ? { link: c.url } : {}) });
     const color = c.url ? opts.linkColor ?? opts.color : opts.color;
     out.push({ text: c.label, ...(c.url ? { link: c.url } : {}), ...(color ? { color } : {}) });
@@ -473,7 +487,7 @@ export function contactRuns(items: ContactItem[], look: Look, opts: { sep?: stri
 /** Stacked contact list (sidebars). */
 export function contactList(items: ContactItem[], look: Look, opts: { icon?: ResumeStyle['iconStyle']; color?: string; labelColor?: string; /** Round badge behind each icon (icon drawn in `iconColor`). */ iconBg?: string; iconColor?: string } = {}): FlowNode[] {
   return items.map((c, i) => {
-    const label = opts.icon === 'label' ? [{ text: `${LABELS[c.kind] || c.platform || 'Link'}`, bold: true, color: opts.labelColor ?? look.muted, size: look.size - 1.5 }] : [];
+    const label = opts.icon === 'label' ? [{ text: contactLabel(c, look.lang), bold: true, color: opts.labelColor ?? look.muted, size: look.size - 1.5 }] : [];
     const icon: Run[] = opts.icon === 'glyph' ? [{ text: '', icon: contactIcon(c.kind, c.platform, c.url), color: opts.iconColor ?? opts.labelColor ?? look.accent, ...(opts.iconBg ? { iconBg: opts.iconBg } : {}), ...(c.url ? { link: c.url } : {}) }] : [];
     const node: TextNode = {
       t: 'text',

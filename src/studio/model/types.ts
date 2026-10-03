@@ -11,6 +11,8 @@
  * are then stored on the resume only.
  * ------------------------------------------------------------------ */
 
+import type { DocLanguage } from '@/i18n/types';
+
 /* ------------------------------ Images ------------------------------ */
 
 /** The original upload. Its bytes live once in the `images` store; everything else is derived. */
@@ -308,6 +310,8 @@ export interface ResumeStyle {
   pageLimit: number;
   repeatHeadings: boolean;
   dateFormat: 'short' | 'long' | 'numeric';
+  /** Output language for the fixed strings templates print (default headings, "Present", dates…). */
+  language: DocLanguage;
   /** Result of Fit to page; null = natural layout. */
   fit: FitAdjust | null;
 }
@@ -435,6 +439,8 @@ export interface DocumentPageSettings {
   baseSize: number;
   lineHeight: number;
   accent: string;
+  /** Output language for fixed strings (letter defaults, dates, kind labels) and text direction. */
+  language: DocLanguage;
 }
 
 export interface StudioDocument {

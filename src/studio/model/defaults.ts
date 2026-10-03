@@ -188,6 +188,7 @@ export const DEFAULT_RESUME_STYLE: ResumeStyle = {
   pageLimit: 0,
   repeatHeadings: true,
   dateFormat: 'short',
+  language: 'en',
   fit: null,
 };
 
@@ -318,6 +319,7 @@ export const DEFAULT_PAGE: DocumentPageSettings = {
   baseSize: 10.5,
   lineHeight: 1.45,
   accent: '#1f3a8a',
+  language: 'en',
 };
 
 export function emptyLetter(): CoverLetterData {

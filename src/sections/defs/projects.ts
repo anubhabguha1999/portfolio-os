@@ -1,5 +1,6 @@
+import { t } from '@/i18n';
 import type { SectionDefinition } from '../types';
-import { esc, hasText, opts, headingField, introField, sectionHeader, tagList, bulletList, link, emptyImage, para, bullets, linkRuns } from '../helpers';
+import { langOf, esc, hasText, opts, headingField, introField, sectionHeader, tagList, bulletList, link, emptyImage, para, bullets, linkRuns } from '../helpers';
 import { uid } from '@/utils/id';
 import type { ProjectItem } from '@/types/portfolio';
 import type { DocBlock } from '@/types/document';
@@ -79,15 +80,15 @@ export const projectsSection: SectionDefinition<'projects'> = {
         const cover = ctx.image(p.image, { className: 'project-cover', width: 1200, height: 750 });
         const meta = [p.role, p.duration].filter(hasText).map(esc).join(' · ');
         const links = [
-          hasText(p.live) ? link(p.live, `${ctx.icon('external')}<span>Live</span>`, 'project-link') : '',
-          hasText(p.github) ? link(p.github, `${ctx.icon('github')}<span>Source</span>`, 'project-link') : '',
+          hasText(p.live) ? link(p.live, `${ctx.icon('external')}<span>${esc(t(langOf(ctx), 'live'))}</span>`, 'project-link') : '',
+          hasText(p.github) ? link(p.github, `${ctx.icon('github')}<span>${esc(t(langOf(ctx), 'source'))}</span>`, 'project-link') : '',
         ].join('');
         const gallery = p.gallery.filter((g) => g.src);
         const galleryHtml = gallery.length
           ? `<div class="project-gallery">${gallery.map((g) => `<button type="button" class="project-thumb" data-lightbox aria-label="Enlarge: ${esc(g.alt || p.title)}">${ctx.image(g, { width: 320, height: 200 })}</button>`).join('')}</div>`
           : '';
         const caseStudy = hasText(p.caseStudy)
-          ? `<details class="case-study"><summary>Read case study</summary><div class="prose">${ctx.markdown(p.caseStudy)}</div></details>`
+          ? `<details class="case-study"><summary>${esc(t(langOf(ctx), 'readCaseStudy'))}</summary><div class="prose">${ctx.markdown(p.caseStudy)}</div></details>`
           : '';
         const big = d.layout === 'featured' && (p.featured || index === 0);
         return `<article class="project card${p.featured ? ' is-featured' : ''}${big ? ' is-large' : ''}" data-anim-child>
@@ -112,8 +113,8 @@ export const projectsSection: SectionDefinition<'projects'> = {
     ...ctx.markdownBlocks(d.intro),
     ...d.items.map((p): DocBlock => {
       const links = linkRuns([
-        { label: 'Live', url: p.live },
-        { label: 'Source', url: p.github },
+        { label: t(langOf(ctx), 'live'), url: p.live },
+        { label: t(langOf(ctx), 'source'), url: p.github },
       ]);
       return {
         kind: 'entry',

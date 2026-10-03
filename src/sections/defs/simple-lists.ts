@@ -1,5 +1,5 @@
 import type { SectionDefinition } from '../types';
-import { esc, hasText, headingField, introField, sectionHeader, link, tagList, para, opts, emptyImage } from '../helpers';
+import { langOf, esc, hasText, headingField, introField, sectionHeader, link, tagList, para, opts, emptyImage } from '../helpers';
 import { uid } from '@/utils/id';
 import { formatMonth } from '@/utils/format';
 import { safeHref } from '@/utils/url';
@@ -90,10 +90,10 @@ export const achievementsSection: SectionDefinition<'achievements'> = {
       .map(
         (a) => `<li class="achievement card" data-anim-child><span class="achievement-icon" aria-hidden="true">${ctx.icon('award')}</span><div><h3 class="achievement-title">${
           hasText(a.url) ? link(a.url, esc(a.title)) : esc(a.title)
-        }</h3>${hasText(a.description) ? `<p>${esc(a.description)}</p>` : ''}</div>${hasText(a.date) ? `<span class="date-range">${esc(formatMonth(a.date))}</span>` : ''}</li>`,
+        }</h3>${hasText(a.description) ? `<p>${esc(a.description)}</p>` : ''}</div>${hasText(a.date) ? `<span class="date-range">${esc(formatMonth(a.date, langOf(ctx)))}</span>` : ''}</li>`,
       )
       .join('')}</ul>`,
-  toDocument: (d) => d.items.map((a) => ({ kind: 'entry' as const, title: a.title, meta: formatMonth(a.date), ...(hasText(a.url) ? { link: a.url } : {}), body: para(a.description) })),
+  toDocument: (d, ctx) => d.items.map((a) => ({ kind: 'entry' as const, title: a.title, meta: formatMonth(a.date, langOf(ctx)), ...(hasText(a.url) ? { link: a.url } : {}), body: para(a.description) })),
 };
 
 /* ----------------------------- Certifications ---------------------------- */
@@ -132,15 +132,15 @@ export const certificationsSection: SectionDefinition<'certifications'> = {
     `${sectionHeader(d.heading, '', ctx)}<ul class="certs" role="list">${d.items
       .map(
         (c) => `<li class="cert card" data-anim-child><span class="cert-icon" aria-hidden="true">${ctx.icon('shield')}</span><div class="cert-body"><h3 class="cert-name">${esc(c.name)}</h3><p class="cert-issuer">${esc(c.issuer)}${
-          hasText(c.date) ? ` · ${esc(formatMonth(c.date))}` : ''
+          hasText(c.date) ? ` · ${esc(formatMonth(c.date, langOf(ctx)))}` : ''
         }</p>${hasText(c.credentialId) ? `<p class="cert-id">ID ${esc(c.credentialId)}</p>` : ''}${hasText(c.url) ? link(c.url, `Verify ${ctx.icon('external')}`, 'cert-link') : ''}</div></li>`,
       )
       .join('')}</ul>`,
-  toDocument: (d) => [
+  toDocument: (d, ctx) => [
     {
       kind: 'table',
       header: ['Certification', 'Issuer', 'Date'],
-      rows: d.items.map((c) => [c.name, c.issuer, formatMonth(c.date)]),
+      rows: d.items.map((c) => [c.name, c.issuer, formatMonth(c.date, langOf(ctx))]),
     },
   ],
 };
@@ -231,12 +231,12 @@ export const blogSection: SectionDefinition<'blog'> = {
   render: (d, ctx) =>
     `${sectionHeader(d.heading, d.intro, ctx)}<ul class="posts" role="list">${d.items
       .map(
-        (p) => `<li class="post" data-anim-child>${hasText(p.date) ? `<span class="post-date">${esc(formatMonth(p.date))}</span>` : ''}<div class="post-body"><h3 class="post-title">${
+        (p) => `<li class="post" data-anim-child>${hasText(p.date) ? `<span class="post-date">${esc(formatMonth(p.date, langOf(ctx)))}</span>` : ''}<div class="post-body"><h3 class="post-title">${
           hasText(p.url) ? link(p.url, `${esc(p.title)} ${ctx.icon('arrow-right')}`) : esc(p.title)
         }</h3>${hasText(p.excerpt) ? `<p class="post-excerpt">${esc(p.excerpt)}</p>` : ''}${tagList(p.tags)}</div></li>`,
       )
       .join('')}</ul>`,
-  toDocument: (d) => d.items.map((p) => ({ kind: 'entry' as const, title: p.title, meta: formatMonth(p.date), ...(hasText(p.url) ? { link: p.url } : {}), body: para(p.excerpt) })),
+  toDocument: (d, ctx) => d.items.map((p) => ({ kind: 'entry' as const, title: p.title, meta: formatMonth(p.date, langOf(ctx)), ...(hasText(p.url) ? { link: p.url } : {}), body: para(p.excerpt) })),
 };
 
 /* --------------------------------- Social -------------------------------- */
@@ -369,9 +369,9 @@ export const timelineSection: SectionDefinition<'timeline'> = {
   links: () => [],
   render: (d, ctx) =>
     `${sectionHeader(d.heading, '', ctx)}<ol class="timeline" role="list">${d.items
-      .map((t) => `<li class="timeline-item" data-anim-child><span class="timeline-date">${esc(formatMonth(t.date))}</span><div class="timeline-body"><h3>${esc(t.title)}</h3>${hasText(t.description) ? `<p>${esc(t.description)}</p>` : ''}</div></li>`)
+      .map((t) => `<li class="timeline-item" data-anim-child><span class="timeline-date">${esc(formatMonth(t.date, langOf(ctx)))}</span><div class="timeline-body"><h3>${esc(t.title)}</h3>${hasText(t.description) ? `<p>${esc(t.description)}</p>` : ''}</div></li>`)
       .join('')}</ol>`,
-  toDocument: (d) => d.items.map((t) => ({ kind: 'entry' as const, title: t.title, meta: formatMonth(t.date), body: para(t.description) })),
+  toDocument: (d, ctx) => d.items.map((t) => ({ kind: 'entry' as const, title: t.title, meta: formatMonth(t.date, langOf(ctx)), body: para(t.description) })),
 };
 
 /* -------------------------------- Gallery -------------------------------- */

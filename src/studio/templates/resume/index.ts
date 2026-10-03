@@ -8,11 +8,14 @@ import { contactIcon, type DocIcon } from '@/studio/engine/icons';
 import type { ContactItem, ResolvedItem, ResolvedResume, ResolvedSection } from '@/studio/model/resolve';
 import type { ResumeSectionKind, ResumeStyle } from '@/studio/model/types';
 import type { ResumeTemplateDef, StyleControl } from '../types';
+import { t, type DictKey } from '@/i18n';
+import { finalizeFlow } from '@/studio/engine/rtl';
 import {
   accentOf,
   bulletNodes,
   contactList,
   contactRuns,
+  continuedTitle,
   effectiveStyle,
   fontFor,
   inlineRuns,
@@ -87,6 +90,7 @@ function baseLook(st: Setup, over: Partial<Look> = {}): Look {
     chipText: mix(accent, '#000000', 0.25),
     showTech: false,
     justify: false,
+    lang: st.s.language,
     ...over,
   };
   if (st.s.atsSafe) {
@@ -102,7 +106,7 @@ function baseLook(st: Setup, over: Partial<Look> = {}): Look {
 
 function footer(r: ResolvedResume, look: Look): PageFurniture | null {
   if (!r.style.pageNumbers) return null;
-  return { runs: [{ text: `${r.name}  ·  Page {page} of {pages}` }], style: ts(look, { size: 7.5, color: look.muted }), align: 'center', pages: 'all' };
+  return { runs: [{ text: `${r.name}  ·  ${t(r.style.language, 'pageOfPages')}` }], style: ts(look, { size: 7.5, color: look.muted }), align: 'center', pages: 'all' };
 }
 
 function doc(r: ResolvedResume, st: Setup, look: Look, parts: Pick<FlowDoc, 'columns'> & Partial<FlowDoc>): FlowDoc {
@@ -182,7 +186,7 @@ function gutterSection(sec: ResolvedSection, look: Look, width: number, gutter: 
     if (i > 0 || nodes.length) g.before = 3.2 * look.sp;
     nodes.push(g);
   });
-  return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, width), continued: sectionTitle(`${sec.title} (continued)`, look, width), nodes, before };
+  return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, width), continued: sectionTitle(continuedTitle(sec), look, width), nodes, before };
 }
 
 const COMMON: StyleControl[] = ['font', 'baseSize', 'lineHeight', 'spacing', 'accent', 'margins', 'borderStyle', 'headerHeight'];
@@ -246,7 +250,7 @@ const modern: ResumeTemplateDef = {
     const photo = photoNode(r.photo, r.style.photo, 1.05, 'left');
     const sideNodes: FlowNode[] = [];
     if (photo) sideNodes.push({ ...photo, after: 5 * look.sp });
-    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle }) });
+    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle(t(r.style.language, 'contact'), sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle }) });
     sideNodes.push(...stackSections(side, sideLook, sideW, { side: true, skillMode: look.tags === 'chips' ? 'chips' : 'lines' }, r.contact.length || photo ? sectionGap(look) : 0));
     const mainNodes: FlowNode[] = [nameNode(r, look, 24 * st.head, { color: look.accent === '#111111' ? '#111111' : mix(look.accent, '#000000', 0.15) })];
     const hl = headlineNode(r, look, { color: look.muted, size: look.size + 2.2 });
@@ -408,7 +412,7 @@ const creative: ResumeTemplateDef = {
     sideNodes.push(nameNode(r, sideLook, 19 * st.head, { color: '#ffffff' }, { align: photo ? 'center' : 'left' }));
     const hl = headlineNode(r, sideLook, { color: sideMuted, size: sideLook.size + 1 }, { align: photo ? 'center' : 'left' });
     if (hl) sideNodes.push(hl);
-    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, color: '#ffffff', labelColor: sideMuted }), before: 7 * look.sp });
+    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle(t(r.style.language, 'contact'), sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, color: '#ffffff', labelColor: sideMuted }), before: 7 * look.sp });
     sideNodes.push(...side.map((s) => sectionNode(s, sideLook, sideW, { side: true, before: sectionGap(look), skillMode: 'bars' })));
     return doc(r, st, look, {
       columns: [
@@ -615,7 +619,7 @@ function timelineSection(sec: ResolvedSection, look: Look, width: number, before
       nodes: [...head, ...body],
     } as BoxNode);
   });
-  return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, width), continued: sectionTitle(`${sec.title} (continued)`, look, width), nodes, before };
+  return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, width), continued: sectionTitle(continuedTitle(sec), look, width), nodes, before };
 }
 
 const timeline: ResumeTemplateDef = {
@@ -834,10 +838,10 @@ const slateBanner: ResumeTemplateDef = {
         else if (sec.kind === 'languages' && sec.display === 'auto') nodes = slateLanguages(sec, look);
         else if (sec.kind === 'projects' && sec.display === 'auto') nodes = sec.items.map((it, j) => ({ ...slateProject(it, look), ...(j ? { before: 3.4 * look.sp } : {}) }));
         else if (['experience', 'education', 'volunteer', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
-          nodes = sec.items.map((it, j) => ({ ...slateEntry(it, look, sec.kind, sec.kind === 'education' ? 'Highlights' : 'Key achievements'), ...(j ? { before: 3.2 * look.sp } : {}) }));
+          nodes = sec.items.map((it, j) => ({ ...slateEntry(it, look, sec.kind, sec.kind === 'education' ? t(look.lang, 'highlights') : t(look.lang, 'keyAchievements')), ...(j ? { before: 3.2 * look.sp } : {}) }));
         if (!nodes) return sectionNode(sec, look, width, { before, side: width < m.contentW * 0.6, titleOverride });
         if (sec.text && sec.kind !== 'summary') nodes = [...paragraphs(sec.text, look), ...nodes];
-        return { t: 'section', id: sec.id, ref: sec.id, title: titleOverride, continued: sectionTitle(`${sec.title} (continued)`, { ...look, section: { ...look.section, color: look.muted } }, width), nodes, before } as FlowNode;
+        return { t: 'section', id: sec.id, ref: sec.id, title: titleOverride, continued: sectionTitle(continuedTitle(sec), { ...look, section: { ...look.section, color: look.muted } }, width), nodes, before } as FlowNode;
       });
     const columns: FlowColumn[] = [
       { id: 'main', x: m.margin.left, width: leftW, nodes: render(main, leftW), order: 0 },
@@ -942,7 +946,7 @@ const navySidebar: ResumeTemplateDef = {
 
     const sideNodes: FlowNode[] = [];
     if (r.style.photo !== 'none') sideNodes.push({ ...ringedPortrait(r.photo, r.name, 30 * st.head, sideW, { ring: mix(navy, '#ffffff', 0.35), ringWidth: 1.1, disc: mix(navy, '#ffffff', 0.18), discText: '#ffffff', mode: r.style.photo }), after: 7 * look.sp });
-    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, color: sideText, labelColor: gold }) });
+    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle(t(r.style.language, 'contact'), sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, color: sideText, labelColor: gold }) });
     side.forEach((sec, i) => {
       const before = i === 0 && !r.contact.length ? 0 : 5.5 * look.sp;
       let nodes: FlowNode[] | null = null;
@@ -976,7 +980,7 @@ const navySidebar: ResumeTemplateDef = {
       const before = i === 0 ? 0 : 6 * look.sp;
       if (sec.kind === 'summary') return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), nodes: summaryNodes(sec.text, look), before };
       if (['experience', 'volunteer', 'projects', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
-        return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), continued: sectionTitle(`${sec.title} (continued)`, look, mainW), before, nodes: [...(sec.text ? paragraphs(sec.text, look) : []), ...sec.items.map((it, j) => ({ ...navyMainEntry(it, look, sec.kind, gold), ...(j ? { before: 4 * look.sp } : {}) }))] };
+        return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), continued: sectionTitle(continuedTitle(sec), look, mainW), before, nodes: [...(sec.text ? paragraphs(sec.text, look) : []), ...sec.items.map((it, j) => ({ ...navyMainEntry(it, look, sec.kind, gold), ...(j ? { before: 4 * look.sp } : {}) }))] };
       if (['achievements', 'awards'].includes(sec.kind) && sec.display === 'auto')
         return {
           t: 'section',
@@ -1139,7 +1143,7 @@ const blushSidebar: ResumeTemplateDef = {
           ]),
         });
       else if (['experience', 'volunteer', 'projects', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
-        mainNodes.push({ t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), continued: sectionTitle(`${sec.title} (continued)`, look, mainW), nodes: sec.items.map((it, j) => ({ ...blushEntry(it, look, sec.kind), ...(j ? { before: 3.4 * look.sp } : {}) })) });
+        mainNodes.push({ t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), continued: sectionTitle(continuedTitle(sec), look, mainW), nodes: sec.items.map((it, j) => ({ ...blushEntry(it, look, sec.kind), ...(j ? { before: 3.4 * look.sp } : {}) })) });
       else mainNodes.push(sectionNode(sec, look, mainW));
     });
 
@@ -1166,7 +1170,7 @@ const blushSidebar: ResumeTemplateDef = {
 /* ------------------------------------------------------------------ */
 
 const ANGLED_SIDE = new Set<ResumeSectionKind>(['skills', 'technical-skills', 'languages', 'interests', 'awards', 'references']);
-const CONTACT_LABEL: Record<string, string> = { email: 'Email', phone: 'Phone', location: 'Address', website: 'Website' };
+const CONTACT_LABEL: Record<string, DictKey> = { email: 'email', phone: 'phone', location: 'address', website: 'website' };
 const PLATFORM_LABEL: Record<string, string> = { linkedin: 'LinkedIn', github: 'GitHub', gitlab: 'GitLab', x: 'X', twitter: 'X', youtube: 'YouTube', dribbble: 'Dribbble', behance: 'Behance', instagram: 'Instagram' };
 
 /** Bar length for a language from its fluency words (no level is stored for languages). */
@@ -1261,13 +1265,13 @@ const angledSidebar: ResumeTemplateDef = {
         t: 'section',
         id: 'contact',
         ref: r.profileSectionId ?? 'profile',
-        title: sectionTitle('Personal Info', sideLook, sideW),
+        title: sectionTitle(t(r.style.language, 'personalInfo'), sideLook, sideW),
         nodes: r.contact.map((c, i) => ({
           t: 'group' as const,
           keep: 'together' as const,
           before: i ? 2.2 * look.sp : 0,
           nodes: [
-            { t: 'text' as const, runs: [{ text: CONTACT_LABEL[c.kind] ?? (c.platform ? PLATFORM_LABEL[c.platform.toLowerCase()] ?? c.platform.charAt(0).toUpperCase() + c.platform.slice(1) : 'Link'), bold: true }], style: ts(sideLook, { lineHeight: 1.2 }) },
+            { t: 'text' as const, runs: [{ text: (CONTACT_LABEL[c.kind] ? t(r.style.language, CONTACT_LABEL[c.kind]!) : undefined) ?? (c.platform ? PLATFORM_LABEL[c.platform.toLowerCase()] ?? c.platform.charAt(0).toUpperCase() + c.platform.slice(1) : t(r.style.language, 'link')), bold: true }], style: ts(sideLook, { lineHeight: 1.2 }) },
             { t: 'text' as const, runs: [{ text: c.label, ...(c.url ? { link: c.url } : {}), ...(c.kind === 'social' ? { underline: true } : {}) }], style: ts(sideLook, { lineHeight: 1.3 }), before: 0.3 * look.sp },
           ],
         })),
@@ -1307,7 +1311,7 @@ const angledSidebar: ResumeTemplateDef = {
       const before = i === 0 ? 0 : 5.5 * look.sp;
       if (sec.kind === 'summary') return { t: 'section', id: sec.id, ref: sec.id, title: [], nodes: summaryNodes(sec.text, look), before };
       if (['experience', 'volunteer', 'projects', 'open-source', 'education'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
-        return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), continued: sectionTitle(`${sec.title} (continued)`, look, mainW), before, nodes: sec.items.map((it, j) => ({ ...angledEntry(it, look, sec.kind), ...(j ? { before: 4 * look.sp } : {}) })) };
+        return { t: 'section', id: sec.id, ref: sec.id, title: sectionTitle(sec.title, look, mainW), continued: sectionTitle(continuedTitle(sec), look, mainW), before, nodes: sec.items.map((it, j) => ({ ...angledEntry(it, look, sec.kind), ...(j ? { before: 4 * look.sp } : {}) })) };
       return sectionNode(sec, look, mainW, { before });
     });
 
@@ -1336,7 +1340,7 @@ const angledSidebar: ResumeTemplateDef = {
 /* ------------------------------------------------------------------ */
 
 const CHEVRON_SIDE = new Set<ResumeSectionKind>(['skills', 'technical-skills', 'education', 'languages', 'certifications', 'interests', 'awards']);
-const LEVEL_WORD = ['', 'Beginner', 'Intermediate', 'Proficient', 'Advanced', 'Expert'];
+const LEVEL_WORD: Array<DictKey | ''> = ['', 'levelBeginner', 'levelIntermediate', 'levelProficient', 'levelAdvanced', 'levelExpert'];
 
 const chevronHeader: ResumeTemplateDef = {
   id: 'chevron-header',
@@ -1385,12 +1389,12 @@ const chevronHeader: ResumeTemplateDef = {
     const { main, side } = placeBy(r, CHEVRON_SIDE);
 
     const sideNodes: FlowNode[] = [];
-    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle('Contact Details', sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, iconBg: charcoal, iconColor: '#ffffff' }).map((n, i) => (i ? { ...n, before: 2 * look.sp } : n)) });
+    if (r.contact.length) sideNodes.push({ t: 'section', id: 'contact', ref: r.profileSectionId ?? 'profile', title: sectionTitle(t(r.style.language, 'contactDetails'), sideLook, sideW), nodes: contactList(r.contact, sideLook, { icon: r.style.iconStyle, iconBg: charcoal, iconColor: '#ffffff' }).map((n, i) => (i ? { ...n, before: 2 * look.sp } : n)) });
     side.forEach((sec, i) => {
       const before = i === 0 && !r.contact.length ? 0 : 6 * look.sp;
       let nodes: FlowNode[] | null = null;
       if (sec.kind === 'skills' || sec.kind === 'technical-skills') {
-        nodes = sec.skills.flatMap((g) => g.names.map((n, j) => ({ n, level: g.levels[j] ?? 0 }))).map((s, j) => ({ t: 'text' as const, runs: [{ text: s.level ? `${s.n} - ${LEVEL_WORD[s.level]}` : s.n }], style: ts(sideLook, { color: '#3d3f45', lineHeight: 1.35 }), before: j ? 1.8 * look.sp : 0 }));
+        nodes = sec.skills.flatMap((g) => g.names.map((n, j) => ({ n, level: g.levels[j] ?? 0 }))).map((s, j) => ({ t: 'text' as const, runs: [{ text: s.level ? `${s.n} - ${LEVEL_WORD[s.level] ? t(r.style.language, LEVEL_WORD[s.level] as DictKey) : ''}` : s.n }], style: ts(sideLook, { color: '#3d3f45', lineHeight: 1.35 }), before: j ? 1.8 * look.sp : 0 }));
       } else if (sec.kind === 'education' && sec.display === 'auto') {
         // Timeline: a rail with a dot at each entry.
         nodes = sec.items.map((it, j) => ({
@@ -1419,7 +1423,7 @@ const chevronHeader: ResumeTemplateDef = {
           id: sec.id,
           ref: sec.id,
           title: sectionTitle(sec.title, look, mainW),
-          continued: sectionTitle(`${sec.title} (continued)`, look, mainW),
+          continued: sectionTitle(continuedTitle(sec), look, mainW),
           before,
           nodes: sec.items.map((it, j) => {
             const head: FlowNode[] = [{ t: 'text', runs: [{ text: [it.title, it.subtitle].filter(Boolean).join(', ') || 'Untitled', ...(it.url ? { link: it.url } : {}) }], style: ts(look, { size: look.size + 0.6, color: st.accent, lineHeight: 1.25 }), role: 'h3' }];
@@ -1638,7 +1642,7 @@ const cornerPortrait: ResumeTemplateDef = {
       if (sec.kind === 'summary') return withTitle(sec, look, bar(sec.title, look), paragraphs(sec.text, look), before);
       if ((sec.kind === 'skills' || sec.kind === 'technical-skills') && sec.display !== 'tags' && sec.display !== 'list') return withTitle(sec, look, bar(sec.title, look), percentBars(sec, look, mainW, navy, mix(navy, '#ffffff', 0.82)), before);
       if (['experience', 'education', 'volunteer', 'projects', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
-        return withTitle(sec, look, bar(sec.title, look), sec.items.map((it, j) => ({ ...cornerEntry(it, look, sec.kind, navy), ...(j ? { before: 3.4 * look.sp } : {}) })), before, bar(`${sec.title} (continued)`, look));
+        return withTitle(sec, look, bar(sec.title, look), sec.items.map((it, j) => ({ ...cornerEntry(it, look, sec.kind, navy), ...(j ? { before: 3.4 * look.sp } : {}) })), before, bar(continuedTitle(sec), look));
       return sectionNode(sec, look, mainW, { before, titleOverride: bar(sec.title, look) });
     });
 
@@ -1775,7 +1779,7 @@ const geometricBanner: ResumeTemplateDef = {
       const title = pill(sec.title, sec.kind, mainW);
       if (sec.kind === 'summary') return withTitle(sec, look, title, [inset(paragraphs(sec.text, look))], before);
       if (['experience', 'education', 'volunteer', 'projects', 'open-source'].includes(sec.kind) && (sec.display === 'auto' || sec.display === 'entries'))
-        return withTitle(sec, look, title, sec.items.map((it, j) => ({ ...inset([mainEntry(it)]), ...(j ? { before: 4 * look.sp } : {}) })), before, pill(`${sec.title} (continued)`, sec.kind, mainW));
+        return withTitle(sec, look, title, sec.items.map((it, j) => ({ ...inset([mainEntry(it)]), ...(j ? { before: 4 * look.sp } : {}) })), before, pill(continuedTitle(sec), sec.kind, mainW));
       if (sec.kind === 'references' && sec.items.length && sec.display === 'auto') {
         const ref = (it: ResolvedItem | undefined): FlowNode[] =>
           it
@@ -1944,13 +1948,13 @@ const tealStripe: ResumeTemplateDef = {
               head.push({ t: 'row', gap: 3, before: 0.8 * look.sp, cols: [{ width: 0.62, nodes: [{ t: 'text', runs: [{ text: it.date || ' ' }], style: ts(look, meta) }] }, { align: 'right', nodes: [{ t: 'text', runs: [{ text: it.location || ' ' }], style: ts(look, meta), align: 'right' }] }] });
             const body: FlowNode[] = [];
             if (it.description.trim()) body.push(...paragraphs(it.description, look, {}, 1).map((n, k) => (k === 0 ? { ...n, before: 1 * look.sp } : n)));
-            if (it.bullets.length && companyFirst) body.push({ t: 'text', runs: [{ text: 'Achievements' }], style: ts(look, meta), before: 0.8 * look.sp, keepWithNext: true });
+            if (it.bullets.length && companyFirst) body.push({ t: 'text', runs: [{ text: t(look.lang, 'achievements') }], style: ts(look, meta), before: 0.8 * look.sp, keepWithNext: true });
             const bl = bulletNodes(it.bullets, look, { size: look.size + 0.4 }, 0.8);
             if (bl[0]) bl[0].before = 0.6 * look.sp;
             body.push(...bl);
             return { t: 'box', keep: body.length <= 6 ? 'together' : 'split', ref: it.id, padding: [0, 0, 1.2, 8.5], rail: { x: 1.8, color: slate, width: 0.4, dot: 1.3, dotColor: teal }, before: j ? 2.6 * look.sp : 0, nodes: [...head, ...body] } as BoxNode;
           });
-          mainNodes.push(withTitle(sec, look, title, entries, before, heading(`${sec.title} (continued)`, sec.kind, look, slate, '#ffffff', slate)));
+          mainNodes.push(withTitle(sec, look, title, entries, before, heading(continuedTitle(sec), sec.kind, look, slate, '#ffffff', slate)));
         } else if (['certifications', 'awards', 'achievements', 'publications'].includes(sec.kind) && sec.display === 'auto') {
           mainNodes.push(
             withTitle(
@@ -1995,7 +1999,10 @@ const tealStripe: ResumeTemplateDef = {
   },
 };
 
-export const RESUME_TEMPLATES: ResumeTemplateDef[] = [cornerPortrait, geometricBanner, tealStripe, slateBanner, navySidebar, blushSidebar, angledSidebar, chevronHeader, atsMinimal, modern, executive, developer, creative, compact, academic, minimalMono, editorial, timeline];
+/** Every template's output gets the document language (and an RTL mirror for Arabic/Hebrew). */
+const localised = (def: ResumeTemplateDef): ResumeTemplateDef => ({ ...def, compose: (r) => finalizeFlow(def.compose(r), r.style.language) });
+
+export const RESUME_TEMPLATES: ResumeTemplateDef[] = [cornerPortrait, geometricBanner, tealStripe, slateBanner, navySidebar, blushSidebar, angledSidebar, chevronHeader, atsMinimal, modern, executive, developer, creative, compact, academic, minimalMono, editorial, timeline].map(localised);
 
 export function getResumeTemplate(id: string): ResumeTemplateDef {
   return RESUME_TEMPLATES.find((t) => t.id === id) ?? atsMinimal;

@@ -122,6 +122,8 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
   const unsupported = new Set<string>();
   const stats = { images: 0, links: 0, minFont: Infinity, runs: 0, shapes: 0 };
   const linksOn = flow.links !== false;
+  // Right-to-left documents (see engine/rtl.ts): list markers, accent bars and rails sit on the right.
+  const rtl = flow.dir === 'rtl';
   let clippedWords = 0;
 
   /* ------------------------------ text ------------------------------ */
@@ -326,19 +328,21 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
             const color = m.color ?? st.color;
             const fs = st.size * PT;
             const baseline = y + (lh - (ln.size * PT)) / 2 + ln.size * PT * 0.78;
+            // In RTL the marker hangs in an indent on the right.
+            const mx = rtl ? x + w - indent * 0.4 : x + indent * 0.4;
             if (m.kind === 'bullet' || m.kind === 'square') {
-              if (m.kind === 'bullet') out.push({ k: 'circle', cx: x + indent * 0.4, cy: baseline - fs * 0.3, r: Math.max(0.35, fs * 0.13), fill: color });
-              else out.push({ k: 'rect', x: x + indent * 0.4 - fs * 0.13, y: baseline - fs * 0.43, w: fs * 0.26, h: fs * 0.26, fill: color });
+              if (m.kind === 'bullet') out.push({ k: 'circle', cx: mx, cy: baseline - fs * 0.3, r: Math.max(0.35, fs * 0.13), fill: color });
+              else out.push({ k: 'rect', x: mx - fs * 0.13, y: baseline - fs * 0.43, w: fs * 0.26, h: fs * 0.26, fill: color });
               // The drawn dot is a shape; an invisible "•" makes the list readable to ATS and text extraction.
               const bw = M.width('•', st.font, false, false, st.size);
-              out.push({ k: 'text', x: x + indent * 0.4 - bw / 2, y: baseline, w: bw, text: '•', font: st.font, bold: false, italic: false, size: st.size, color, invisible: true });
+              out.push({ k: 'text', x: mx - bw / 2, y: baseline, w: bw, text: '•', font: st.font, bold: false, italic: false, size: st.size, color, invisible: true });
             } else {
               const t = markerText(m);
               const mw = M.width(t, st.font, !!st.bold, false, st.size);
-              out.push({ k: 'text', x: x + indent - mw - fs * 0.35, y: baseline, w: mw, text: t, font: st.font, bold: !!st.bold, italic: false, size: st.size, color });
+              out.push({ k: 'text', x: rtl ? x + w - indent + fs * 0.35 : x + indent - mw - fs * 0.35, y: baseline, w: mw, text: t, font: st.font, bold: !!st.bold, italic: false, size: st.size, color });
             }
           }
-          drawLine(ln, x + indent, y, lh, w - indent, node.align, out);
+          drawLine(ln, rtl ? x : x + indent, y, lh, w - indent, node.align, out);
         },
       };
     });
@@ -429,7 +433,7 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
       case 'rule': {
         const c = withRef(ctx, node.ref);
         const len = w * Math.min(1, Math.max(0.05, node.length ?? 1));
-        const rx = node.align === 'center' ? x + (w - len) / 2 : x;
+        const rx = node.align === 'center' ? x + (w - len) / 2 : rtl ? x + w - len : x;
         stats.shapes++;
         const p: Piece = {
           h: Math.max(0.1, node.weight),
@@ -518,7 +522,7 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
         const barW = node.bar ? node.bar.width : 0;
         const container: Container = { id: ++containerSeq, box: node, x, w, depth: c0.containers.length };
         const c: Ctx = { ...c0, containers: [...c0.containers, container] };
-        const ix = x + pl + barW;
+        const ix = rtl ? x + pl : x + pl + barW;
         const iw = Math.max(4, w - pl - pr - barW);
         const inner = node.nodes.flatMap((n) => flatten(n, ix, iw, c));
         if (!inner.length) return [];
@@ -657,11 +661,11 @@ export function layoutFlow(flow: FlowDoc, opts: LayoutOptions = {}): LaidDocumen
       }
       if (b.bar) {
         stats.shapes++;
-        list.push({ k: 'rect', x: s.c.x, y: s.y0, w: b.bar.width, h, fill: b.bar.color });
+        list.push({ k: 'rect', x: rtl ? s.c.x + s.c.w - b.bar.width : s.c.x, y: s.y0, w: b.bar.width, h, fill: b.bar.color });
       }
       if (b.rail) {
         const r = b.rail;
-        const rx = s.c.x + r.x;
+        const rx = rtl ? s.c.x + s.c.w - r.x : s.c.x + r.x;
         const top = s.first ? s.y0 + (b.padding?.[0] ?? 0) + r.dot + 0.8 : s.y0;
         list.push({ k: 'line', x1: rx, y1: top, x2: rx, y2: s.y1, color: r.color, lw: r.width });
         if (s.first) {

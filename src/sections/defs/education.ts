@@ -1,5 +1,5 @@
 import type { SectionDefinition } from '../types';
-import { esc, hasText, headingField, dateRange, sectionHeader, para } from '../helpers';
+import { langOf, esc, hasText, headingField, dateRange, sectionHeader, para } from '../helpers';
 import { uid } from '@/utils/id';
 import { formatRange } from '@/utils/format';
 
@@ -49,18 +49,18 @@ export const educationSection: SectionDefinition<'education'> = {
     ${hasText(i.grade) ? `<p class="edu-grade">${esc(i.grade)}</p>` : ''}
     ${hasText(i.description) ? `<p class="edu-desc">${esc(i.description)}</p>` : ''}
   </div>
-  ${dateRange(i.start, i.end)}
+  ${dateRange(i.start, i.end, false, langOf(ctx))}
 </li>`,
       )
       .join('');
     return `${sectionHeader(d.heading, '', ctx)}<ul class="edu" role="list">${items}</ul>`;
   },
-  toDocument: (d) =>
+  toDocument: (d, ctx) =>
     d.items.map((i) => ({
       kind: 'entry' as const,
       title: `${i.degree}${hasText(i.field) ? `, ${i.field}` : ''}`,
       subtitle: i.institution,
-      meta: formatRange(i.start, i.end),
+      meta: formatRange(i.start, i.end, false, langOf(ctx)),
       location: i.location,
       body: [...para(i.grade, 'muted'), ...para(i.description)],
     })),

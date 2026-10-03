@@ -52,6 +52,38 @@
       "destination": "/guides/:slug/index.html"
     },
     {
+      "source": "/match",
+      "destination": "/match/index.html"
+    },
+    {
+      "source": "/bullets",
+      "destination": "/bullets/index.html"
+    },
+    {
+      "source": "/applications",
+      "destination": "/applications/index.html"
+    },
+    {
+      "source": "/interview",
+      "destination": "/interview/index.html"
+    },
+    {
+      "source": "/compare",
+      "destination": "/compare/index.html"
+    },
+    {
+      "source": "/linkedin",
+      "destination": "/linkedin/index.html"
+    },
+    {
+      "source": "/assistant",
+      "destination": "/assistant/index.html"
+    },
+    {
+      "source": "/backup",
+      "destination": "/backup/index.html"
+    },
+    {
       "source": "/((?!\\.well-known/)(?!.*\\.[A-Za-z0-9]+$).*)",
       "destination": "/app.html"
     }
@@ -218,6 +250,15 @@
     },
     {
       "source": "/export/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/applications/:path*",
       "headers": [
         {
           "key": "X-Robots-Tag",

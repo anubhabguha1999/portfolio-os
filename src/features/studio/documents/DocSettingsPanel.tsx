@@ -12,6 +12,7 @@ import { LETTER_TEMPLATES } from '@/studio/templates/letter';
 import { documentMetaDefaults } from '@/studio/model/compose-document';
 import { documentFileName } from '@/studio/export/pipeline';
 import { cn } from '@/utils/cn';
+import { LanguageField } from '../shared/LanguageField';
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -84,6 +85,7 @@ export function DocSettingsPanel({ doc }: { doc: StudioDocument }) {
         {doc.kind !== 'cover-letter' && <Segmented label="Orientation" value={p.orientation} onChange={(v) => updatePage({ orientation: v })} options={[{ value: 'portrait', label: 'Portrait' }, { value: 'landscape', label: 'Landscape' }]} />}
         <Segmented label="Margins" value={p.margins} onChange={(v) => updatePage({ margins: v })} options={[{ value: 'narrow', label: 'Narrow' }, { value: 'normal', label: 'Normal' }, { value: 'wide', label: 'Wide' }]} />
         <Switch label="Page numbers" checked={p.pageNumbers} onChange={(v) => updatePage({ pageNumbers: v })} />
+        <LanguageField value={p.language} onChange={(v) => updatePage({ language: v })} />
         <TextInput label="Header text" placeholder="Shown at the top of each page" value={p.headerText} onChange={(e) => updatePage({ headerText: e.target.value }, 'header')} />
         <TextInput label="Footer text" placeholder="Shown at the bottom of each page" value={p.footerText} onChange={(e) => updatePage({ footerText: e.target.value }, 'footer')} />
       </Group>

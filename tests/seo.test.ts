@@ -24,7 +24,12 @@ describe('SEO route table', () => {
     for (const p of ['/view', '/builder/abc', '/resume/res_1', '/document/doc_1', '/settings', '/profile', '/studio', '/projects', '/export/x', '/deploy/x', '/preview/x']) {
       expect(seoFor(p).index, p).toBe(false);
     }
+    expect(seoFor('/applications/app_1').index).toBe(false);
     expect(seoFor('/resumes').index).toBe(true);
+    for (const p of ['/match', '/bullets', '/applications', '/interview', '/compare', '/linkedin', '/assistant', '/backup']) {
+      expect(seoFor(p).index, p).toBe(true);
+      expect(seoFor(`${p}/`).path, p).toBe(p);
+    }
     expect(seoFor('/resumes/').path).toBe('/resumes');
   });
 

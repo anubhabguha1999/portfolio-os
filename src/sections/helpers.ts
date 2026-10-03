@@ -43,10 +43,13 @@ export function sectionHeader(heading: string, intro: string, ctx: RenderContext
   }</header>`;
 }
 
-export function dateRange(start: string, end: string, current = false): string {
-  const r = formatRange(start, end, current);
+export function dateRange(start: string, end: string, current = false, lang?: string): string {
+  const r = formatRange(start, end, current, lang);
   return r ? `<span class="date-range">${esc(r)}</span>` : '';
 }
+
+/** The portfolio's output language (metadata.language), for fixed strings and dates. */
+export const langOf = (ctx: { portfolio: { metadata: { language: string } } }): string => ctx.portfolio.metadata.language;
 
 /* ------------------------------- Documents ------------------------------ */
 

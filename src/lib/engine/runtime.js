@@ -372,6 +372,9 @@
         if (typeof m.rootClass === 'string') root.className = m.rootClass + ' pos-editing' + (root.classList.contains('pos-present') ? ' pos-present' : '');
         if (m.scheme) root.setAttribute('data-scheme', m.scheme); else root.removeAttribute('data-scheme');
         if (m.config) cfg = m.config;
+        // Output language can change while editing: keep lang/dir on <html> in sync.
+        if (cfg.lang) root.setAttribute('lang', cfg.lang);
+        if (cfg.dir === 'rtl') root.setAttribute('dir', 'rtl'); else root.removeAttribute('dir');
         motion = cfg.animations !== false && !reduce;
         hydrateAssets(doc);
         applyFonts();

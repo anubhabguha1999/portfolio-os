@@ -6,6 +6,7 @@ import type { Portfolio } from '@/types/portfolio';
 import { renderPortfolio, type RenderResult } from '@/lib/engine/render';
 import { collectAssetIds, collectImages } from '@/lib/engine/collect';
 import { jsonForScript } from '@/utils/escape';
+import { isRtl, t } from '@/i18n';
 import {
   loadAssets,
   blobToBytes,
@@ -258,14 +259,16 @@ function notFoundPage(p: Portfolio, render: RenderResult, siteUrl: string): stri
   const pal = p.theme.palettes[p.theme.defaultScheme];
   const title = p.metadata.title || 'Portfolio';
   const lang = xmlEsc(p.metadata.language || 'en');
+  const dir = isRtl(p.metadata.language) ? ' dir="rtl"' : '';
+  const L = p.metadata.language;
   const home = siteUrl || './';
   const favicon = FAVICON_DATA.exec(render.html) ? '<link rel="icon" href="assets/icons/favicon.svg">' : '';
   return `<!doctype html>
-<html lang="${lang}">
+<html lang="${lang}"${dir}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page not found · ${xmlEsc(title)}</title>
+<title>${xmlEsc(t(L, 'notFoundTitle'))} · ${xmlEsc(title)}</title>
 <meta name="robots" content="noindex">
 ${siteUrl ? favicon.replace('assets/', `${siteUrl}assets/`) : favicon}
 <style>
@@ -279,8 +282,8 @@ ${siteUrl ? favicon.replace('assets/', `${siteUrl}assets/`) : favicon}
 <body>
 <main>
 <h1>404</h1>
-<p>This page doesn't exist.</p>
-<a href="${xmlEsc(home)}">Back to ${xmlEsc(title)}</a>
+<p>${xmlEsc(t(L, 'notFoundText'))}</p>
+<a href="${xmlEsc(home)}">${xmlEsc(t(L, 'backTo', { title }))}</a>
 </main>
 </body>
 </html>

@@ -229,6 +229,8 @@ export interface FlowDoc {
   links?: boolean;
   /** Machine-readable copy of the content (JSON), embedded as PDF XMP metadata for lossless re-import. */
   data?: string;
+  /** Text direction. 'rtl' flows are mirrored by engine/rtl.ts; the layout then hangs markers on the right. */
+  dir?: 'ltr' | 'rtl';
 }
 
 /* --------------------------- Display list --------------------------- */

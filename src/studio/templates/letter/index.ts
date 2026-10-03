@@ -7,15 +7,25 @@ import type { CoverLetterData, Profile } from '@/studio/model/types';
 import { displayUrl } from '@/studio/model/resolve';
 import type { LetterInput, LetterTemplateDef } from '../types';
 import { fontFor, inlineRuns, metrics, mix, readableOnWhite, safeHex } from '../kit';
+import { formatFullDate, localizeDefault, t } from '@/i18n';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-/** "2026-09-30" → "30 September 2026"; anything else is kept as typed. */
-export function formatLetterDate(value: string): string {
+/** "2026-09-30" → "30 September 2026" (localised for other languages); anything else is kept as typed. */
+export function formatLetterDate(value: string, lang: string = 'en'): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   if (!m) return value.trim();
-  const month = MONTHS[Number(m[2]) - 1];
-  return month ? `${Number(m[3])} ${month} ${m[1]}` : value.trim();
+  const mi = Number(m[2]) - 1;
+  return mi >= 0 && mi < 12 ? formatFullDate(Number(m[1]), mi, Number(m[3]), lang) : value.trim();
+}
+
+/** Letter defaults that were never edited ("Dear Hiring Manager,", "Sincerely,") in the letter's language. */
+export function localizeLetter(d: CoverLetterData, lang: string): CoverLetterData {
+  if (lang === 'en') return d;
+  return {
+    ...d,
+    salutation: localizeDefault(d.salutation, 'dearHiringManager', lang),
+    recipientTitle: localizeDefault(d.recipientTitle, 'hiringManager', lang),
+    signOff: localizeDefault(d.signOff, 'sincerely', lang),
+  };
 }
 
 interface L {
@@ -25,6 +35,8 @@ interface L {
   text: string;
   muted: string;
   accent: string;
+  /** Output language (dates, "Re: Application for…"). */
+  lang?: string;
 }
 
 const st = (l: L, over: Partial<TextStyle> = {}): TextStyle => ({ font: l.font, size: l.size, color: l.text, lineHeight: l.lh, ...over });
@@ -65,7 +77,7 @@ function recipientBlock(d: CoverLetterData, l: L, align: TextNode['align'] = 'le
 function letterBody(d: CoverLetterData, l: L, align: TextNode['align'], opts: { subject?: boolean; signatureFont?: FontFamily } = {}): FlowNode[] {
   const gap = l.size * 0.42;
   const out: FlowNode[] = [];
-  if (opts.subject && d.role.trim()) out.push({ t: 'text', runs: [{ text: `Re: Application for ${d.role.trim()}`, bold: true }], style: st(l), after: gap * 1.4, ref: 'letter:role' });
+  if (opts.subject && d.role.trim()) out.push({ t: 'text', runs: [{ text: t(l.lang, 'reApplicationFor', { role: d.role.trim() }), bold: true }], style: st(l), after: gap * 1.4, ref: 'letter:role' });
   if (d.salutation.trim()) out.push({ t: 'text', runs: [{ text: d.salutation.trim() }], style: st(l), after: gap, ref: 'letter:salutation' });
   const withRef = (nodes: FlowNode[], ref: string) => (nodes.length ? [{ t: 'group' as const, keep: 'none' as const, nodes, ref }] : []);
   out.push(...withRef(paragraphs(d.opening, l, align, gap), 'letter:opening'));
@@ -88,6 +100,7 @@ function base(input: LetterInput, fallback: FontFamily): { l: L; m: ReturnType<t
       text: '#1b1d22',
       muted: '#5b6170',
       accent: readableOnWhite(safeHex(p.accent), 3.5),
+      lang: p.language ?? 'en',
     },
     m: metrics(p.paper, p.margins, 1.15, 'portrait'),
   };
@@ -111,7 +124,7 @@ function doc(input: LetterInput, m: ReturnType<typeof metrics>, nodes: FlowNode[
   };
 }
 
-const dateNode = (d: CoverLetterData, l: L, align: TextNode['align'] = 'left'): FlowNode[] => (d.date.trim() ? [{ t: 'text', runs: [{ text: formatLetterDate(d.date) }], style: st(l, { color: l.muted }), align, ref: 'letter:date' }] : []);
+const dateNode = (d: CoverLetterData, l: L, align: TextNode['align'] = 'left'): FlowNode[] => (d.date.trim() ? [{ t: 'text', runs: [{ text: formatLetterDate(d.date, l.lang) }], style: st(l, { color: l.muted }), align, ref: 'letter:date' }] : []);
 
 /* ------------------------------------------------------------------ */
 

@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { SectionDefinition } from '../types';
 import { esc, hasText, link, opts, emptyImage, para, run } from '../helpers';
 import { uid } from '@/utils/id';
@@ -135,7 +136,7 @@ export const heroSection: SectionDefinition<'hero'> = {
     </div>
     ${img && d.layout !== 'centered' ? `<div class="hero-visual" data-anim-child>${img}</div>` : ''}
   </div>
-  ${d.layout !== 'minimal' ? '<a class="hero-scroll" href="#main-after-hero" aria-label="Scroll to content">' + ctx.icon('arrow-down') + '</a>' : ''}
+  ${d.layout !== 'minimal' ? `<a class="hero-scroll" href="#main-after-hero" aria-label="${esc(t(ctx.portfolio.metadata.language, 'scrollToContent'))}">` + ctx.icon('arrow-down') + '</a>' : ''}
 </div>`;
   },
   toDocument: (d) => [

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { CheckCircle2, Download, HardDrive, Keyboard, Monitor, Moon, Sun, Trash2, WifiOff } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -177,7 +178,7 @@ export default function SettingsPage() {
               help={
                 persist === 'persisted'
                   ? 'The browser will keep your data even when disk space runs low.'
-                  : 'Without persistence the browser may clear site data under storage pressure. Keep JSON backups either way.'
+                  : 'Without persistence the browser may clear site data under storage pressure. Keep a backup either way.'
               }
             >
               <Badge tone={persist === 'persisted' ? 'ok' : persist === 'best-effort' ? 'warn' : 'neutral'}>{persistLabel}</Badge>
@@ -267,7 +268,13 @@ export default function SettingsPage() {
 
           <Panel title="Danger zone" tone="danger" description="Permanently removes every portfolio, image, version and preference stored by this app in this browser.">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-[13px] text-fg-muted">Download JSON backups from My Portfolios first. This cannot be undone.</p>
+              <p className="text-[13px] text-fg-muted">
+                Make a full backup on the{' '}
+                <Link to="/backup" className="font-medium text-accent hover:underline">
+                  Backup &amp; sync
+                </Link>{' '}
+                page first. This cannot be undone.
+              </p>
               <Button variant="danger" loading={wiping} icon={<Trash2 className="size-4" aria-hidden="true" />} onClick={() => setConfirmWipe(true)}>
                 Delete all local data
               </Button>

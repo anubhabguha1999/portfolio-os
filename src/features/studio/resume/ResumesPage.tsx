@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, FileText, MoreHorizontal, Package, Pencil, Plus, Sparkles, Trash2, Mail, Link2 } from 'lucide-react';
+import { Copy, FileText, GitCompare, MoreHorizontal, Package, Pencil, Plus, Sparkles, Trash2, Mail, Link2, Target, ListChecks } from 'lucide-react';
 import { SiteHeader } from '@/components/SiteHeader';
 import { Button, IconButton } from '@/components/ui/Button';
 import { CardGridSkeleton } from '@/components/ui/Skeletons';
@@ -158,6 +158,9 @@ export default function ResumesPage() {
                         },
                       },
                       { label: 'Rename', icon: <Pencil />, onSelect: () => setRenaming(r) },
+                      { label: 'Match to a job', icon: <Target />, onSelect: () => navigate(`/match?resume=${r.id}`) },
+                      { label: 'Check bullets', icon: <ListChecks />, onSelect: () => navigate(`/bullets?resume=${r.id}`) },
+                      ...(resumes.length > 1 ? [{ label: 'Compare with…', icon: <GitCompare />, onSelect: () => navigate(`/compare?a=${r.id}`) }] : []),
                       'separator',
                       { label: 'Delete', icon: <Trash2 />, danger: true, onSelect: () => setDeleting(r) },
                     ]}

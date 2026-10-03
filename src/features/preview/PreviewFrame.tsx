@@ -55,6 +55,15 @@ export const PreviewFrame = forwardRef<PreviewFrameHandle, PreviewFrameProps>(fu
 
   const rendered = useMemo(() => renderPortfolio(deferred, { mode: 'preview', editing }), [deferred, editing]);
 
+  // The iframe element paints this until the document inside repaints (e.g. right after the
+  // canvas grows), so it must match the page — a white default shows up as a white bar.
+  const pageBg = useMemo(() => {
+    const { theme, settings } = deferred;
+    const prefersDark = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const scheme = settings.colorScheme === 'system' ? (prefersDark ? 'dark' : 'light') : settings.colorScheme;
+    return (theme.palettes[scheme] ?? theme.palettes[theme.defaultScheme])?.background;
+  }, [deferred]);
+
   const post = (msg: unknown) => iframeRef.current?.contentWindow?.postMessage(msg, '*');
 
   useEffect(() => {
@@ -98,6 +107,7 @@ export const PreviewFrame = forwardRef<PreviewFrameHandle, PreviewFrameProps>(fu
       sandbox={cn('allow-scripts allow-modals', allowPopups && 'allow-popups allow-popups-to-escape-sandbox')}
       referrerPolicy="no-referrer"
       className={cn('block h-full w-full border-0 bg-white', className)}
+      style={pageBg ? { background: pageBg } : undefined}
     />
   );
 });

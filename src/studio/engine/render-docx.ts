@@ -76,6 +76,9 @@ export function renderFlowDocxDocument(flow: FlowDoc, o: DocxOutputOptions): Doc
   let listSeq = 0;
   const { margin } = flow.page;
   const contentW = flow.page.width - margin.left - margin.right;
+  // Right-to-left documents: bidi paragraphs and runs. Word lays bidi paragraphs out from the
+  // right, so start-aligned (no explicit left/right) is the natural reading edge.
+  const rtl = flow.dir === 'rtl';
 
   const runs = (rs: Run[], st: TextStyle): ParagraphChild[] =>
     rs
@@ -91,6 +94,7 @@ export function renderFlowDocxDocument(flow: FlowDoc, o: DocxOutputOptions): Doc
           ...(st.uppercase ? { allCaps: true } : {}),
           ...(st.tracking ? { characterSpacing: Math.round((st.tracking / PT) * 20) } : {}),
           ...(r.underline ?? st.underline ? { underline: {} } : {}),
+          ...(rtl ? { rightToLeft: true } : {}),
         };
         const link = flow.links === false ? undefined : safeLink(r.link);
         return link ? new ExternalHyperlink({ link, children: [new TextRun(opts)] }) : new TextRun(opts);
@@ -119,7 +123,7 @@ export function renderFlowDocxDocument(flow: FlowDoc, o: DocxOutputOptions): Doc
     }
     return new Paragraph({
       ...(h ? { heading: h } : {}),
-      alignment: align(n.align),
+      ...(rtl ? { bidirectional: true, ...(n.align === 'center' || n.align === 'justify' ? { alignment: align(n.align) } : {}) } : { alignment: align(n.align) }),
       spacing: spacing(n, n.style),
       ...(n.keepWithNext || h ? { keepNext: true, keepLines: true } : {}),
       ...(numbering ? { numbering } : n.indent ? { indent: { left: tw(n.indent) } } : {}),

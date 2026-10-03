@@ -6,7 +6,9 @@ import type { FlowDoc } from '@/studio/engine/flow';
 import type { Library, Profile, StudioDocument } from './types';
 import { photoKey } from './resolve';
 import { getDocTemplate } from '@/studio/templates/document';
-import { getLetterTemplate } from '@/studio/templates/letter';
+import { getLetterTemplate, localizeLetter } from '@/studio/templates/letter';
+import { finalizeFlow } from '@/studio/engine/rtl';
+import { normalizeLanguage } from '@/i18n';
 import { kindLabel } from '@/studio/templates/document';
 
 export interface ComposeOptions {
@@ -48,10 +50,11 @@ export function documentMeta(doc: StudioDocument, profile: Profile): FlowDoc['me
 export function composeStudioDocument(doc: StudioDocument, profile: Profile, library: Library, opts: ComposeOptions = {}): FlowDoc {
   const meta = documentMeta(doc, profile);
   const photo = documentPhotoKey(profile);
+  const lang = normalizeLanguage(doc.page.language);
   if (doc.kind === 'cover-letter' && doc.letter) {
     const t = getLetterTemplate(doc.templateId);
-    return t.compose({ letter: doc.letter, profile, page: doc.page, photo, meta });
+    return finalizeFlow(t.compose({ letter: localizeLetter(doc.letter, lang), profile, page: doc.page, photo, meta }), lang);
   }
   const t = getDocTemplate(doc.templateId);
-  return t.compose({ blocks: doc.blocks, profile, library, page: doc.page, photo, meta, title: doc.name, kind: doc.kind, ...(opts.placeholders ? { placeholders: true } : {}) } as Parameters<typeof t.compose>[0]);
+  return finalizeFlow(t.compose({ blocks: doc.blocks, profile, library, page: doc.page, photo, meta, title: doc.name, kind: doc.kind, ...(opts.placeholders ? { placeholders: true } : {}) } as Parameters<typeof t.compose>[0]), lang);
 }

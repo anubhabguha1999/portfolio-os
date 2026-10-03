@@ -2,6 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { AssetRecord, Portfolio } from '@/types/portfolio';
 import { BRAND } from '@/config/brand';
 import type { Extraction, KnowledgeBlob, KnowledgeDoc } from '@/knowledge/types';
+import type { Application } from '@/lib/applications/types';
 
 export interface ProjectRecord {
   id: string;
@@ -71,9 +72,11 @@ interface PortfolioDB extends DBSchema {
   kdocs: { key: string; value: KnowledgeDoc; indexes: { byUpdated: string; byHash: string } };
   kblobs: { key: string; value: KnowledgeBlob };
   kextractions: { key: string; value: Extraction; indexes: { byDoc: string } };
+  /** Job application tracker. */
+  applications: { key: string; value: Application; indexes: { byUpdated: string } };
 }
 
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 let dbPromise: Promise<IDBPDatabase<PortfolioDB>> | null = null;
 
@@ -103,6 +106,9 @@ export function getDb(): Promise<IDBPDatabase<PortfolioDB>> {
           kdocs.createIndex('byHash', 'hash');
           db.createObjectStore('kblobs', { keyPath: 'id' });
           db.createObjectStore('kextractions', { keyPath: 'id' }).createIndex('byDoc', 'docId');
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore('applications', { keyPath: 'id' }).createIndex('byUpdated', 'updatedAt');
         }
       },
       blocked() {

@@ -20,6 +20,7 @@ import type {
   ResumeStyle,
 } from './types';
 import { sectionInfo } from './defaults';
+import { formatMonthYear, localizeDefault, localizeHeading, t } from '@/i18n';
 
 export interface ResolvedItem {
   /** ItemRef id or LocalEntry id — used for click-to-select. */
@@ -56,6 +57,8 @@ export interface ResolvedSection {
   items: ResolvedItem[];
   text: string;
   skills: SkillGroup[];
+  /** Heading repeated on following pages ("Experience (continued)"), in the resume's language. */
+  continued?: string;
 }
 
 export interface ContactItem {
@@ -78,22 +81,19 @@ export interface ResolvedResume {
   meta: { title: string; author: string; subject: string; keywords: string[]; creator: string };
 }
 
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-export function formatDate(value: string, fmt: ResumeStyle['dateFormat']): string {
+/** "YYYY-MM" (or "YYYY-MM-DD") → a display date in the resume's language; anything else is kept as typed. */
+export function formatDate(value: string, fmt: ResumeStyle['dateFormat'], lang: string = 'en'): string {
   const v = (value ?? '').trim();
   const m = /^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/.exec(v);
   if (!m) return v;
   const mi = Number(m[2]) - 1;
   if (mi < 0 || mi > 11) return m[1]!;
-  if (fmt === 'numeric') return `${String(mi + 1).padStart(2, '0')}/${m[1]}`;
-  return `${(fmt === 'long' ? MONTHS_LONG : MONTHS_SHORT)[mi]} ${m[1]}`;
+  return formatMonthYear(Number(m[1]), mi, fmt, lang);
 }
 
-export function formatDateRange(start: string, end: string, current: boolean, fmt: ResumeStyle['dateFormat']): string {
-  const s = formatDate(start, fmt);
-  const e = current ? 'Present' : formatDate(end, fmt);
+export function formatDateRange(start: string, end: string, current: boolean, fmt: ResumeStyle['dateFormat'], lang: string = 'en'): string {
+  const s = formatDate(start, fmt, lang);
+  const e = current ? t(lang, 'present') : formatDate(end, fmt, lang);
   if (s && e && s !== e) return `${s} – ${e}`;
   return s || e;
 }
@@ -134,7 +134,7 @@ function base(id: string, libId: string | null): ResolvedItem {
   return { id, libId, title: '', subtitle: '', date: '', location: '', url: '', description: '', bullets: [], tags: [], start: '', end: '', current: false };
 }
 
-function resolveLibrarySection(section: ResumeSection, library: Library, fmt: ResumeStyle['dateFormat']): ResolvedItem[] {
+function resolveLibrarySection(section: ResumeSection, library: Library, fmt: ResumeStyle['dateFormat'], lang = 'en'): ResolvedItem[] {
   const info = sectionInfo(section.kind);
   const mb = section.maxBullets;
   switch (info.library) {
@@ -148,7 +148,7 @@ function resolveLibrarySection(section: ResumeSection, library: Library, fmt: Re
             ...base(ref.id, e.id),
             title: v('role'),
             subtitle: v('company'),
-            date: formatDateRange(v('start'), v('end'), v('current'), fmt),
+            date: formatDateRange(v('start'), v('end'), v('current'), fmt, lang),
             location: v('location'),
             url: v('url'),
             description: v('description'),
@@ -188,7 +188,7 @@ function resolveLibrarySection(section: ResumeSection, library: Library, fmt: Re
             ...base(ref.id, e.id),
             title: [v('degree'), v('field')].filter((s) => s.trim()).join(', '),
             subtitle: v('institution'),
-            date: formatDateRange(v('start'), v('end'), false, fmt),
+            date: formatDateRange(v('start'), v('end'), false, fmt, lang),
             location: v('location'),
             description: [v('grade'), v('description')].filter((s) => s.trim()).join(' · '),
             start: v('start'),
@@ -201,7 +201,7 @@ function resolveLibrarySection(section: ResumeSection, library: Library, fmt: Re
         .map(({ ref, item }) => {
           const c = item as LibCertification;
           const v = <K extends keyof LibCertification & string>(k: K) => refValue(ref, c, k);
-          return { ...base(ref.id, c.id), title: v('name'), subtitle: v('issuer'), date: formatDate(v('date'), fmt), url: v('url'), description: v('credentialId') ? `Credential ID ${v('credentialId')}` : '', start: v('date') };
+          return { ...base(ref.id, c.id), title: v('name'), subtitle: v('issuer'), date: formatDate(v('date'), fmt, lang), url: v('url'), description: v('credentialId') ? `${t(lang, 'credentialId')} ${v('credentialId')}` : '', start: v('date') };
         });
     case 'achievements':
       return sectionRefs(section, library, 'achievements')
@@ -209,21 +209,21 @@ function resolveLibrarySection(section: ResumeSection, library: Library, fmt: Re
         .map(({ ref, item }) => {
           const a = item as LibAchievement;
           const v = <K extends keyof LibAchievement & string>(k: K) => refValue(ref, a, k);
-          return { ...base(ref.id, a.id), title: v('title'), description: v('description'), date: formatDate(v('date'), fmt), url: v('url'), start: v('date') };
+          return { ...base(ref.id, a.id), title: v('title'), description: v('description'), date: formatDate(v('date'), fmt, lang), url: v('url'), start: v('date') };
         });
     default:
       return [];
   }
 }
 
-function resolveLocal(entries: LocalEntry[], fmt: ResumeStyle['dateFormat'], mb: number): ResolvedItem[] {
+function resolveLocal(entries: LocalEntry[], fmt: ResumeStyle['dateFormat'], mb: number, lang = 'en'): ResolvedItem[] {
   return entries
     .filter((e) => !e.hidden)
     .map((e) => ({
       ...base(e.id, null),
       title: e.title,
       subtitle: e.subtitle,
-      date: /^\d{4}-\d{1,2}$/.test(e.date.trim()) ? formatDate(e.date, fmt) : e.date,
+      date: /^\d{4}-\d{1,2}$/.test(e.date.trim()) ? formatDate(e.date, fmt, lang) : e.date,
       location: e.location,
       url: e.url,
       description: e.description,
@@ -232,7 +232,7 @@ function resolveLocal(entries: LocalEntry[], fmt: ResumeStyle['dateFormat'], mb:
     }));
 }
 
-export function skillGroups(section: ResumeSection, library: Library): SkillGroup[] {
+export function skillGroups(section: ResumeSection, library: Library, lang = 'en'): SkillGroup[] {
   const allowed = section.skillIds ? new Set(section.skillIds) : null;
   const hidden = new Set(section.refs.filter((r) => r.hidden).map((r) => r.libId));
   const skills = library.skills.filter((s) => s.name.trim() && (!allowed || allowed.has(s.id)) && !hidden.has(s.id));
@@ -240,7 +240,7 @@ export function skillGroups(section: ResumeSection, library: Library): SkillGrou
   // "Other" only makes sense next to real categories.
   const anyCategory = skills.some((s) => s.category.trim());
   for (const s of skills) {
-    const cat = s.category.trim() || (section.kind === 'technical-skills' && anyCategory ? 'Other' : '');
+    const cat = s.category.trim() || (section.kind === 'technical-skills' && anyCategory ? t(lang, 'other') : '');
     const g = groups.get(cat) ?? { category: cat, names: [], levels: [] };
     g.names.push(s.name.trim());
     g.levels.push(s.level);
@@ -288,6 +288,7 @@ export function photoKey(variantId: string, mode: string): string {
 
 export function resolveResume(resume: ResumeDoc, library: Library, profile: Profile): ResolvedResume {
   const fmt = resume.style.dateFormat;
+  const lang = resume.style.language ?? 'en';
   const sections: ResolvedSection[] = [];
   let profileSectionId: string | null = null;
   for (const s of resume.sections) {
@@ -298,19 +299,21 @@ export function resolveResume(resume: ResumeDoc, library: Library, profile: Prof
     if (s.hidden) continue;
     const info = sectionInfo(s.kind);
     const placement: 'main' | 'side' = s.placement === 'auto' ? (info.side ? 'side' : 'main') : s.placement;
-    const common = { id: s.id, kind: s.kind, title: s.title.trim() || info.title, display: s.display, placement, autoPlacement: s.placement === 'auto' };
+    // Only default (English) headings are localised; headings the user typed are kept.
+    const title = localizeHeading(s.title.trim() || info.title, lang);
+    const common = { id: s.id, kind: s.kind, title, continued: t(lang, 'continued', { title }), display: s.display, placement, autoPlacement: s.placement === 'auto' };
     if (s.kind === 'summary') {
       const text = (s.text ?? profile.bio).trim();
       if (text) sections.push({ ...common, items: [], text, skills: [] });
       continue;
     }
     if (s.kind === 'skills' || s.kind === 'technical-skills') {
-      const skills = skillGroups(s, library);
+      const skills = skillGroups(s, library, lang);
       if (skills.length) sections.push({ ...common, items: [], text: '', skills });
       continue;
     }
-    const items = info.library ? resolveLibrarySection(s, library, fmt) : resolveLocal(s.entries, fmt, s.maxBullets);
-    const text = info.library ? '' : (s.text ?? '').trim();
+    const items = info.library ? resolveLibrarySection(s, library, fmt, lang) : resolveLocal(s.entries, fmt, s.maxBullets, lang);
+    const text = info.library ? '' : localizeDefault((s.text ?? '').trim(), 'availableOnRequest', lang);
     if (items.length || text) sections.push({ ...common, items, text, skills: [] });
   }
   const name = profile.name.trim() || 'Your Name';

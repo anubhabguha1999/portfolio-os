@@ -1,5 +1,5 @@
 import type { SectionDefinition } from '../types';
-import { esc, hasText, opts, headingField, introField, sectionHeader, dateRange, bulletList, tagList, link, bullets, para } from '../helpers';
+import { langOf, esc, hasText, opts, headingField, introField, sectionHeader, dateRange, bulletList, tagList, link, bullets, para } from '../helpers';
 import { uid } from '@/utils/id';
 import { formatRange } from '@/utils/format';
 import type { ExperienceItem } from '@/types/portfolio';
@@ -66,7 +66,7 @@ export const experienceSection: SectionDefinition<'experience'> = {
         <h3 class="xp-role">${esc(i.role)}</h3>
         <p class="xp-company">${hasText(i.url) ? link(i.url, esc(i.company)) : esc(i.company)}${hasText(i.location) ? `<span class="xp-location"> · ${esc(i.location)}</span>` : ''}</p>
       </div>
-      ${dateRange(i.start, i.end, i.current)}
+      ${dateRange(i.start, i.end, i.current, langOf(ctx))}
     </header>
     ${hasText(i.description) ? `<p class="xp-desc">${esc(i.description)}</p>` : ''}
     ${bulletList(i.achievements, 'bullets xp-achievements')}
@@ -83,7 +83,7 @@ export const experienceSection: SectionDefinition<'experience'> = {
       kind: 'entry' as const,
       title: i.role,
       subtitle: i.company,
-      meta: formatRange(i.start, i.end, i.current),
+      meta: formatRange(i.start, i.end, i.current, langOf(ctx)),
       location: i.location,
       ...(hasText(i.url) ? { link: i.url } : {}),
       body: [

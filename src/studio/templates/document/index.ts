@@ -178,7 +178,7 @@ const corporate: DocTemplateDef = {
             t: 'row',
             gap: 6,
             cols: [
-              { nodes: [{ t: 'text', runs: [{ text: input.title || 'Document' }], style: { font: b.font, size: b.size + 8, bold: true, color: onBand, lineHeight: 1.1 }, role: 'title' }, ...(input.kind && kindLabel(input.kind).toLowerCase() !== (input.title || '').trim().toLowerCase() ? [{ t: 'text' as const, runs: [{ text: kindLabel(input.kind) }], style: { font: b.font, size: b.size - 1.5, color: mix(band, '#ffffff', 0.7), uppercase: true, tracking: 0.5, lineHeight: 1.2 }, before: 1.6 }] : [])] },
+              { nodes: [{ t: 'text', runs: [{ text: input.title || 'Document' }], style: { font: b.font, size: b.size + 8, bold: true, color: onBand, lineHeight: 1.1 }, role: 'title' }, ...(input.kind && kindLabel(input.kind, input.page.language).toLowerCase() !== (input.title || '').trim().toLowerCase() ? [{ t: 'text' as const, runs: [{ text: kindLabel(input.kind, input.page.language) }], style: { font: b.font, size: b.size - 1.5, color: mix(band, '#ffffff', 0.7), uppercase: true, tracking: 0.5, lineHeight: 1.2 }, before: 1.6 }] : [])] },
               { width: 0.36, align: 'right', vAlign: 'bottom', nodes: [{ t: 'text', runs: [{ text: brand }], style: { font: b.font, size: b.size - 0.5, bold: true, color: onBand, lineHeight: 1.2 }, align: 'right' }, ...(input.profile.email ? [{ t: 'text' as const, runs: [{ text: input.profile.email, link: `mailto:${input.profile.email}` }], style: { font: b.font, size: b.size - 1.5, color: mix(band, '#ffffff', 0.75), lineHeight: 1.3 }, align: 'right' as const }] : [])] },
             ],
           },

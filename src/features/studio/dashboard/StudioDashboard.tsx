@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, FileStack, FileText, Globe, HardDrive, LayoutTemplate, Lock, Package, Plus, ScanText, ShieldCheck, UploadCloud, UserRound } from 'lucide-react';
+import { ArrowRight, Briefcase, DatabaseBackup, FileStack, FileText, GitCompare, Globe, HardDrive, LayoutTemplate, ListChecks, Lock, MessagesSquare, Package, Plus, ScanText, ShieldCheck, Sparkles, Target, UploadCloud, UserRound, UserSquare } from 'lucide-react';
 import { Truncate } from 'dead-lock-react-lib';
 import { SiteHeader } from '@/components/SiteHeader';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +15,17 @@ import { useImageUrls } from '@/studio/images/service';
 import { timeAgo } from '@/utils/format';
 import type { Profile } from '@/studio/model/types';
 import { cn } from '@/utils/cn';
+
+const CAREER_TOOLS: Array<{ to: string; title: string; body: string; icon: ReactNode }> = [
+  { to: '/applications', title: 'Applications', body: 'Track every application from wishlist to offer.', icon: <Briefcase className="size-4" /> },
+  { to: '/match', title: 'Job match', body: 'Compare a resume with a job description.', icon: <Target className="size-4" /> },
+  { to: '/bullets', title: 'Bullet helper', body: 'Find weak verbs, missing metrics and long lines.', icon: <ListChecks className="size-4" /> },
+  { to: '/interview', title: 'Interview prep', body: 'Practise questions built from your experience.', icon: <MessagesSquare className="size-4" /> },
+  { to: '/compare', title: 'Compare resumes', body: 'See what differs between two versions.', icon: <GitCompare className="size-4" /> },
+  { to: '/linkedin', title: 'LinkedIn copy', body: 'Headline, About and experience, sized to fit.', icon: <UserSquare className="size-4" /> },
+  { to: '/assistant', title: 'AI assistant', body: 'Optional, with your own API key.', icon: <Sparkles className="size-4" /> },
+  { to: '/backup', title: 'Backup & sync', body: 'Everything in one file or a synced folder.', icon: <DatabaseBackup className="size-4" /> },
+];
 
 /** The export pipeline behind the pack is large; load it when the dialog opens. */
 const ApplicationPackDialog = lazy(() => import('../pack/ApplicationPackDialog').then((m) => ({ default: m.ApplicationPackDialog })));
@@ -212,6 +223,25 @@ export default function StudioDashboard() {
               }
             />
           </div>
+        </section>
+
+        <section className="mt-10" aria-labelledby="career-tools">
+          <h2 id="career-tools" className="text-[14px] font-semibold">
+            Career tools
+          </h2>
+          <ul className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+            {CAREER_TOOLS.map((t) => (
+              <li key={t.to}>
+                <Link to={t.to} className="group flex h-full items-start gap-3 rounded-2xl border border-line bg-panel p-3.5 hover:border-line-strong hover:bg-hover">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-elevated text-fg-muted group-hover:text-accent">{t.icon}</span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-medium">{t.title}</span>
+                    <span className="mt-0.5 block text-[11.5px] leading-snug text-fg-subtle">{t.body}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr]">

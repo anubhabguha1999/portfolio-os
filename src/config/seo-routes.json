@@ -103,6 +103,150 @@
       "index": true
     },
     {
+      "path": "/match",
+      "title": "Resume Job Description Match Checker — Portfolio OS",
+      "description": "Paste a job description and see which keywords and skills your resume covers, what's missing and a weighted match score. Free, private, runs offline.",
+      "h1": "Match your resume to a job description",
+      "intro": "Paste a job posting and pick a resume. Portfolio OS finds the skills, tools and keywords the role asks for, shows which ones your resume already covers, flags the missing ones you already have in your profile, and explains exactly how the match score is calculated.",
+      "points": [
+        "Matched and missing keywords grouped into hard skills, tools, soft skills and other",
+        "Weighted match score that counts requirements more than nice-to-haves",
+        "Spots skills you have in your profile but left off this resume",
+        "Title, seniority and years-of-experience checks",
+        "One click to make a tailored copy of the resume for the job"
+      ],
+      "priority": 0.8,
+      "changefreq": "monthly",
+      "cta": "/match",
+      "index": true
+    },
+    {
+      "path": "/bullets",
+      "title": "Resume Bullet Point Checker — Portfolio OS",
+      "description": "Check every resume bullet for weak verbs, missing metrics, length, repeated openers, tense, pronouns and passive voice. Free and runs in your browser.",
+      "h1": "Resume bullet point checker",
+      "intro": "Strong bullets start with an action verb, show a result and fit on one or two lines. The bullet helper reviews every bullet in your resume, or any text you paste, and tells you what to fix with stronger verb suggestions.",
+      "points": [
+        "Flags weak openers like \"responsible for\" and suggests stronger verbs",
+        "Finds bullets with no numbers or measurable results",
+        "Catches overlong lines, repeated starting verbs and mixed tenses",
+        "Spots first-person pronouns, filler words and passive voice",
+        "Works on a saved resume or on pasted text"
+      ],
+      "priority": 0.7,
+      "changefreq": "monthly",
+      "cta": "/bullets",
+      "index": true
+    },
+    {
+      "path": "/applications",
+      "title": "Free Job Application Tracker — Portfolio OS",
+      "description": "Track job applications from wishlist to offer on a board or list, with dates, contacts, notes and the resume you sent. Private, free and no sign-up.",
+      "h1": "Job application tracker",
+      "intro": "Keep every role you apply for in one place. Move applications from wishlist to applied, interview and offer, record contacts and next steps, and link the exact resume and cover letter you sent. Everything is stored in your browser.",
+      "points": [
+        "Kanban board and sortable list with search and filters",
+        "Response rate, upcoming next steps and stale application alerts",
+        "Links each application to the resume and cover letter you sent",
+        "Contacts, notes and the full job description for every role",
+        "Export to CSV"
+      ],
+      "priority": 0.8,
+      "changefreq": "monthly",
+      "cta": "/applications",
+      "index": true
+    },
+    {
+      "path": "/interview",
+      "title": "Interview Prep Questions From Your Resume — Portfolio OS",
+      "description": "Practise interview questions generated from your own experience, projects and skills. Write STAR answers, time them and drill with flashcards.",
+      "h1": "Interview prep built from your own resume",
+      "intro": "Portfolio OS turns your experience, projects and skills into the behavioural and technical questions interviewers are likely to ask. Write STAR answers, check how long they take to say, rate your confidence and practise with flashcards.",
+      "points": [
+        "Behavioural questions built from your real roles and projects",
+        "Technical questions for the skills on your resume",
+        "STAR answer template with word count and speaking time",
+        "Confidence ratings and a shuffled flashcard mode",
+        "Questions tailored to a saved job application"
+      ],
+      "priority": 0.7,
+      "changefreq": "monthly",
+      "cta": "/interview",
+      "index": true
+    },
+    {
+      "path": "/compare",
+      "title": "Compare Two Resume Versions — Portfolio OS",
+      "description": "See exactly what changed between two resume versions: sections, entries, bullets, skills and design, with word-by-word highlights. Free and private.",
+      "h1": "Compare two resume versions",
+      "intro": "Tailoring a resume for each job creates many versions. Compare any two side by side or in one merged view and see added, removed and edited sections, entries and bullets, skill differences and design changes.",
+      "points": [
+        "Side-by-side and unified views with an only-changes filter",
+        "Word-level highlights for edited summaries and bullets",
+        "Added, removed, hidden and reordered sections",
+        "Skill set differences and design setting changes",
+        "Read-only: nothing in your resumes is changed"
+      ],
+      "priority": 0.6,
+      "changefreq": "monthly",
+      "cta": "/compare",
+      "index": true
+    },
+    {
+      "path": "/linkedin",
+      "title": "LinkedIn Headline & About Generator — Portfolio OS",
+      "description": "Generate a LinkedIn headline, About section, experience text and skills list from your resume profile, sized to LinkedIn's character limits.",
+      "h1": "LinkedIn headline and About section generator",
+      "intro": "Turn the profile you already built into ready-to-paste LinkedIn copy. Pick from several headline and About variants, edit them with live character counters, and copy each block into LinkedIn.",
+      "points": [
+        "Headline variants within the 220-character limit",
+        "About section in story, concise and skills-focused styles",
+        "Experience descriptions formatted for LinkedIn",
+        "Deduplicated skills list ordered by strength",
+        "Live character counters and one-click copy"
+      ],
+      "priority": 0.7,
+      "changefreq": "monthly",
+      "cta": "/linkedin",
+      "index": true
+    },
+    {
+      "path": "/assistant",
+      "title": "AI Resume & Cover Letter Assistant — Portfolio OS",
+      "description": "Optional AI help with your own API key: rewrite resume bullets, draft a cover letter from a job description and get summary and tailoring ideas.",
+      "h1": "AI resume and cover letter assistant",
+      "intro": "An optional assistant that uses your own Anthropic API key. Text goes straight from your browser to the model under your account, and it is told to use only the facts you provide and never invent employers, dates or numbers.",
+      "points": [
+        "Rewrite resume bullets in a concise, impact or technical tone",
+        "Draft a cover letter from a job description and save it as a document",
+        "Professional summary suggestions",
+        "Tailoring tips that point to experience you already have",
+        "Bring your own key; the rest of the app works without it"
+      ],
+      "priority": 0.6,
+      "changefreq": "monthly",
+      "cta": "/assistant",
+      "index": true
+    },
+    {
+      "path": "/backup",
+      "title": "Back Up & Sync Your Resume Data — Portfolio OS",
+      "description": "Save every portfolio, resume, document and application to one file or a synced folder, with optional passphrase encryption. Restore on any device.",
+      "h1": "Back up and sync your data",
+      "intro": "Portfolio OS keeps your work in your browser. Back up everything to a single file, encrypt it with a passphrase if you like, and restore it on another device, or sync through a folder in iCloud, Dropbox or Google Drive.",
+      "points": [
+        "One file with portfolios, resumes, documents, images and applications",
+        "Optional passphrase encryption (AES-GCM)",
+        "Merge or replace when restoring, with a preview first",
+        "Sync folder support in Chrome and Edge",
+        "Saved tokens and API keys never leave the device"
+      ],
+      "priority": 0.5,
+      "changefreq": "monthly",
+      "cta": "/backup",
+      "index": true
+    },
+    {
       "path": "/projects",
       "title": "My Portfolios — Portfolio OS",
       "description": "Your portfolio projects, stored privately in this browser.",
@@ -192,6 +336,14 @@
       "prefix": true,
       "title": "Extract Your Data — Portfolio OS",
       "description": "Extract your data from PDFs, locally in your browser.",
+      "index": false,
+      "dynamic": true
+    },
+    {
+      "path": "/applications/",
+      "prefix": true,
+      "title": "Application — Portfolio OS",
+      "description": "Edit a job application.",
       "index": false,
       "dynamic": true
     }
