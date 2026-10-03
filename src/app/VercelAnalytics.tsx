@@ -1,5 +1,9 @@
 import { useLocation } from 'react-router-dom';
 import { Analytics, type BeforeSendEvent } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+
+/** Vercel Web Analytics / Speed Insights only exist on Vercel (off for the GitHub Pages build). */
+const ENABLED = import.meta.env.VITE_VERCEL_INSIGHTS !== 'off';
 
 /** Collapse per-item ids so dashboards group by screen, and no local ids leave the device. */
 function routeOf(pathname: string): string {
@@ -18,7 +22,18 @@ function beforeSend(event: BeforeSendEvent): BeforeSendEvent {
   return { ...event, url: url.toString() };
 }
 
-export function VercelAnalytics() {
+function VercelAnalytics() {
   const route = routeOf(useLocation().pathname);
   return <Analytics route={route} path={route} beforeSend={beforeSend} />;
+}
+
+/** Web Analytics and Speed Insights, or nothing off Vercel. */
+export function VercelInsights() {
+  if (!ENABLED) return null;
+  return (
+    <>
+      <VercelAnalytics />
+      <SpeedInsights />
+    </>
+  );
 }

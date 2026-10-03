@@ -1,64 +1,18 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PageFallback } from '@/components/PageFallback';
+import { WhenIdle } from '@/components/WhenIdle';
 import { Toaster } from '@/components/ui/Toaster';
-import { Spinner } from '@/components/ui/Button';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
-import { ScrollToTop } from './ScrollToTop';
-import { VercelAnalytics } from './VercelAnalytics';
 import { ROUTER_BASENAME } from '@/utils/base';
-
-/** Vercel Web Analytics / Speed Insights only exist on Vercel (off for the GitHub Pages build). */
-const VERCEL_INSIGHTS = import.meta.env.VITE_VERCEL_INSIGHTS !== 'off';
+import { ROUTES } from './routes';
 import { RouteSeo } from './RouteSeo';
-import { SpeedInsights } from '@vercel/speed-insights/react';
+import { ScrollToTop } from './ScrollToTop';
+import { VercelInsights } from './VercelAnalytics';
 
-const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
-const ProjectsPage = lazy(() => import('@/features/projects/ProjectsPage'));
-const NewProjectPage = lazy(() => import('@/features/projects/NewProjectPage'));
-const TemplatesPage = lazy(() => import('@/features/templates/TemplatesPage'));
-const BuilderPage = lazy(() => import('@/features/builder/BuilderPage'));
-const PreviewPage = lazy(() => import('@/features/preview/PreviewPage'));
-const ExportStudioPage = lazy(() => import('@/features/export/ExportStudioPage'));
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
-const AboutPage = lazy(() => import('@/features/landing/AboutPage'));
-const ViewPage = lazy(() => import('@/features/share/ViewPage'));
-const StudioDashboard = lazy(() => import('@/features/studio/dashboard/StudioDashboard'));
-const ProfileStudioPage = lazy(() => import('@/features/studio/profile/ProfileStudioPage'));
-const ResumesPage = lazy(() => import('@/features/studio/resume/ResumesPage'));
-const NewResumePage = lazy(() => import('@/features/studio/resume/NewResumePage'));
-const ResumeStudioPage = lazy(() => import('@/features/studio/resume/ResumeStudioPage'));
-const DocumentsPage = lazy(() => import('@/features/studio/documents/DocumentsPage'));
-const DocumentStudioPage = lazy(() => import('@/features/studio/documents/DocumentStudioPage'));
-const KnowledgePage = lazy(() => import('@/features/knowledge/KnowledgePage'));
-const KnowledgeDocPage = lazy(() => import('@/features/knowledge/KnowledgeDocPage'));
-/** Local build & test runner: only exists under `npm run dev` (its endpoint is a dev-server plugin). */
-const RunnerPage = import.meta.env.DEV ? lazy(() => import('@/features/runner/RunnerPage')) : null;
-
-// Update / offline notices: nothing to show at startup, so they (and their animation library) load once the browser is idle.
+// Update / offline notices have nothing to show at startup, so they (and their animation library) load when idle.
 const PwaPrompt = lazy(() => import('@/features/settings/PwaPrompt').then((m) => ({ default: m.PwaPrompt })));
-
-function WhenIdle({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const ric = window.requestIdleCallback as ((cb: () => void, o?: { timeout: number }) => number) | undefined;
-    if (ric) {
-      const id = ric(() => setReady(true), { timeout: 3000 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = window.setTimeout(() => setReady(true), 1500);
-    return () => window.clearTimeout(id);
-  }, []);
-  return ready ? <Suspense fallback={null}>{children}</Suspense> : null;
-}
-
-function PageFallback() {
-  return (
-    <div className="grid h-full min-h-[60vh] place-items-center text-fg-subtle" role="status" aria-label="Loading">
-      <Spinner className="size-5" />
-    </div>
-  );
-}
 
 /**
  * Clean paths (/resumes, /templates…) so every public page is its own crawlable URL.
@@ -70,31 +24,13 @@ export function App() {
     <BrowserRouter basename={ROUTER_BASENAME}>
       <ScrollToTop />
       <RouteSeo />
-      {VERCEL_INSIGHTS && <VercelAnalytics />}
-      {VERCEL_INSIGHTS && <SpeedInsights />}
+      <VercelInsights />
       <ErrorBoundary area="Application">
         <Suspense fallback={<PageFallback />}>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/new" element={<NewProjectPage />} />
-            <Route path="/templates" element={<TemplatesPage />} />
-            <Route path="/builder/:projectId" element={<BuilderPage />} />
-            <Route path="/preview/:projectId" element={<PreviewPage />} />
-            <Route path="/export/:projectId" element={<ExportStudioPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/view" element={<ViewPage />} />
-            <Route path="/studio" element={<StudioDashboard />} />
-            <Route path="/profile" element={<ProfileStudioPage />} />
-            <Route path="/resumes" element={<ResumesPage />} />
-            <Route path="/resumes/new" element={<NewResumePage />} />
-            <Route path="/resume/:resumeId" element={<ResumeStudioPage />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/document/:id" element={<DocumentStudioPage />} />
-            <Route path="/knowledge" element={<KnowledgePage />} />
-            <Route path="/knowledge/:id" element={<KnowledgeDocPage />} />
-            {RunnerPage && <Route path="/runner" element={<RunnerPage />} />}
+            {ROUTES.map(({ path, page: Page }) => (
+              <Route key={path} path={path} element={<Page />} />
+            ))}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
