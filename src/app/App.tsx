@@ -33,6 +33,8 @@ const DocumentsPage = lazy(() => import('@/features/studio/documents/DocumentsPa
 const DocumentStudioPage = lazy(() => import('@/features/studio/documents/DocumentStudioPage'));
 const KnowledgePage = lazy(() => import('@/features/knowledge/KnowledgePage'));
 const KnowledgeDocPage = lazy(() => import('@/features/knowledge/KnowledgeDocPage'));
+/** Local build & test runner: only exists under `npm run dev` (its endpoint is a dev-server plugin). */
+const RunnerPage = import.meta.env.DEV ? lazy(() => import('@/features/runner/RunnerPage')) : null;
 
 function PageFallback() {
   return (
@@ -76,6 +78,7 @@ export function App() {
             <Route path="/document/:id" element={<DocumentStudioPage />} />
             <Route path="/knowledge" element={<KnowledgePage />} />
             <Route path="/knowledge/:id" element={<KnowledgeDocPage />} />
+            {RunnerPage && <Route path="/runner" element={<RunnerPage />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

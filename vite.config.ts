@@ -6,6 +6,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { BRAND } from './src/config/brand';
 import { localRuntimeAssets } from './scripts/vite-local-assets';
 import { contentPagesDev } from './scripts/vite-content-pages';
+import { localRunner } from './scripts/vite-dev-runner';
 
 /** "/" on Vercel; "/portfolio-os/" for GitHub Pages (BASE_PATH=/portfolio-os/ npm run build). */
 const base = `/${(process.env.BASE_PATH ?? '/').replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/');
@@ -22,6 +23,8 @@ export default defineConfig({
     tailwindcss(),
     localRuntimeAssets(fileURLToPath(new URL('.', import.meta.url))),
     contentPagesDev(fileURLToPath(new URL('.', import.meta.url))),
+    // /runner page backend: dev server only, never part of a build.
+    localRunner(fileURLToPath(new URL('.', import.meta.url))),
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,

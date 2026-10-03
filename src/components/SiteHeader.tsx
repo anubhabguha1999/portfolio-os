@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ArrowRight, Menu, Search, X } from 'lucide-react';
+import { ArrowRight, Menu, Play, Search, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { ProfileAvatar, ProfileMenu, useProfileSummary } from './profile/ProfileMenu';
 import { cn } from '@/utils/cn';
@@ -71,6 +71,17 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-2">
+          {/* Local build & test runner: the page only exists under `npm run dev`. */}
+          {import.meta.env.DEV && (
+            <NavLink
+              to="/runner"
+              aria-label="Local runner"
+              title="Local runner (dev only)"
+              className={({ isActive }) => cn('grid size-9 place-items-center rounded-lg hover:bg-hover', isActive ? 'text-ok' : 'text-fg-muted hover:text-fg')}
+            >
+              <Play className="size-4" />
+            </NavLink>
+          )}
           <button
             type="button"
             onClick={() => useGlobalSearch.getState().setOpen(true)}
