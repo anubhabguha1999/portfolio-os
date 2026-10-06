@@ -1,11 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Cloud, CloudOff, Loader2, Redo2, Search, Undo2 } from 'lucide-react';
 import { IconButton } from '@/components/ui/Button';
 import { LogoMark } from '@/components/Logo';
 import { cn } from '@/utils/cn';
 import { modKey } from '@/utils/download';
-import { useGlobalSearch } from '@/features/search/GlobalSearch';
 
 export function SaveBadge({ state }: { state: 'idle' | 'dirty' | 'saving' | 'saved' | 'error' }) {
   return (
@@ -48,6 +47,7 @@ export interface StudioTopBarProps {
 }
 
 export function StudioTopBar({ studio, back, title, save, undo, center, actions }: StudioTopBarProps) {
+  const navigate = useNavigate();
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-panel px-2 sm:px-3">
       <Link to={back.to} className="grid size-8 place-items-center rounded-lg text-fg-muted hover:bg-hover hover:text-fg" aria-label={back.label} title={back.label}>
@@ -74,7 +74,7 @@ export function StudioTopBar({ studio, back, title, save, undo, center, actions 
       )}
       <div className="mx-auto hidden min-w-0 items-center gap-2 lg:flex">{center}</div>
       <div className="ml-auto flex items-center gap-1.5">
-        <IconButton label={`Search (${modKey}+K)`} size="sm" onClick={() => useGlobalSearch.getState().setOpen(true)}>
+        <IconButton label={`Search (${modKey}+K)`} size="sm" onClick={() => void navigate('/search')}>
           <Search className="size-4" />
         </IconButton>
         {actions}

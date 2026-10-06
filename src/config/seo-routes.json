@@ -271,6 +271,12 @@
       "index": false
     },
     {
+      "path": "/search",
+      "title": "Search — Portfolio OS",
+      "description": "Every feature in Portfolio OS, and everything you have saved.",
+      "index": false
+    },
+    {
       "path": "/settings",
       "title": "Settings — Portfolio OS",
       "description": "Storage, backups and app settings.",

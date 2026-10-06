@@ -6,7 +6,6 @@ import { ProfileAvatar, ProfileMenu, useProfileSummary } from './profile/Profile
 import { BRAND } from '@/config/brand';
 import { cn } from '@/utils/cn';
 import { modKey } from '@/utils/download';
-import { useGlobalSearch } from '@/features/search/GlobalSearch';
 
 const links = [
   { to: '/studio', label: 'Dashboard' },
@@ -83,15 +82,14 @@ export function SiteHeader({ transparent }: { transparent?: boolean }) {
               <Play className="size-4" />
             </NavLink>
           )}
-          <button
-            type="button"
-            onClick={() => useGlobalSearch.getState().setOpen(true)}
+          <NavLink
+            to="/search"
             aria-label={`Search (${modKey}+K)`}
             title={`Search (${modKey}K)`}
-            className="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-hover hover:text-fg"
+            className={({ isActive }) => cn('grid size-9 place-items-center rounded-lg hover:bg-hover', isActive ? 'text-fg' : 'text-fg-muted hover:text-fg')}
           >
             <Search className="size-4" />
-          </button>
+          </NavLink>
           <ProfileMenu />
           <Link to="/studio" className="hidden h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-fg px-3 text-[13px] font-medium text-bg transition-opacity hover:opacity-90 sm:inline-flex lg:hidden xl:inline-flex">
             Open app

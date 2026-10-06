@@ -48,6 +48,7 @@ export const ROUTES: AppRoute[] = [
   { path: '/backup', page: lazy(() => import('@/features/backup/BackupPage')) },
   { path: '/assistant', page: lazy(() => import('@/features/assistant/AssistantPage')) },
 
+  { path: '/search', page: lazy(() => import('@/features/search/SearchPage')) },
   { path: '/settings', page: lazy(() => import('@/features/settings/SettingsPage')) },
 
   // Local build & test runner: only under `npm run dev` (its endpoint is a dev-server plugin), never in a build.
