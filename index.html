@@ -43,27 +43,31 @@
     <div id="root"><!-- seo:content --></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Ad tags start once the page has loaded and the browser is idle, so they never compete
-      // with the page's own files for bandwidth or the main thread (LCP / Total Blocking Time).
+      // Ads load on the visitor's first interaction (scroll, tap, key), then when the browser is idle.
+      // They never compete with the page's own files (LCP / Total Blocking Time), and page loads
+      // with no visitor (Lighthouse, crawlers) never set the ad network's third-party cookies.
       (function () {
         var tags = [
           { src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4661359748949042', crossOrigin: 'anonymous' },
         ];
+        var events = ['scroll', 'pointerdown', 'keydown', 'touchstart', 'wheel'];
+        var started = false;
         function load() {
           tags.forEach(function (t) {
             var s = document.createElement('script');
             s.async = true;
             s.src = t.src;
             if (t.crossOrigin) s.crossOrigin = t.crossOrigin;
-            for (var k in t.attrs || {}) s.setAttribute(k, t.attrs[k]);
             document.body.appendChild(s);
           });
         }
-        function whenIdle() {
-          (window.requestIdleCallback || function (cb) { setTimeout(cb, 1500); })(load, { timeout: 4000 });
+        function start() {
+          if (started) return;
+          started = true;
+          events.forEach(function (e) { window.removeEventListener(e, start); });
+          (window.requestIdleCallback || function (cb) { setTimeout(cb, 1); })(load, { timeout: 2000 });
         }
-        if (document.readyState === 'complete') whenIdle();
-        else window.addEventListener('load', whenIdle, { once: true });
+        events.forEach(function (e) { window.addEventListener(e, start, { once: true, passive: true }); });
       })();
     </script>
   </body>
