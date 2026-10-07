@@ -33,6 +33,21 @@ const resources = [
   { href: '/guides/how-to-write-a-cover-letter', label: 'How to write a cover letter' },
 ];
 
+// Direct links so crawlers reach every example page from the landing pages, not only via the hubs.
+const resumeExamples: [string, string][] = [
+  ['software-engineer', 'Software engineer'], ['data-analyst', 'Data analyst'], ['product-manager', 'Product manager'],
+  ['ux-designer', 'UX designer'], ['marketing-manager', 'Marketing manager'], ['nurse', 'Nurse'], ['teacher', 'Teacher'],
+  ['accountant', 'Accountant'], ['fresher', 'Fresher'], ['sales-representative', 'Sales representative'],
+];
+const portfolioExamples: [string, string][] = [
+  ['developer', 'Developer'], ['ux-designer', 'UX designer'], ['graphic-designer', 'Graphic designer'],
+  ['photographer', 'Photographer'], ['writer', 'Writer'], ['architect', 'Architect'],
+];
+const exampleRows = [
+  { title: 'Resume examples', base: '/resume-examples', items: resumeExamples, suffix: 'resume' },
+  { title: 'Portfolio examples', base: '/portfolio-examples', items: portfolioExamples, suffix: 'portfolio' },
+];
+
 export function MarketingFooter() {
   return (
     <footer className="border-t border-line/70">
@@ -70,6 +85,18 @@ export function MarketingFooter() {
             ))}
           </ul>
         </nav>
+      </div>
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 pb-10 sm:px-6">
+        {exampleRows.map((row) => (
+          <nav key={row.base} aria-label={row.title} className="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-subtle">{row.title}</h2>
+            {row.items.map(([slug, label]) => (
+              <a key={slug} href={withBase(`${row.base}/${slug}`)} className="text-[12px] text-fg-muted transition-colors hover:text-fg">
+                {label} {row.suffix}
+              </a>
+            ))}
+          </nav>
+        ))}
       </div>
       <div className="border-t border-line/50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-[12px] text-fg-subtle sm:px-6">
