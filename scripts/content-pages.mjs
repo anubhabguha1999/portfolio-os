@@ -267,7 +267,7 @@ function relatedHtml(section, page) {
 
 const band = (section, hub = false) => `<section class="band" aria-label="Get started"><div><h2>Make yours in <em>minutes</em></h2><p>Free, private and no sign-up. Everything stays in your browser, and you can export PDF, Word or a complete website.</p></div><div class="actions"><a class="btn" href="${section.cta.href}">${esc(hub ? (section.hubCta ?? section.cta.label) : section.cta.label)} ${ARROW}</a><a class="btn ghost" href="/about">How it works</a></div></section>`;
 
-function pageJsonLd({ SITE, cfg, section, page, url, today }) {
+function pageJsonLd({ SITE, cfg, section, page, url, updated }) {
   const trail = [
     { name: section.hub.label, url: `${SITE}${section.base}` },
     { name: page.h1, url },
@@ -283,7 +283,7 @@ function pageJsonLd({ SITE, cfg, section, page, url, today }) {
       inLanguage: 'en',
       image: `${SITE}${cfg.defaultImage}`,
       datePublished: PUBLISHED,
-      dateModified: today,
+      dateModified: updated,
       author: { '@type': 'Organization', name: cfg.siteName, url: `${SITE}/` },
       publisher: { '@type': 'Organization', name: cfg.siteName, url: `${SITE}/`, logo: { '@type': 'ImageObject', url: `${SITE}/icon-512.png` } },
       isPartOf: { '@type': 'WebSite', '@id': `${SITE}/#website`, name: cfg.siteName, url: `${SITE}/` },
@@ -306,12 +306,13 @@ function writePage(dist, path, html) {
 }
 
 /** Writes every content page and hub; returns sitemap entries. */
-export function buildContentPages({ SITE, cfg, dist, today }) {
+export function buildContentPages({ SITE, cfg, dist, lastmod }) {
   const entries = [];
   for (const section of SECTIONS) {
     const hubUrl = `${SITE}${section.base}`;
+    const hubUpdated = lastmod.dateOf(section.base, { hub: section.hub, cta: section.cta, hubCta: section.hubCta, pages: section.pages.map((p) => [p.slug, p.h1, p.description]) });
     const hubLd = [
-      { '@type': 'CollectionPage', '@id': `${hubUrl}#webpage`, url: hubUrl, name: section.hub.title, description: section.hub.description, inLanguage: 'en', isPartOf: { '@id': `${SITE}/#website` }, dateModified: today },
+      { '@type': 'CollectionPage', '@id': `${hubUrl}#webpage`, url: hubUrl, name: section.hub.title, description: section.hub.description, inLanguage: 'en', isPartOf: { '@id': `${SITE}/#website` }, dateModified: hubUpdated },
       { '@type': 'ItemList', itemListElement: section.pages.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${hubUrl}/${p.slug}`, name: p.h1 })) },
       breadcrumbs(SITE, cfg, [{ name: section.hub.label, url: hubUrl }]),
     ];
@@ -324,27 +325,28 @@ export function buildContentPages({ SITE, cfg, dist, today }) {
 ${band(section, true)}</main>` +
       footer(cfg);
     writePage(dist, section.base, hubHtml);
-    entries.push({ path: section.base, title: section.hub.h1, description: section.hub.description, priority: 0.8, changefreq: 'weekly' });
+    entries.push({ path: section.base, title: section.hub.h1, description: section.hub.description, priority: 0.8, changefreq: 'weekly', lastmod: hubUpdated });
 
     for (const page of section.pages) {
       const path = `${section.base}/${page.slug}`;
       const url = `${SITE}${path}`;
       const body = articleBody(section, page);
-      const date = new Date(`${today}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+      const updated = lastmod.dateOf(path, page);
+      const date = new Date(`${updated}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
       const words = [page.intro, ...page.sections.flatMap((x) => [...(x.p ?? []), ...(x.list ?? [])]), ...(page.steps ?? []).map((x) => x.text), ...(page.faqs ?? []).map((x) => x.a)].join(' ').split(/\s+/).length;
       const toc = body.toc.length > 2 ? `<nav class="toc" aria-label="On this page"><p>On this page</p><ol>${body.toc.map((t) => `<li><a href="#${t.id}">${esc(t.text)}</a></li>`).join('')}</ol></nav>` : '';
       const html =
-        head({ SITE, cfg, url, title: page.title, description: page.description, jsonld: pageJsonLd({ SITE, cfg, section, page, url, today }), active: section.base }) +
+        head({ SITE, cfg, url, title: page.title, description: page.description, jsonld: pageJsonLd({ SITE, cfg, section, page, url, updated }), active: section.base }) +
         `<main id="main" class="wrap"><div class="page"><article><header class="article-head">${crumbsHtml([{ name: section.hub.label, path: section.base }, { name: page.h1, path }])}
 <p class="eyebrow" style="margin-top:28px">${esc(section.hub.label.replace(/s$/, ''))}</p><h1>${esc(page.h1)}</h1><p class="lead">${esc(page.intro)}</p>
-<div class="byline"><span>Updated <time datetime="${today}">${date}</time></span><span class="dot"></span><span>${Math.max(1, Math.round(words / 230))} min read</span><span class="dot"></span><span>${esc(cfg.siteName)}</span></div></header>
+<div class="byline"><span>Updated <time datetime="${updated}">${date}</time></span><span class="dot"></span><span>${Math.max(1, Math.round(words / 230))} min read</span><span class="dot"></span><span>${esc(cfg.siteName)}</span></div></header>
 <div class="prose">${body.html}</div></article>
 <aside class="rail">${toc}<div class="cta-card"><h3>${section.kind === 'portfolio' ? 'Build this portfolio' : section.kind === 'resume' ? 'Build this resume' : 'Put it into practice'}</h3><p>Start from a template and make it yours in minutes.</p><ul><li>Free, no account</li><li>Private: stays on your device</li><li>${section.kind === 'portfolio' ? 'Export a complete website' : 'Export PDF and Word'}</li></ul><a class="btn" href="${section.cta.href}">${esc(section.cta.label)}</a></div></aside></div>
 ${relatedHtml(section, page)}
 ${band(section)}</main>` +
         footer(cfg);
       writePage(dist, path, html);
-      entries.push({ path, title: page.h1, description: page.description, priority: 0.7, changefreq: 'monthly' });
+      entries.push({ path, title: page.h1, description: page.description, priority: 0.7, changefreq: 'monthly', lastmod: updated });
     }
   }
   return entries;

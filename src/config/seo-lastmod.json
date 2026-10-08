@@ -1,0 +1,158 @@
+{
+  "/": {
+    "hash": "0dbe0d2c8f6f",
+    "date": "2026-10-08"
+  },
+  "/about": {
+    "hash": "0e3e255e28f5",
+    "date": "2026-10-08"
+  },
+  "/applications": {
+    "hash": "69b312a23c97",
+    "date": "2026-10-08"
+  },
+  "/assistant": {
+    "hash": "36039e5f297d",
+    "date": "2026-10-08"
+  },
+  "/backup": {
+    "hash": "668637fd6200",
+    "date": "2026-10-08"
+  },
+  "/bullets": {
+    "hash": "7ec5bdfb35d0",
+    "date": "2026-10-08"
+  },
+  "/compare": {
+    "hash": "fc29090a9161",
+    "date": "2026-10-08"
+  },
+  "/documents": {
+    "hash": "650e407705bb",
+    "date": "2026-10-08"
+  },
+  "/guides": {
+    "hash": "85f99db3200d",
+    "date": "2026-10-08"
+  },
+  "/guides/ats-friendly-resume": {
+    "hash": "a6a22d0e6d22",
+    "date": "2026-10-08"
+  },
+  "/guides/how-to-make-a-portfolio-website": {
+    "hash": "e1ab6b796eb3",
+    "date": "2026-10-08"
+  },
+  "/guides/how-to-tailor-your-resume": {
+    "hash": "060d4cd96ece",
+    "date": "2026-10-08"
+  },
+  "/guides/how-to-write-a-cover-letter": {
+    "hash": "e1fb006e2ef2",
+    "date": "2026-10-08"
+  },
+  "/guides/json-resume": {
+    "hash": "16831b0f8620",
+    "date": "2026-10-08"
+  },
+  "/guides/resume-vs-cv": {
+    "hash": "95ec79cb4637",
+    "date": "2026-10-08"
+  },
+  "/interview": {
+    "hash": "6c46ba1b1520",
+    "date": "2026-10-08"
+  },
+  "/linkedin": {
+    "hash": "320177d72d2b",
+    "date": "2026-10-08"
+  },
+  "/match": {
+    "hash": "02a1f019210e",
+    "date": "2026-10-08"
+  },
+  "/new": {
+    "hash": "2094ada773a4",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples": {
+    "hash": "52c476d9a2a4",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples/architect": {
+    "hash": "a6f485ce2abe",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples/developer": {
+    "hash": "6a50046620f4",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples/graphic-designer": {
+    "hash": "83cb098b7f9c",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples/photographer": {
+    "hash": "a4453ed2c346",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples/ux-designer": {
+    "hash": "65913b37745e",
+    "date": "2026-10-08"
+  },
+  "/portfolio-examples/writer": {
+    "hash": "b994c822c1f1",
+    "date": "2026-10-08"
+  },
+  "/resume-examples": {
+    "hash": "c5096bd72db6",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/accountant": {
+    "hash": "c9e2e122ecde",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/data-analyst": {
+    "hash": "b1e2ba73a276",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/fresher": {
+    "hash": "d4516c7ae74b",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/marketing-manager": {
+    "hash": "35505aaae1e3",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/nurse": {
+    "hash": "1f9290064987",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/product-manager": {
+    "hash": "fc30f7e56f19",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/sales-representative": {
+    "hash": "f53c1a792c04",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/software-engineer": {
+    "hash": "366fc8674aad",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/teacher": {
+    "hash": "af6e9f88cf8e",
+    "date": "2026-10-08"
+  },
+  "/resume-examples/ux-designer": {
+    "hash": "d2558f9a3df9",
+    "date": "2026-10-08"
+  },
+  "/resumes": {
+    "hash": "6279b46aaeb4",
+    "date": "2026-10-08"
+  },
+  "/templates": {
+    "hash": "0de5a6c1d773",
+    "date": "2026-10-08"
+  }
+}

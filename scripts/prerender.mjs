@@ -16,6 +16,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildContentPages } from './content-pages.mjs';
+import { createLastmod } from './seo-lastmod.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -25,6 +26,7 @@ const SITE = (process.env.VITE_SITE_URL || cfg.siteUrl).replace(/\/$/, '');
 const template = readFileSync(join(dist, 'index.html'), 'utf8').replaceAll(cfg.siteUrl, SITE);
 const today = new Date().toISOString().slice(0, 10);
 const indexable = cfg.routes.filter((r) => r.index);
+const lastmod = createLastmod(join(root, 'src/config/seo-lastmod.json'), today);
 // Single source for the resume template count (kept in sync with the registry by tests).
 const RESUME_TEMPLATES = Number(/RESUME_TEMPLATE_COUNT\s*=\s*(\d+)/.exec(readFileSync(join(root, 'src/studio/templates/count.ts'), 'utf8'))?.[1] ?? 0);
 if (!RESUME_TEMPLATES) throw new Error('Could not read RESUME_TEMPLATE_COUNT from src/studio/templates/count.ts');
@@ -73,7 +75,7 @@ function jsonLdFor(route) {
     isPartOf: { '@id': `${SITE}/#website` },
     about: { '@id': `${SITE}/#app` },
     primaryImageOfPage: { '@type': 'ImageObject', url: `${SITE}${cfg.defaultImage}` },
-    dateModified: today,
+    dateModified: route.lastmod,
   };
   const graph = [org, website, app, page];
   if (route.path !== '/') {
@@ -118,13 +120,9 @@ const HUB_LINKS = [
 function contentFor(route) {
   const nav = indexable.map((r) => `<li><a href="${r.path}"${r.path === route.path ? ' aria-current="page"' : ''}>${esc(NAV_LABELS[r.path] ?? r.h1 ?? r.title)}</a></li>`).join('');
   const points = (route.points ?? []).map((p) => `<li>${esc(p)}</li>`).join('');
-  const related = indexable
-    .filter((r) => r.path !== route.path)
-    .map((r) => `<li><a href="${r.path}"><strong>${esc(r.h1 ?? r.title)}</strong></a> — ${esc(r.description)}</li>`)
-    .join('');
   return `<div id="seo-shell"><style>#seo-shell{max-width:72rem;margin:0 auto;padding:1.25rem 1rem 4rem;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#e7e5f0;background:#0b0b0f;min-height:100vh}#seo-shell a{color:#a99cff}#seo-shell nav ul{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;padding:0;margin:0 0 3rem;font-size:14px}#seo-shell h1{font-size:clamp(2rem,5vw,3.25rem);line-height:1.05;letter-spacing:-.03em;margin:0 0 1rem;color:#fff}#seo-shell h2{font-size:1.25rem;margin:2.5rem 0 .75rem;color:#fff}#seo-shell p{max-width:44rem;color:#b9b6c8}#seo-shell ul.points,#seo-shell ul.related{padding-left:1.25rem;color:#b9b6c8}#seo-shell footer{margin-top:3rem;font-size:13px;color:#8f8ba3}</style>
 <header><nav aria-label="Main"><ul><li><a href="/"><strong>${esc(cfg.siteName)}</strong></a></li>${nav}</ul></nav></header>
-<main><h1>${esc(route.h1 ?? route.title)}</h1><p>${esc(route.intro ?? route.description)}</p>${points ? `<h2>Features</h2><ul class="points">${points}</ul>` : ''}<p><a href="${route.cta ?? (route.path === '/resumes' ? '/resumes' : route.path === '/documents' ? '/documents' : '/new')}">Get started free</a>, no sign-up needed.</p><h2>Explore ${esc(cfg.siteName)}</h2><ul class="related">${related}${HUB_LINKS}</ul><h2>Guides and examples</h2><ul class="related">${ARTICLE_LINKS}</ul></main>
+<main><h1>${esc(route.h1 ?? route.title)}</h1><p>${esc(route.intro ?? route.description)}</p>${points ? `<h2>Features</h2><ul class="points">${points}</ul>` : ''}<p><a href="${route.cta ?? (route.path === '/resumes' ? '/resumes' : route.path === '/documents' ? '/documents' : '/new')}">Get started free</a>, no sign-up needed.</p><h2>Explore ${esc(cfg.siteName)}</h2><ul class="related">${HUB_LINKS}</ul><h2>Guides and examples</h2><ul class="related">${ARTICLE_LINKS}</ul></main>
 <footer>${esc(cfg.siteName)}: a free, private portfolio website, resume and cover letter builder that runs in your browser.</footer></div>`;
 }
 
@@ -155,7 +153,11 @@ function pageHtml(route) {
 /* --------------------------- content pages --------------------------- */
 
 // Built first so every app page can link straight to each guide and example, not only the hubs.
-const contentPages = buildContentPages({ SITE, cfg, dist, today });
+const contentPages = buildContentPages({ SITE, cfg, dist, lastmod });
+// Stamp app routes after content pages: their body links every article, so article titles count as source.
+const ARTICLE_SOURCE = contentPages.map((p) => [p.path, p.title]);
+for (const route of indexable) route.lastmod = lastmod.dateOf(route.path, { route, RESUME_TEMPLATES, ARTICLE_SOURCE });
+lastmod.save();
 const ARTICLE_LINKS = contentPages
   .filter((p) => p.path.split('/').length > 2)
   .map((p) => `<li><a href="${p.path}">${esc(p.title)}</a></li>`)
@@ -185,7 +187,7 @@ ${sitemapRoutes
   .map(
     (r) => `  <url>
     <loc>${urlOf(r.path)}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${r.lastmod}</lastmod>
     <changefreq>${r.changefreq ?? 'monthly'}</changefreq>
     <priority>${(r.priority ?? 0.5).toFixed(1)}</priority>${r.path === '/' ? `\n    <image:image><image:loc>${SITE}${cfg.defaultImage}</image:loc></image:image>` : ''}
   </url>`,

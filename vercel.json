@@ -258,7 +258,7 @@
       ]
     },
     {
-      "source": "/applications/:path*",
+      "source": "/applications/:path+",
       "headers": [
         {
           "key": "X-Robots-Tag",
