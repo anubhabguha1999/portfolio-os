@@ -1,35 +1,39 @@
 {
   "/": {
-    "hash": "0dbe0d2c8f6f",
-    "date": "2026-10-08"
+    "hash": "893b9878203e",
+    "date": "2026-10-24"
   },
   "/about": {
-    "hash": "0e3e255e28f5",
-    "date": "2026-10-08"
+    "hash": "351161ed1ca7",
+    "date": "2026-10-24"
   },
   "/applications": {
-    "hash": "69b312a23c97",
-    "date": "2026-10-08"
+    "hash": "99cd51900f01",
+    "date": "2026-10-24"
   },
   "/assistant": {
-    "hash": "36039e5f297d",
-    "date": "2026-10-08"
+    "hash": "934a6556c20e",
+    "date": "2026-10-24"
   },
   "/backup": {
-    "hash": "668637fd6200",
-    "date": "2026-10-08"
+    "hash": "155d578d433b",
+    "date": "2026-10-24"
   },
   "/bullets": {
-    "hash": "7ec5bdfb35d0",
-    "date": "2026-10-08"
+    "hash": "6d53f9ef2312",
+    "date": "2026-10-24"
   },
   "/compare": {
-    "hash": "fc29090a9161",
-    "date": "2026-10-08"
+    "hash": "1ba312f51f41",
+    "date": "2026-10-24"
+  },
+  "/contact": {
+    "hash": "aa701476424b",
+    "date": "2026-10-24"
   },
   "/documents": {
-    "hash": "650e407705bb",
-    "date": "2026-10-08"
+    "hash": "765e09777d28",
+    "date": "2026-10-24"
   },
   "/guides": {
     "hash": "85f99db3200d",
@@ -60,20 +64,20 @@
     "date": "2026-10-08"
   },
   "/interview": {
-    "hash": "6c46ba1b1520",
-    "date": "2026-10-08"
+    "hash": "226a6a2b1a80",
+    "date": "2026-10-24"
   },
   "/linkedin": {
-    "hash": "320177d72d2b",
-    "date": "2026-10-08"
+    "hash": "a06470e12aac",
+    "date": "2026-10-24"
   },
   "/match": {
-    "hash": "02a1f019210e",
-    "date": "2026-10-08"
+    "hash": "913ea46ca3b4",
+    "date": "2026-10-24"
   },
   "/new": {
-    "hash": "2094ada773a4",
-    "date": "2026-10-08"
+    "hash": "9cecb6b10193",
+    "date": "2026-10-24"
   },
   "/portfolio-examples": {
     "hash": "52c476d9a2a4",
@@ -102,6 +106,10 @@
   "/portfolio-examples/writer": {
     "hash": "b994c822c1f1",
     "date": "2026-10-08"
+  },
+  "/privacy": {
+    "hash": "eb40bd628973",
+    "date": "2026-10-24"
   },
   "/resume-examples": {
     "hash": "c5096bd72db6",
@@ -148,11 +156,15 @@
     "date": "2026-10-08"
   },
   "/resumes": {
-    "hash": "6279b46aaeb4",
-    "date": "2026-10-08"
+    "hash": "f406b1663ebc",
+    "date": "2026-10-24"
   },
   "/templates": {
-    "hash": "0de5a6c1d773",
-    "date": "2026-10-08"
+    "hash": "63ed59489c91",
+    "date": "2026-10-24"
+  },
+  "/terms": {
+    "hash": "ee97f0210e3b",
+    "date": "2026-10-24"
   }
 }

@@ -65,6 +65,7 @@ describe('static content pages', async () => {
     '/resume-examples': (await import('../scripts/seo-content/resume-examples.mjs')).default,
     '/portfolio-examples': (await import('../scripts/seo-content/portfolio-examples.mjs')).default,
     '/guides': (await import('../scripts/seo-content/guides.mjs')).default,
+    '': (await import('../scripts/seo-content/legal.mjs')).default,
   };
   const pages = Object.entries(sets).flatMap(([base, list]) => list.map((p) => ({ ...p, path: `${base}/${p.slug}` })));
 

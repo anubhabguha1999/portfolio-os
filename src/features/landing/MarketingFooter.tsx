@@ -33,6 +33,12 @@ const resources = [
   { href: '/guides/how-to-write-a-cover-letter', label: 'How to write a cover letter' },
 ];
 
+const legal = [
+  { href: '/contact', label: 'Contact' },
+  { href: '/privacy', label: 'Privacy policy' },
+  { href: '/terms', label: 'Terms of use' },
+];
+
 // Direct links so crawlers reach every example page from the landing pages, not only via the hubs.
 const resumeExamples: [string, string][] = [
   ['software-engineer', 'Software engineer'], ['data-analyst', 'Data analyst'], ['product-manager', 'Product manager'],
@@ -101,6 +107,13 @@ export function MarketingFooter() {
       <div className="border-t border-line/50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-[12px] text-fg-subtle sm:px-6">
           <p>Everything you create is stored in this browser. Download a JSON backup from My Portfolios to keep a copy.</p>
+          <nav aria-label="Legal" className="flex gap-4">
+            {legal.map((l) => (
+              <a key={l.href} href={withBase(l.href)} className="font-medium text-fg-muted underline-offset-2 transition-colors hover:text-fg hover:underline">
+                {l.label}
+              </a>
+            ))}
+          </nav>
           <p>
             Made by{' '}
             <a href="https://anubhab-guha.vercel.app/" target="_blank" rel="author noopener" className="font-medium text-fg-muted underline-offset-2 transition-colors hover:text-fg hover:underline">

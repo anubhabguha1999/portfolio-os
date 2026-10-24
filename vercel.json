@@ -84,6 +84,18 @@
       "destination": "/backup/index.html"
     },
     {
+      "source": "/privacy",
+      "destination": "/privacy/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms/index.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact/index.html"
+    },
+    {
       "source": "/((?!\\.well-known/)(?!.*\\.[A-Za-z0-9]+$).*)",
       "destination": "/app.html"
     }

@@ -10,13 +10,18 @@ import { join } from 'node:path';
 import resumeExamples from './seo-content/resume-examples.mjs';
 import portfolioExamples from './seo-content/portfolio-examples.mjs';
 import guides from './seo-content/guides.mjs';
+import legal, { CONTACT_EMAIL, EFFECTIVE } from './seo-content/legal.mjs';
 
 // First publication date for every content page; dateModified is the build date.
 const PUBLISHED = '2026-10-01';
 
 const AUTHOR_URL = 'https://anubhab-guha.vercel.app/';
 
-export const CONTENT_PREFIXES = ['/resume-examples', '/portfolio-examples', '/guides'];
+export const CONTENT_PREFIXES = ['/resume-examples', '/portfolio-examples', '/guides', ...legal.map((p) => `/${p.slug}`)];
+
+const ADSENSE_CLIENT = 'ca-pub-4661359748949042';
+// Same loader as index.html: the ad script loads on the visitor's first interaction, then when idle.
+const ADS_LOADER = `<script>(function(){var ev=['scroll','pointerdown','keydown','touchstart','wheel'],go=false;function load(){var s=document.createElement('script');s.async=true;s.crossOrigin='anonymous';s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}';document.body.appendChild(s)}function start(){if(go)return;go=true;ev.forEach(function(e){removeEventListener(e,start)});(window.requestIdleCallback||function(cb){setTimeout(cb,1)})(load,{timeout:2000})}ev.forEach(function(e){addEventListener(e,start,{once:true,passive:true})})})();</script>`;
 
 const SECTIONS = [
   {
@@ -202,9 +207,11 @@ function head({ SITE, cfg, url, title, description, jsonld, active }) {
 <meta name="twitter:title" content="${esc(title)}" />
 <meta name="twitter:description" content="${esc(description)}" />
 <meta name="twitter:image" content="${SITE}${cfg.defaultImage}" />
+<meta name="google-adsense-account" content="${ADSENSE_CLIENT}" />
 ${ldJson({ '@context': 'https://schema.org', '@graph': jsonld })}
 <style>${CSS}</style>
 <script defer src="/_vercel/insights/script.js"></script>
+${ADS_LOADER}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -216,7 +223,7 @@ function footer(cfg) {
   const col = (s) => `<nav aria-label="${esc(s.hub.label)}"><h2>${esc(s.hub.label)}</h2><ul>${s.pages.slice(0, 4).map((p) => `<li><a href="${s.base}/${p.slug}">${esc(p.h1)}</a></li>`).join('')}<li><a href="${s.base}">All ${esc(s.hub.label.toLowerCase())} →</a></li></ul></nav>`;
   const app = `<nav aria-label="Product"><h2>Product</h2><ul><li><a href="/resumes">Resume builder</a></li><li><a href="/templates">Portfolio templates</a></li><li><a href="/documents">Cover letter builder</a></li><li><a href="/knowledge">Extract your data</a></li><li><a href="/about">How it works</a></li></ul></nav>`;
   return `<footer class="site"><div class="wrap top"><div class="about"><a class="brand" href="/">${LOGO}${esc(cfg.siteName)}</a><p>A free, private portfolio website, resume and cover letter builder that runs entirely in your browser. No sign-up, works offline.</p></div>${app}${SECTIONS.map(col).join('')}</div>
-<div class="bottom"><div class="wrap"><span>Everything you create stays on your device.</span><span>Made by <a href="${AUTHOR_URL}" rel="author" target="_blank">Anubhab Guha</a></span></div></div></footer>
+<div class="bottom"><div class="wrap"><span>Everything you create stays on your device.</span><nav aria-label="Site"><a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></nav><span>Made by <a href="${AUTHOR_URL}" rel="author" target="_blank">Anubhab Guha</a></span></div></div></footer>
 </body>
 </html>
 `;
@@ -349,5 +356,38 @@ ${band(section)}</main>` +
       entries.push({ path, title: page.h1, description: page.description, priority: 0.7, changefreq: 'monthly', lastmod: updated });
     }
   }
+
+  for (const page of legal) {
+    const path = `/${page.slug}`;
+    const url = `${SITE}${path}`;
+    const updated = lastmod.dateOf(path, page);
+    const ld = [
+      { '@type': page.slug === 'contact' ? 'ContactPage' : 'WebPage', '@id': `${url}#webpage`, url, name: page.title, description: page.description, inLanguage: 'en', isPartOf: { '@id': `${SITE}/#website` }, dateModified: updated },
+      breadcrumbs(SITE, cfg, [{ name: page.h1, url }]),
+    ];
+    const body = page.sections
+      .map((sec) => `<h2 id="${slug(sec.heading)}">${esc(sec.heading)}</h2>${(sec.p ?? []).map((p) => `<p>${linkify(esc(p))}</p>`).join('')}${sec.list?.length ? `<ul>${sec.list.map((l) => `<li>${linkify(esc(l))}</li>`).join('')}</ul>` : ''}`)
+      .join('\n');
+    const html =
+      head({ SITE, cfg, url, title: page.title, description: page.description, jsonld: ld, active: null }) +
+      `<main id="main" class="wrap"><div class="page"><article><header class="article-head">${crumbsHtml([{ name: page.h1, path }])}<h1 style="margin-top:28px">${esc(page.h1)}</h1><p class="lead">${esc(page.intro)}</p>
+<div class="byline"><span>Effective <time datetime="${EFFECTIVE}">${new Date(`${EFFECTIVE}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</time></span></div></header>
+<div class="prose">${body}</div></article></div></main>` +
+      footer(cfg);
+    writePage(dist, path, html);
+    entries.push({ path, title: page.h1, description: page.description, priority: 0.3, changefreq: 'yearly', lastmod: updated });
+  }
   return entries;
 }
+
+/** Turns the contact address and the policy sites named in legal.mjs into links (input is already escaped). */
+const LINKS = [
+  [CONTACT_EMAIL, `mailto:${CONTACT_EMAIL}`],
+  ['adssettings.google.com', 'https://adssettings.google.com/'],
+  ['aboutads.info', 'https://optout.aboutads.info/'],
+  ['policies.google.com/technologies/partner-sites', 'https://policies.google.com/technologies/partner-sites'],
+  ['anubhab-guha.vercel.app', AUTHOR_URL],
+  ['privacy policy', '/privacy'],
+  ['Backup page', '/backup'],
+];
+const linkify = (html) => LINKS.reduce((h, [text, href]) => h.replaceAll(text, `<a href="${href}"${href.startsWith('http') ? ' rel="noopener" target="_blank"' : ''}>${text}</a>`), html);
